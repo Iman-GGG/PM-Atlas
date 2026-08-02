@@ -383,6 +383,7 @@ D1 存储用户身份映射、解锁状态、分支、提交、事件、状态�
 | `lab_case_versions` | 已发布案例版本登记 | `case_id`, `case_version`, `content_hash`, `published_at` |
 | `lab_progress` | 用户对案例的解锁进度 | `user_id`, `case_id`, `case_version`, `highest_unlocked_week` |
 | `lab_branches` | 用户个人分支 | `id`, `user_id`, `case_id`, `case_version`, `parent_branch_id`, `fork_week`, `status` |
+| `lab_round_drafts` | 云端自动保存未提交行动链与决策依据 | `branch_id`, `round_number`, `scenario_id`, `selected_card_ids_json`, `connections_json`, `reasoning_json` |
 | `lab_round_submissions` | 每回合提交的行动链与理由 | `id`, `branch_id`, `round_number`, `submission_json`, `reasoning_json`, `idempotency_key` |
 | `lab_state_snapshots` | 每回合结算后的项目状态 | `branch_id`, `week`, `state_json`, `state_hash` |
 | `lab_events` | 可回放的用户/系统事件 | `id`, `branch_id`, `week`, `event_type`, `payload_json`, `visibility` |
@@ -390,6 +391,8 @@ D1 存储用户身份映射、解锁状态、分支、提交、事件、状态�
 | `lab_ai_reviews` | AI 结构化复盘 | `id`, `branch_id`, `scenario_id`, `review_json`, `model_ref`, `prompt_version` |
 
 所有用户可读写表都应具备 `user_id` 或通过 `branch_id` 可回查到 `user_id`。API 查询必须先按用户边界过滤，再按资源 ID 查询，不能只按前端传入的分支 ID 读取。
+
+**已实现数据库基线**：`prototype/db/schema.ts` 已建立上述 10 张 D1/Drizzle 表，包含用户与案例版本边界、分支自引用、云端草稿、回合幂等、不可变快照、事件、文件增量和 AI 复盘缓存。分支保存当前周、当前回合和乐观锁版本；AI 项目级复盘使用 `__project__` 作为非空作用域键，避免 SQLite 对 NULL 唯一索引的绕过。`prototype/drizzle/0000_lab_mvp.sql` 为首个迁移，包含级联/限制外键、唯一索引、查询索引以及周次、回合、状态、AI 重试次数等 CHECK 约束。
 
 ### 8.3 事务与幂等
 

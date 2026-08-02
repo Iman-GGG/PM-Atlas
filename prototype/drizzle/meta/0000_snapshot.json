@@ -1,0 +1,1147 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "633d7da3-8740-4481-9b34-2958956d48a1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "lab_ai_reviews": {
+      "name": "lab_ai_reviews",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'__project__'"
+        },
+        "review_kind": {
+          "name": "review_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "state_hash": {
+          "name": "state_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "review_json": {
+          "name": "review_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "model_ref": {
+          "name": "model_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "retry_count": {
+          "name": "retry_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_ai_reviews_cache_uq": {
+          "name": "lab_ai_reviews_cache_uq",
+          "columns": [
+            "branch_id",
+            "review_kind",
+            "scenario_id",
+            "state_hash",
+            "prompt_version"
+          ],
+          "isUnique": true
+        },
+        "lab_ai_reviews_branch_status_idx": {
+          "name": "lab_ai_reviews_branch_status_idx",
+          "columns": [
+            "branch_id",
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_ai_reviews_branch_id_lab_branches_id_fk": {
+          "name": "lab_ai_reviews_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_ai_reviews",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_ai_reviews_kind_scope_ck": {
+          "name": "lab_ai_reviews_kind_scope_ck",
+          "value": "(\"lab_ai_reviews\".\"review_kind\" = 'project' AND \"lab_ai_reviews\".\"scenario_id\" = '__project__') OR (\"lab_ai_reviews\".\"review_kind\" = 'scenario' AND \"lab_ai_reviews\".\"scenario_id\" <> '__project__')"
+        },
+        "lab_ai_reviews_status_ck": {
+          "name": "lab_ai_reviews_status_ck",
+          "value": "\"lab_ai_reviews\".\"status\" IN ('pending', 'completed', 'failed', 'budget_blocked')"
+        },
+        "lab_ai_reviews_retry_ck": {
+          "name": "lab_ai_reviews_retry_ck",
+          "value": "\"lab_ai_reviews\".\"retry_count\" BETWEEN 0 AND 1"
+        }
+      }
+    },
+    "lab_branches": {
+      "name": "lab_branches",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "case_version": {
+          "name": "case_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parent_branch_id": {
+          "name": "parent_branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fork_week": {
+          "name": "fork_week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fork_round_number": {
+          "name": "fork_round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "current_week": {
+          "name": "current_week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "current_round_number": {
+          "name": "current_round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lock_version": {
+          "name": "lock_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "outcome_classification": {
+          "name": "outcome_classification",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_branches_user_case_idx": {
+          "name": "lab_branches_user_case_idx",
+          "columns": [
+            "user_id",
+            "case_id",
+            "case_version"
+          ],
+          "isUnique": false
+        },
+        "lab_branches_parent_idx": {
+          "name": "lab_branches_parent_idx",
+          "columns": [
+            "parent_branch_id"
+          ],
+          "isUnique": false
+        },
+        "lab_branches_status_idx": {
+          "name": "lab_branches_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_branches_user_id_lab_users_id_fk": {
+          "name": "lab_branches_user_id_lab_users_id_fk",
+          "tableFrom": "lab_branches",
+          "tableTo": "lab_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lab_branches_parent_branch_id_lab_branches_id_fk": {
+          "name": "lab_branches_parent_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_branches",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "parent_branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "lab_branches_case_version_fk": {
+          "name": "lab_branches_case_version_fk",
+          "tableFrom": "lab_branches",
+          "tableTo": "lab_case_versions",
+          "columnsFrom": [
+            "case_id",
+            "case_version"
+          ],
+          "columnsTo": [
+            "case_id",
+            "case_version"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_branches_week_ck": {
+          "name": "lab_branches_week_ck",
+          "value": "\"lab_branches\".\"fork_week\" >= 1 AND \"lab_branches\".\"current_week\" >= \"lab_branches\".\"fork_week\""
+        },
+        "lab_branches_round_ck": {
+          "name": "lab_branches_round_ck",
+          "value": "\"lab_branches\".\"fork_round_number\" >= 0 AND \"lab_branches\".\"current_round_number\" >= \"lab_branches\".\"fork_round_number\""
+        },
+        "lab_branches_lock_version_ck": {
+          "name": "lab_branches_lock_version_ck",
+          "value": "\"lab_branches\".\"lock_version\" >= 0"
+        },
+        "lab_branches_status_ck": {
+          "name": "lab_branches_status_ck",
+          "value": "\"lab_branches\".\"status\" IN ('active', 'completed', 'failed', 'archived')"
+        },
+        "lab_branches_outcome_ck": {
+          "name": "lab_branches_outcome_ck",
+          "value": "\"lab_branches\".\"outcome_classification\" IS NULL OR \"lab_branches\".\"outcome_classification\" IN ('near_mainline_success', 'detour_success', 'delayed_success', 'scenario_failure')"
+        }
+      }
+    },
+    "lab_case_versions": {
+      "name": "lab_case_versions",
+      "columns": {
+        "case_id": {
+          "name": "case_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "case_version": {
+          "name": "case_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_case_versions_content_hash_uq": {
+          "name": "lab_case_versions_content_hash_uq",
+          "columns": [
+            "content_hash"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lab_case_versions_pk": {
+          "columns": [
+            "case_id",
+            "case_version"
+          ],
+          "name": "lab_case_versions_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "lab_document_deltas": {
+      "name": "lab_document_deltas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "week": {
+          "name": "week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "patch_json": {
+          "name": "patch_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_document_deltas_branch_document_week_idx": {
+          "name": "lab_document_deltas_branch_document_week_idx",
+          "columns": [
+            "branch_id",
+            "document_id",
+            "week"
+          ],
+          "isUnique": false
+        },
+        "lab_document_deltas_branch_round_idx": {
+          "name": "lab_document_deltas_branch_round_idx",
+          "columns": [
+            "branch_id",
+            "round_number"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_document_deltas_branch_id_lab_branches_id_fk": {
+          "name": "lab_document_deltas_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_document_deltas",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_document_deltas_round_week_ck": {
+          "name": "lab_document_deltas_round_week_ck",
+          "value": "\"lab_document_deltas\".\"round_number\" >= 1 AND \"lab_document_deltas\".\"week\" >= 1"
+        }
+      }
+    },
+    "lab_events": {
+      "name": "lab_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "week": {
+          "name": "week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payload_json": {
+          "name": "payload_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'user'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_events_branch_week_idx": {
+          "name": "lab_events_branch_week_idx",
+          "columns": [
+            "branch_id",
+            "week"
+          ],
+          "isUnique": false
+        },
+        "lab_events_branch_type_idx": {
+          "name": "lab_events_branch_type_idx",
+          "columns": [
+            "branch_id",
+            "event_type"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_events_branch_id_lab_branches_id_fk": {
+          "name": "lab_events_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_events",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_events_round_week_ck": {
+          "name": "lab_events_round_week_ck",
+          "value": "(\"lab_events\".\"round_number\" IS NULL OR \"lab_events\".\"round_number\" >= 0) AND \"lab_events\".\"week\" >= 1"
+        },
+        "lab_events_visibility_ck": {
+          "name": "lab_events_visibility_ck",
+          "value": "\"lab_events\".\"visibility\" IN ('user', 'review_only', 'internal')"
+        }
+      }
+    },
+    "lab_progress": {
+      "name": "lab_progress",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "case_version": {
+          "name": "case_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "highest_unlocked_week": {
+          "name": "highest_unlocked_week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_progress_user_case_version_uq": {
+          "name": "lab_progress_user_case_version_uq",
+          "columns": [
+            "user_id",
+            "case_id",
+            "case_version"
+          ],
+          "isUnique": true
+        },
+        "lab_progress_user_idx": {
+          "name": "lab_progress_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_progress_user_id_lab_users_id_fk": {
+          "name": "lab_progress_user_id_lab_users_id_fk",
+          "tableFrom": "lab_progress",
+          "tableTo": "lab_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lab_progress_case_version_fk": {
+          "name": "lab_progress_case_version_fk",
+          "tableFrom": "lab_progress",
+          "tableTo": "lab_case_versions",
+          "columnsFrom": [
+            "case_id",
+            "case_version"
+          ],
+          "columnsTo": [
+            "case_id",
+            "case_version"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_progress_unlocked_week_ck": {
+          "name": "lab_progress_unlocked_week_ck",
+          "value": "\"lab_progress\".\"highest_unlocked_week\" >= 1"
+        }
+      }
+    },
+    "lab_round_drafts": {
+      "name": "lab_round_drafts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "selected_card_ids_json": {
+          "name": "selected_card_ids_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "connections_json": {
+          "name": "connections_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "reasoning_json": {
+          "name": "reasoning_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_round_drafts_branch_round_uq": {
+          "name": "lab_round_drafts_branch_round_uq",
+          "columns": [
+            "branch_id",
+            "round_number"
+          ],
+          "isUnique": true
+        },
+        "lab_round_drafts_branch_idx": {
+          "name": "lab_round_drafts_branch_idx",
+          "columns": [
+            "branch_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_round_drafts_branch_id_lab_branches_id_fk": {
+          "name": "lab_round_drafts_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_round_drafts",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_round_drafts_round_ck": {
+          "name": "lab_round_drafts_round_ck",
+          "value": "\"lab_round_drafts\".\"round_number\" >= 1"
+        }
+      }
+    },
+    "lab_round_submissions": {
+      "name": "lab_round_submissions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submission_json": {
+          "name": "submission_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reasoning_json": {
+          "name": "reasoning_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rule_result_json": {
+          "name": "rule_result_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_round_submissions_branch_round_uq": {
+          "name": "lab_round_submissions_branch_round_uq",
+          "columns": [
+            "branch_id",
+            "round_number"
+          ],
+          "isUnique": true
+        },
+        "lab_round_submissions_branch_idempotency_uq": {
+          "name": "lab_round_submissions_branch_idempotency_uq",
+          "columns": [
+            "branch_id",
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
+        "lab_round_submissions_branch_idx": {
+          "name": "lab_round_submissions_branch_idx",
+          "columns": [
+            "branch_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_round_submissions_branch_id_lab_branches_id_fk": {
+          "name": "lab_round_submissions_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_round_submissions",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_round_submissions_round_ck": {
+          "name": "lab_round_submissions_round_ck",
+          "value": "\"lab_round_submissions\".\"round_number\" >= 1"
+        }
+      }
+    },
+    "lab_state_snapshots": {
+      "name": "lab_state_snapshots",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "week": {
+          "name": "week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "state_json": {
+          "name": "state_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state_hash": {
+          "name": "state_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_state_snapshots_branch_round_uq": {
+          "name": "lab_state_snapshots_branch_round_uq",
+          "columns": [
+            "branch_id",
+            "round_number"
+          ],
+          "isUnique": true
+        },
+        "lab_state_snapshots_branch_week_idx": {
+          "name": "lab_state_snapshots_branch_week_idx",
+          "columns": [
+            "branch_id",
+            "week"
+          ],
+          "isUnique": false
+        },
+        "lab_state_snapshots_hash_idx": {
+          "name": "lab_state_snapshots_hash_idx",
+          "columns": [
+            "state_hash"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lab_state_snapshots_branch_id_lab_branches_id_fk": {
+          "name": "lab_state_snapshots_branch_id_lab_branches_id_fk",
+          "tableFrom": "lab_state_snapshots",
+          "tableTo": "lab_branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lab_state_snapshots_round_week_ck": {
+          "name": "lab_state_snapshots_round_week_ck",
+          "value": "\"lab_state_snapshots\".\"round_number\" >= 0 AND \"lab_state_snapshots\".\"week\" >= 1"
+        }
+      }
+    },
+    "lab_users": {
+      "name": "lab_users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity_key": {
+          "name": "identity_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "lab_users_identity_key_uq": {
+          "name": "lab_users_identity_key_uq",
+          "columns": [
+            "identity_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
