@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "caseId": "car-control",
+  "caseVersion": "v1",
+  "raciPolicy": {
+    "overviewRows": "level_1_work_packages",
+    "exactlyOneAccountablePerRow": true,
+    "minimumResponsiblePerRow": 1,
+    "blankCellMeaning": "no_routine_participation_or_notification",
+    "assignmentsMustBeExplicit": true,
+    "temporaryScenarioParticipationDoesNotChangeBaseline": true,
+    "activityInheritance": "inherit_parent_work_package_unless_overridden",
+    "stageGateApprovalsStoredSeparately": true,
+    "stageGateWeeks": [8, 12, 20, 28, 32]
+  },
+  "stageGatePolicy": {
+    "exactlyOneDecisionOwner": true,
+    "roles": ["decisionOwner", "presenters", "requiredSignoffs", "advisors", "informed"],
+    "allowedOutcomes": ["approved", "conditionally_approved", "returned"]
+  },
+  "engagementPolicy": {
+    "powerScale": { "minimum": 1, "maximum": 5 },
+    "interestScale": { "minimum": 1, "maximum": 5, "dynamic": true },
+    "states": ["unaware", "resistant", "neutral", "supportive", "leading"],
+    "objectiveSignals": ["expected_touchpoints", "actual_touchpoints", "on_time_responses", "overdue_approvals", "open_action_items"],
+    "overviewOutputs": ["participation_coverage", "engagement_gap_count", "overdue_stakeholder_count", "stakeholder_heatmap"],
+    "opaqueCompositeScoreForbidden": true
+  },
+  "mainlineEngagementEvents": [
+    { "week": 4, "stakeholderId": "tech_lead", "current": "leading", "evidence": ["架构工作坊", "关键架构决策记录"] },
+    { "week": 8, "stakeholderId": "operations_support", "current": "supportive", "evidence": ["范围基线评审"] },
+    { "week": 8, "stakeholderId": "marketing_release", "current": "supportive", "evidence": ["范围基线评审"] },
+    { "week": 8, "stakeholderId": "legal_privacy", "current": "supportive", "evidence": ["范围与隐私要求签字"] },
+    { "week": 8, "stakeholderId": "vehicle_vendor_pm", "current": "supportive", "evidence": ["接口范围与交付计划确认"] },
+    { "week": 8, "stakeholderId": "pilot_owner_representative", "current": "supportive", "evidence": ["用户研究反馈确认", "范围基线评审"] },
+    { "week": 12, "stakeholderId": "vehicle_integration", "current": "leading", "evidence": ["接口冻结签字"] },
+    { "week": 12, "stakeholderId": "devsecops", "current": "leading", "evidence": ["安全基线签字"] },
+    { "week": 17, "stakeholderId": "qa", "current": "leading", "evidence": ["集成测试准备评审"] },
+    { "week": 17, "stakeholderId": "security_vendor", "current": "supportive", "desired": "supportive", "evidence": ["安全测试计划启动"] },
+    { "week": 25, "stakeholderId": "operations_support", "current": "leading", "desired": "leading", "evidence": ["试点运营启动"] },
+    { "week": 25, "stakeholderId": "pilot_owner_representative", "current": "leading", "desired": "leading", "evidence": ["试点启动会"] }
+  ],
+  "communicationTouchpoints": [
+    { "id": "core_status", "title": "核心团队状态会", "cadence": "weekly", "startWeek": 1, "endWeek": 32, "participants": ["pm", "product_ba", "tech_lead", "mobile", "backend", "vehicle_integration", "qa", "devsecops"] },
+    { "id": "vendor_interface", "title": "供应商接口例会", "cadence": "weekly", "startWeek": 5, "endWeek": 24, "participants": ["pm", "tech_lead", "vehicle_integration", "vehicle_vendor_pm"] },
+    { "id": "risk_quality", "title": "风险与质量评审", "cadence": "biweekly", "startWeek": 5, "endWeek": 30, "participants": ["pm", "product_ba", "tech_lead", "qa", "devsecops"] },
+    { "id": "steering_committee", "title": "项目指导委员会", "cadence": "specified_weeks", "weeks": [4, 8, 12, 20, 28, 32], "participants": ["sponsor", "pm", "product_ba", "tech_lead"] },
+    { "id": "requirements_workshops", "title": "需求与范围工作坊", "cadence": "activity_driven", "startWeek": 1, "endWeek": 8, "participants": ["pm", "product_ba", "tech_lead", "operations_support", "pilot_owner_representative"] },
+    { "id": "pilot_operations", "title": "试点运营例会", "cadence": "weekly", "startWeek": 25, "endWeek": 29, "participants": ["pm", "product_ba", "qa", "operations_support", "marketing_release", "pilot_owner_representative"] },
+    { "id": "stage_gate_approvals", "title": "阶段门审批", "cadence": "specified_weeks", "weeks": [8, 12, 20, 28, 32], "participantsSource": "stageGates" }
+  ],
+  "stageGates": [
+    {
+      "id": "gate-w8",
+      "week": 8,
+      "title": "需求与范围基线",
+      "decisionOwner": "sponsor",
+      "presenters": ["pm", "product_ba"],
+      "requiredSignoffs": ["pm", "product_ba", "tech_lead", "devsecops", "legal_privacy"],
+      "advisors": ["qa", "operations_support", "marketing_release", "vehicle_vendor_pm", "pilot_owner_representative"],
+      "informed": ["mobile", "backend", "vehicle_integration", "security_vendor"],
+      "evidenceTitles": ["需求文件", "项目范围说明书", "WBS", "项目进度计划", "成本基线", "风险登记册"]
+    },
+    {
+      "id": "gate-w12",
+      "week": 12,
+      "title": "方案与接口冻结",
+      "decisionOwner": "tech_lead",
+      "presenters": ["tech_lead", "vehicle_integration"],
+      "requiredSignoffs": ["pm", "product_ba", "qa", "devsecops", "legal_privacy", "vehicle_vendor_pm"],
+      "advisors": ["mobile", "backend", "security_vendor"],
+      "informed": ["sponsor", "operations_support", "marketing_release", "pilot_owner_representative"],
+      "evidenceTitles": ["架构决策记录", "接口契约", "Mock验证结果", "安全基线", "测试策略", "供应商交付计划"]
+    },
+    {
+      "id": "gate-w20",
+      "week": 20,
+      "title": "核心开发完成",
+      "decisionOwner": "pm",
+      "presenters": ["tech_lead", "qa"],
+      "requiredSignoffs": ["product_ba", "tech_lead", "qa", "devsecops", "vehicle_integration"],
+      "advisors": ["mobile", "backend", "operations_support", "vehicle_vendor_pm", "security_vendor"],
+      "informed": ["sponsor", "marketing_release", "legal_privacy", "pilot_owner_representative"],
+      "evidenceTitles": ["候选构建", "需求跟踪矩阵", "自动化测试结果", "缺陷统计", "接口交付状态", "进度预测", "风险报告"]
+    },
+    {
+      "id": "gate-w28",
+      "week": 28,
+      "title": "试点验收",
+      "decisionOwner": "sponsor",
+      "presenters": ["pm", "product_ba", "operations_support", "qa"],
+      "requiredSignoffs": ["product_ba", "tech_lead", "qa", "devsecops", "operations_support", "legal_privacy", "pilot_owner_representative"],
+      "advisors": ["mobile", "backend", "vehicle_integration", "marketing_release", "vehicle_vendor_pm", "security_vendor"],
+      "informed": [],
+      "evidenceTitles": ["试点统计", "满意度分析", "质量报告", "安全报告", "未关闭缺陷清单", "运营准备检查表", "上线与回滚计划"]
+    },
+    {
+      "id": "gate-w32",
+      "week": 32,
+      "title": "正式上线、移交与收尾",
+      "decisionOwner": "sponsor",
+      "presenters": ["pm", "product_ba", "operations_support"],
+      "requiredSignoffs": ["pm", "product_ba", "tech_lead", "qa", "devsecops", "operations_support", "marketing_release", "legal_privacy"],
+      "advisors": ["mobile", "backend", "vehicle_integration", "vehicle_vendor_pm", "security_vendor", "pilot_owner_representative"],
+      "informed": [],
+      "evidenceTitles": ["最终验收结论", "安全上线门结论", "发布报告", "运营移交清单", "供应商验收结论", "财务收尾", "风险关闭记录", "经验教训"]
+    }
+  ],
+  "workPackageRaci": [
+    {
+      "workPackageId": "WBS-1.0",
+      "A": ["sponsor"],
+      "R": ["pm"],
+      "C": ["product_ba", "tech_lead", "qa", "devsecops", "legal_privacy"],
+      "I": ["mobile", "backend", "vehicle_integration", "operations_support", "marketing_release", "vehicle_vendor_pm", "security_vendor"]
+    },
+    {
+      "workPackageId": "WBS-2.0",
+      "A": ["product_ba"],
+      "R": ["product_ba", "pm"],
+      "C": ["sponsor", "tech_lead", "mobile", "backend", "vehicle_integration", "qa", "devsecops", "operations_support", "marketing_release", "legal_privacy", "vehicle_vendor_pm", "pilot_owner_representative"],
+      "I": ["security_vendor"]
+    },
+    {
+      "workPackageId": "WBS-3.0",
+      "A": ["tech_lead"],
+      "R": ["tech_lead", "mobile", "backend", "vehicle_integration", "devsecops"],
+      "C": ["pm", "product_ba", "qa", "legal_privacy", "vehicle_vendor_pm", "security_vendor"],
+      "I": ["sponsor", "operations_support", "marketing_release"]
+    },
+    {
+      "workPackageId": "WBS-4.0",
+      "A": ["tech_lead"],
+      "R": ["mobile", "backend", "qa", "devsecops"],
+      "C": ["pm", "product_ba", "vehicle_integration", "legal_privacy", "vehicle_vendor_pm", "security_vendor"],
+      "I": ["sponsor", "operations_support", "marketing_release", "pilot_owner_representative"]
+    },
+    {
+      "workPackageId": "WBS-5.0",
+      "A": ["product_ba"],
+      "R": ["mobile", "backend", "vehicle_integration", "qa"],
+      "C": ["pm", "tech_lead", "devsecops", "operations_support", "vehicle_vendor_pm", "pilot_owner_representative"],
+      "I": ["sponsor", "marketing_release", "legal_privacy", "security_vendor"]
+    },
+    {
+      "workPackageId": "WBS-6.0",
+      "A": ["tech_lead"],
+      "R": ["mobile", "backend", "vehicle_integration", "qa", "devsecops"],
+      "C": ["pm", "product_ba", "legal_privacy", "vehicle_vendor_pm", "security_vendor"],
+      "I": ["sponsor", "operations_support", "marketing_release", "pilot_owner_representative"]
+    },
+    {
+      "workPackageId": "WBS-7.0",
+      "A": ["operations_support"],
+      "R": ["product_ba", "tech_lead", "mobile", "backend", "qa", "devsecops"],
+      "C": ["pm", "marketing_release", "legal_privacy"],
+      "I": ["sponsor", "vehicle_integration", "vehicle_vendor_pm", "security_vendor", "pilot_owner_representative"]
+    },
+    {
+      "workPackageId": "WBS-8.0",
+      "A": ["pm"],
+      "R": ["pm", "vehicle_integration", "vehicle_vendor_pm"],
+      "C": ["sponsor", "tech_lead", "qa", "devsecops", "legal_privacy"],
+      "I": ["product_ba", "mobile", "backend", "operations_support", "marketing_release", "security_vendor"]
+    },
+    {
+      "workPackageId": "WBS-9.0",
+      "A": ["qa"],
+      "R": ["tech_lead", "mobile", "backend", "vehicle_integration", "qa", "devsecops"],
+      "C": ["pm", "product_ba", "vehicle_vendor_pm", "security_vendor"],
+      "I": ["sponsor", "operations_support", "marketing_release", "legal_privacy"]
+    },
+    {
+      "workPackageId": "WBS-10.0",
+      "A": ["devsecops"],
+      "R": ["tech_lead", "mobile", "backend", "vehicle_integration", "qa", "devsecops", "security_vendor"],
+      "C": ["pm", "product_ba", "legal_privacy"],
+      "I": ["sponsor", "operations_support", "marketing_release", "vehicle_vendor_pm", "pilot_owner_representative"]
+    },
+    {
+      "workPackageId": "WBS-11.0",
+      "A": ["sponsor"],
+      "R": ["pm", "product_ba", "tech_lead", "mobile", "backend", "vehicle_integration", "qa", "devsecops", "operations_support", "marketing_release"],
+      "C": ["legal_privacy", "vehicle_vendor_pm", "security_vendor", "pilot_owner_representative"],
+      "I": []
+    }
+  ],
+  "stakeholders": [
+    { "id": "sponsor", "title": "项目发起人", "group": "governance", "initialEngagement": { "power": 5, "interest": 5, "current": "leading", "desired": "leading" } },
+    { "id": "pm", "title": "项目经理", "group": "core_team", "resourceRoleId": "pm", "initialEngagement": { "power": 5, "interest": 5, "current": "leading", "desired": "leading" } },
+    { "id": "product_ba", "title": "产品负责人/业务分析师", "group": "core_team", "resourceRoleId": "ba", "initialEngagement": { "power": 4, "interest": 5, "current": "leading", "desired": "leading" } },
+    { "id": "tech_lead", "title": "技术负责人", "group": "core_team", "resourceRoleId": "tech_lead", "initialEngagement": { "power": 4, "interest": 5, "current": "supportive", "desired": "leading" } },
+    { "id": "mobile", "title": "移动端工程师", "group": "core_team", "resourceRoleId": "mobile", "initialEngagement": { "power": 2, "interest": 4, "current": "supportive", "desired": "supportive" } },
+    { "id": "backend", "title": "后端工程师", "group": "core_team", "resourceRoleId": "backend", "initialEngagement": { "power": 2, "interest": 4, "current": "supportive", "desired": "supportive" } },
+    { "id": "vehicle_integration", "title": "车端接口集成工程师", "group": "core_team", "resourceRoleId": "vehicle_integration", "initialEngagement": { "power": 3, "interest": 5, "current": "supportive", "desired": "leading" } },
+    { "id": "qa", "title": "测试工程师", "group": "core_team", "resourceRoleId": "qa", "initialEngagement": { "power": 3, "interest": 4, "current": "supportive", "desired": "leading" } },
+    { "id": "devsecops", "title": "DevOps/安全工程师", "group": "core_team", "resourceRoleId": "devsecops", "initialEngagement": { "power": 4, "interest": 5, "current": "supportive", "desired": "leading" } },
+    { "id": "operations_support", "title": "运营与客服负责人", "group": "business", "initialEngagement": { "power": 4, "interest": 4, "current": "neutral", "desired": "supportive" } },
+    { "id": "marketing_release", "title": "市场与发布负责人", "group": "business", "initialEngagement": { "power": 4, "interest": 4, "current": "neutral", "desired": "supportive" } },
+    { "id": "legal_privacy", "title": "法务与隐私合规负责人", "group": "governance", "initialEngagement": { "power": 4, "interest": 3, "current": "neutral", "desired": "supportive" } },
+    { "id": "vehicle_vendor_pm", "title": "车端接口供应商项目经理", "group": "external", "initialEngagement": { "power": 4, "interest": 4, "current": "neutral", "desired": "supportive" } },
+    { "id": "security_vendor", "title": "第三方安全测试负责人", "group": "external", "initialEngagement": { "power": 3, "interest": 2, "current": "neutral", "desired": "neutral" } },
+    { "id": "pilot_owner_representative", "title": "试点车主代表", "group": "external", "initialEngagement": { "power": 2, "interest": 5, "current": "neutral", "desired": "supportive" } }
+  ]
+}

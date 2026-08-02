@@ -1,0 +1,706 @@
+{
+  "schemaVersion": 1,
+  "caseId": "car-control",
+  "caseVersion": "v1",
+  "eventDiscoveryPolicy": {
+    "showDirectEventAnswerOnTakeover": false,
+    "entrySignals": ["inbox_badge", "stakeholder_message", "report_update", "dashboard_anomaly"],
+    "requiredMaterialComposition": {
+      "primaryClues": 3,
+      "corroboratingClues": 1,
+      "dashboardAnomalies": 1
+    },
+    "materialsStateFactsOnly": true,
+    "materialsMustNotReveal": ["risk_category", "correct_tool", "recommended_decision"],
+    "trackMaterialViewsForAiReview": true
+  },
+  "decisionReasoningPolicy": {
+    "fields": [
+      { "id": "observed_signals", "label": "我观察到的关键信号", "required": true, "minimumCharacters": 20, "maximumCharacters": 500 },
+      { "id": "risk_or_root_cause", "label": "我判断的主要风险/根因", "required": true, "minimumCharacters": 20, "maximumCharacters": 500 },
+      { "id": "action_rationale", "label": "我选择这些行动的原因", "required": true, "minimumCharacters": 20, "maximumCharacters": 500 }
+    ],
+    "allowReferences": ["viewed_event_material", "viewed_project_document", "selected_action_card"],
+    "autosaveDraft": true,
+    "blockSubmissionWhenInvalid": true,
+    "showInlineValidation": true,
+    "keywordScoringEnabled": false,
+    "requireStandardTerminology": false,
+    "aiEvaluationBasis": ["consistency_with_viewed_evidence", "consistency_with_action_chain", "consistency_with_objective_outcomes"]
+  },
+  "aiReviewPolicy": {
+    "overallScoreEnabled": false,
+    "rankingEnabled": false,
+    "levels": ["mature", "developing", "needs_practice"],
+    "capabilityDimensions": ["signal_recognition", "risk_and_root_cause_diagnosis", "action_completeness_and_minimality", "timing_and_tradeoff", "communication_and_governance"],
+    "requiredSections": ["strengths", "improvements", "mainline_differences", "retry_suggestion", "knowledge_references"],
+    "everyFindingRequiresEvidenceReferences": true,
+    "mayOverrideRuleEngineOutcome": false,
+    "fallbackToRuleReviewWhenUnavailable": true
+  },
+  "engineSettlementPolicy": {
+    "steps": ["validate_submission", "evaluate_required_actions", "apply_completed_action_effects", "apply_harmful_card_effects", "apply_unresolved_issue_degradation", "advance_one_week_and_trigger_scheduled_events", "enforce_hard_gates_and_terminal_rules", "recompute_views_and_document_versions"],
+    "conflictPriority": ["safety_red_line", "terminal_failure", "harmful_effect", "missing_action_effect", "completed_action_effect", "scheduled_baseline_effect"],
+    "additiveFields": ["incrementalActualCostCny", "incrementalWorkPersonDays", "overtimePersonDays", "blockedPersonDays", "coordinationAndWaitingPersonDays"],
+    "forecastCompletionConflictResolution": "latest_unless_approved_recovery_completed",
+    "riskConflictResolution": "highest_currently_effective_level",
+    "oneTimeCardEffectsApplyOncePerBranch": true,
+    "idealOutcomeApplication": "only_when_near_mainline_conditions_fully_satisfied"
+  },
+  "branchComparisonPolicy": {
+    "mainlineTrackStyle": "gray",
+    "personalBranchTrackStyle": "distinct_color_per_branch",
+    "immutableNodePerRoundSubmission": true,
+    "takeoverCreatesForkPoint": true,
+    "nodeDetails": ["action_chain", "decision_reasoning", "state_diff", "document_diff"],
+    "weeks1To32ComparisonBasis": "same_calendar_week_mainline_snapshot",
+    "afterWeek32ComparisonBasis": "mainline_final_week32_snapshot",
+    "afterWeek32Label": "主线已完成",
+    "comparisonDimensions": ["schedule", "cost", "scope", "quality", "security", "risk", "resource", "stakeholder", "governance_documents"],
+    "maximumPersonalBranchesCompared": 3,
+    "mergeOrCherryPickEnabled": false,
+    "retryFromNodeCreatesNewBranch": true
+  },
+  "scenarios": [
+    {
+      "id": "scenario-1",
+      "week": 9,
+      "title": "试点车主反馈引发的需求变更",
+      "initialImpact": {
+        "riskTransitions": [{ "riskId": "R01", "fromLifecycleState": "monitoring", "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled", "assessment": { "probability": 3, "impact": 4 } }],
+        "requirements": { "newExternalRequirements": 1, "status": "needs_clarification", "linkedToBaseline": false, "linkedToWbs": false, "traceabilityCoverageDeltaPercentagePoints": -2 },
+        "scopeBaselineChanged": false,
+        "formalChangeRequestsCreated": 0,
+        "ccbOpenItemsDelta": 0,
+        "stakeholderEffects": [{ "stakeholderId": "pilot_owner_representative", "engagementState": "supportive", "newPendingCommunicationItems": 1 }],
+        "performanceChanged": false,
+        "forecastCompletionWeek": 32
+      },
+      "eventMaterials": {
+        "primaryClues": [
+          {
+            "id": "S1-M01",
+            "type": "stakeholder_message",
+            "senderStakeholderId": "pilot_owner_representative",
+            "channel": "pilot_owner_group",
+            "subject": "家庭成员临时用车时无法查看车辆状态",
+            "facts": ["配偶临时用车时无法查看车辆状态", "希望允许家庭成员共享车辆"]
+          },
+          {
+            "id": "S1-M02",
+            "type": "report_update",
+            "channel": "prototype_feedback_report",
+            "subject": "早期原型体验反馈汇总",
+            "facts": ["20名早期体验者中8人提出家庭共享", "部分体验者直接共享主账号", "报告记录了隐私和授权隐患"]
+          },
+          {
+            "id": "S1-M03",
+            "type": "stakeholder_message",
+            "senderStakeholderId": "product_ba",
+            "channel": "project_chat",
+            "subject": "是否可以将家庭共享直接加入1.0",
+            "facts": ["产品负责人认为该需求有价值", "尚未提供成本、工期或安全影响评估"]
+          }
+        ],
+        "corroboratingClues": [
+          {
+            "id": "S1-M04",
+            "type": "document_diff",
+            "documentIds": ["D16", "D21"],
+            "subject": "批准范围与新增反馈对照",
+            "facts": ["当前批准版本只支持车主本人", "未包含家庭成员、授权层级或共享撤销规则"]
+          }
+        ],
+        "dashboardAnomalies": [
+          {
+            "id": "S1-M05",
+            "widget": "requirement_status",
+            "metric": "external_requirements_without_baseline_or_wbs_link",
+            "delta": 1,
+            "effects": ["requirements_traceability_coverage_slightly_decreases"],
+            "displayLabel": "新增1项未关联基线/WBS的外部需求"
+          }
+        ]
+      },
+      "necessaryManagementActions": [
+        { "id": "S1-A1", "title": "澄清共享需求、使用场景与安全边界", "completedEffect": { "requirementAmbiguity": "clarified", "clarifiedDimensions": ["family_member", "authorization_level", "sharing_revocation"] } },
+        { "id": "S1-A2", "title": "对照批准基线并识别范围外变更", "completedEffect": { "scopeClassification": "outside_approved_baseline", "changeDisposition": "undecided" } },
+        { "id": "S1-A3", "title": "评估范围、进度、成本、安全、质量和干系人影响", "completedEffect": { "assessedOption": { "option": "include_family_sharing_in_v1_0", "scheduleIncreaseWeeks": 3, "costIncreaseCny": 180000, "additionalSecurityValidationRequired": true }, "isActualProjectImpact": false } },
+        { "id": "S1-A4", "title": "形成正式变更请求并提交CCB审查", "prerequisiteActionIds": ["S1-A1", "S1-A2", "S1-A3"], "completedEffect": { "ccbItemCreated": true, "validWhenPrerequisitesComplete": true, "otherwise": "returned_for_more_information" } },
+        { "id": "S1-A5", "title": "纳入1.1后续版本并保护1.0试点基线", "prerequisiteActionIds": ["S1-A4"], "completedEffect": { "changeDisposition": "approved_for_v1_1", "v1_0BaselineChanged": false, "unauthorizedScopeExecutionRiskCleared": true } },
+        { "id": "S1-A6", "title": "更新关联记录并沟通替代流程与承诺", "completedEffect": { "documentAndCommunicationUpdatesCreated": true, "pilotOwnerEngagementState": "supportive", "riskId": "R01", "lifecycleStateWhenAllPriorActionsComplete": "closed", "lifecycleStateOtherwise": "triggered", "controlStatusOtherwise": "active_partially_controlled" } }
+      ],
+      "requiredObservations": [
+        { "source": "document", "id": "D06", "title": "成本估算" },
+        { "source": "document", "id": "D14", "title": "项目进度计划" },
+        { "source": "document", "id": "D26", "title": "风险登记册" }
+      ],
+      "idealOutcome": {
+        "advanceToWeek": 10,
+        "inheritMainlineMetricsWeek": 10,
+        "scheduleDelayDays": 0,
+        "incrementalDevelopmentCostCny": 0,
+        "scope": { "v1_0BaselineChanged": false, "v1_1CandidateAdded": "家庭成员共享车辆" },
+        "riskTransitions": [{ "riskId": "R01", "fromLifecycleState": "triggered", "toLifecycleState": "closed", "controlStatus": null, "residual": { "probability": 1, "impact": 2 } }],
+        "changeDecision": { "status": "approved_for_later_version", "targetVersion": "1.1" },
+        "ccbOpenItems": 0,
+        "unauthorizedScopeWorkPersonDays": 0,
+        "documentRevisions": ["D05", "D13", "D21", "D26"],
+        "unchangedBaselines": ["D16"],
+        "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }],
+        "scenarioState": "closed",
+        "pathClassification": "near_mainline"
+      },
+      "missingActionConsequences": [
+        { "actionId": "S1-A1", "gapCategories": ["evidence", "communication"], "effects": ["requirement_ambiguity_open", "R01_remains_triggered"] },
+        { "actionId": "S1-A2", "gapCategories": ["scope_governance"], "effects": ["scope_classification_unclear", "ccb_package_invalid"] },
+        { "actionId": "S1-A3", "gapCategories": ["analysis"], "effects": ["ccb_returned", "one_rework_round_required"] },
+        { "actionId": "S1-A4", "gapCategories": ["approval"], "effects": ["change_decision_pending", "ccb_item_open"] },
+        { "actionId": "S1-A5", "gapCategories": ["execution_decision"], "effects": ["v1_0_v1_1_boundary_open", "scope_conflict_forecast"] },
+        { "actionId": "S1-A6", "gapCategories": ["documentation", "communication"], "effects": ["risk_reduced_not_closed", "pilot_engagement_gap_open"] }
+      ],
+      "incompleteOutcomePolicy": {
+        "scenarioRemainsOpen": true,
+        "minimumAdditionalRounds": 1,
+        "earliestNearMainlineReturnWeek": 11
+      },
+      "unresolvedIssueDegradation": {
+        "perOpenRound": { "managementWorkPersonDays": 2, "incrementalActualCostCny": 3300, "newOverdueCommunicationItems": 1, "traceabilityCoverageDeltaPercentagePoints": -1 },
+        "floors": { "requirementsTraceabilityCoveragePercent": 90 },
+        "weekThresholds": [
+          { "week": 11, "effects": { "stakeholderTransition": { "stakeholderId": "pilot_owner_representative", "to": "neutral" }, "forecastCompletionWeek": 33 } },
+          { "week": 12, "effects": { "forecastCompletionWeek": 34, "ccbItemStatus": "overdue", "escalatedToStakeholderId": "sponsor" } },
+          { "week": 13, "effects": { "terminalCondition": "week_13_without_ccb_decision" } }
+        ],
+        "stopEffectsForClosedGaps": true,
+        "oneTimeThresholdEffectsApplyOnce": true
+      },
+      "harmfulConsequences": [
+        {
+          "cardId": "S1-C20",
+          "id": "premature_schedule_compression",
+          "effects": { "overtimePersonDays": 4, "incrementalActualCostCny": 9300, "forecastCompressionWorkDays": 2, "riskClosureProgress": 0, "scopeDecisionProgress": 0 }
+        },
+        {
+          "cardId": "S1-C21",
+          "id": "uncontrolled_scope_execution",
+          "effects": { "unauthorizedScopeWorkPersonDays": 12, "incrementalActualCostCny": 18250, "forecastCompletionDelayWeeks": 1, "scopeControlViolation": true, "riskLifecycleState": "triggered", "riskControlStatus": "active_uncontrolled" }
+        },
+        {
+          "cardId": "S1-C22",
+          "id": "unmanaged_stakeholder_expectation",
+          "effects": { "stakeholderId": "pilot_owner_representative", "engagementState": "neutral", "overdueCommunicationActions": 1, "pilotParticipationForecastDelta": -30 }
+        }
+      ],
+      "harmfulEffectsStack": true,
+      "terminalRules": [
+        { "classification": "near_mainline_success", "closeWeek": 10, "conditions": ["all_necessary_actions_complete", "no_harmful_cards"], "forecastCompletionWeek": 32 },
+        { "classification": "detour_success", "minimumCloseWeek": 11, "maximumCloseWeek": 12, "conditions": ["all_necessary_actions_complete", "no_continued_unauthorized_development"], "forecastCompletionWeek": 32 },
+        { "classification": "delayed_success", "conditions": ["unauthorized_development_occurred", "corrective_actions_completed"], "forecastCompletionWeek": 33 },
+        { "classification": "scenario_failure", "conditionsAny": ["week_13_without_ccb_decision", "unauthorized_scope_work_person_days_at_least_36", "three_consecutive_uncontrolled_development_rounds"], "terminal": true, "failureReason": "scope_governance_out_of_control" }
+      ],
+      "cards": [
+        { "id": "S1-C01", "column": "evidence_document", "referenceId": "D16", "title": "项目范围说明书", "satisfiesActionIds": ["S1-A2"] },
+        { "id": "S1-C02", "column": "evidence_document", "referenceId": "D21", "title": "需求文件", "satisfiesActionIds": ["S1-A1", "S1-A2"] },
+        { "id": "S1-C03", "column": "tool_technique", "referenceId": "tool.interview", "title": "访谈", "satisfiesActionIds": ["S1-A1"] },
+        { "id": "S1-C04", "column": "tool_technique", "referenceId": "tool.alternative_and_integrated_impact_analysis", "title": "备选方案与综合影响分析", "satisfiesActionIds": ["S1-A3"] },
+        { "id": "S1-C05", "column": "tool_technique", "referenceId": "tool.ccb_review", "title": "CCB审查", "satisfiesActionIds": ["S1-A4", "S1-A5"] },
+        { "id": "S1-C06", "column": "execution_action", "referenceId": "action.create_change_request", "title": "创建正式变更请求", "satisfiesActionIds": ["S1-A4"] },
+        { "id": "S1-C07", "column": "execution_action", "referenceId": "action.complete_integrated_impact_assessment", "title": "完成综合影响评估", "satisfiesActionIds": ["S1-A3"] },
+        { "id": "S1-C08", "column": "execution_action", "referenceId": "action.defer_to_v1_1_preserve_v1_0", "title": "纳入1.1并维持1.0基线", "satisfiesActionIds": ["S1-A5"] },
+        { "id": "S1-C09", "column": "execution_action", "referenceId": "action.update_records_and_communicate_workaround", "title": "更新记录并沟通替代流程", "satisfiesActionIds": ["S1-A6"] },
+        { "id": "S1-C10", "column": "stakeholder", "referenceId": "pilot_owner_representative", "title": "试点车主代表", "satisfiesActionIds": ["S1-A1", "S1-A6"] },
+        { "id": "S1-C11", "column": "stakeholder", "referenceId": "product_ba", "title": "产品负责人", "satisfiesActionIds": ["S1-A1", "S1-A3", "S1-A4", "S1-A5", "S1-A6"] },
+        { "id": "S1-C12", "column": "stakeholder", "referenceId": "tech_lead", "title": "技术负责人", "satisfiesActionIds": ["S1-A3", "S1-A4"] },
+        { "id": "S1-C13", "column": "stakeholder", "referenceId": "devsecops", "title": "DevOps/安全负责人", "satisfiesActionIds": ["S1-A1", "S1-A3", "S1-A4"] },
+        { "id": "S1-C14", "column": "stakeholder", "referenceId": "sponsor", "title": "项目发起人", "satisfiesActionIds": ["S1-A4", "S1-A5"] },
+        { "id": "S1-C15", "column": "evidence_document", "referenceId": "D06", "title": "成本估算", "evaluationRole": "useful_optional" },
+        { "id": "S1-C16", "column": "evidence_document", "referenceId": "D14", "title": "项目进度计划", "evaluationRole": "useful_optional" },
+        { "id": "S1-C17", "column": "evidence_document", "referenceId": "D26", "title": "风险登记册", "evaluationRole": "useful_optional" },
+        { "id": "S1-C18", "column": "tool_technique", "referenceId": "tool.brainstorming", "title": "头脑风暴", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S1-C19", "column": "stakeholder", "referenceId": "marketing_release", "title": "市场与发布负责人", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S1-C20", "column": "tool_technique", "referenceId": "tool.crashing", "title": "赶工", "evaluationRole": "harmful", "consequenceId": "premature_schedule_compression" },
+        { "id": "S1-C21", "column": "execution_action", "referenceId": "action.start_family_sharing_immediately", "title": "立即开始家庭共享功能开发", "evaluationRole": "harmful", "consequenceId": "uncontrolled_scope_execution" },
+        { "id": "S1-C22", "column": "execution_action", "referenceId": "action.reject_feedback_without_analysis", "title": "直接拒绝用户反馈", "evaluationRole": "harmful", "consequenceId": "unmanaged_stakeholder_expectation" }
+      ],
+      "minimumCorrectCardIds": ["S1-C01", "S1-C02", "S1-C03", "S1-C04", "S1-C05", "S1-C06", "S1-C07", "S1-C08", "S1-C09", "S1-C10", "S1-C11", "S1-C12", "S1-C13", "S1-C14"]
+      ,
+      "minimumCorrectConnections": [
+        { "fromCardId": "S1-C02", "toCardId": "S1-C03" },
+        { "fromCardId": "S1-C01", "toCardId": "S1-C04" },
+        { "fromCardId": "S1-C02", "toCardId": "S1-C04" },
+        { "fromCardId": "S1-C01", "toCardId": "S1-C05" },
+        { "fromCardId": "S1-C02", "toCardId": "S1-C05" },
+        { "fromCardId": "S1-C03", "toCardId": "S1-C07" },
+        { "fromCardId": "S1-C04", "toCardId": "S1-C07" },
+        { "fromCardId": "S1-C04", "toCardId": "S1-C06" },
+        { "fromCardId": "S1-C05", "toCardId": "S1-C08" },
+        { "fromCardId": "S1-C03", "toCardId": "S1-C09" },
+        { "fromCardId": "S1-C07", "toCardId": "S1-C11" },
+        { "fromCardId": "S1-C07", "toCardId": "S1-C12" },
+        { "fromCardId": "S1-C07", "toCardId": "S1-C13" },
+        { "fromCardId": "S1-C06", "toCardId": "S1-C11" },
+        { "fromCardId": "S1-C06", "toCardId": "S1-C12" },
+        { "fromCardId": "S1-C06", "toCardId": "S1-C13" },
+        { "fromCardId": "S1-C06", "toCardId": "S1-C14" },
+        { "fromCardId": "S1-C08", "toCardId": "S1-C11" },
+        { "fromCardId": "S1-C08", "toCardId": "S1-C14" },
+        { "fromCardId": "S1-C09", "toCardId": "S1-C10" },
+        { "fromCardId": "S1-C09", "toCardId": "S1-C11" }
+      ]
+    },
+    {
+      "id": "scenario-2",
+      "week": 17,
+      "title": "供应商接口延期与核心工程师临时抽调",
+      "initialImpact": {
+        "riskTransitions": [
+          { "riskId": "R02", "fromLifecycleState": "monitoring", "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled", "assessment": { "probability": 4, "impact": 4 } },
+          { "riskId": "R03", "fromLifecycleState": "monitoring", "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled", "assessment": { "probability": 3, "impact": 4 } }
+        ],
+        "provisionalIssuesCreated": 2,
+        "provisionalIssueStatus": "pending_verification",
+        "resourceCapacityOverrides": [{ "roleId": "vehicle_integration", "fromWeek": 17, "toWeek": 18, "availablePersonDaysPerWeek": 0 }],
+        "integrationItems": { "blocked": 14, "canContinueWhenMockAvailable": 18 },
+        "criticalActivities": [{ "activityId": "WBS-8.2", "totalFloatWeeks": 0 }, { "activityId": "WBS-9.2", "totalFloatWeeks": 0 }],
+        "week20GateForecastDelayWeeks": 3,
+        "forecastCompletionWeek": 35,
+        "performanceChanged": false,
+        "actualCostChanged": false,
+        "qualityGateChanged": false
+      },
+      "eventMaterials": {
+        "primaryClues": [
+          {
+            "id": "S2-M01",
+            "type": "supplier_email",
+            "senderStakeholderId": "vehicle_vendor_pm",
+            "channel": "project_email",
+            "subject": "认证与车辆状态接口交付日期调整",
+            "facts": ["认证与车辆状态接口未通过协议适配测试", "完整接口预计延期3周", "字段清单和Mock响应可提前提供", "尚未形成正式分阶段承诺"]
+          },
+          {
+            "id": "S2-M02",
+            "type": "stakeholder_message",
+            "senderStakeholderId": "tech_lead",
+            "channel": "engineering_management_chat",
+            "subject": "车端接口工程师临时支援生产事故",
+            "facts": ["车端接口集成工程师被抽调2周", "只能提供一次短时交接", "候选替补工程师尚不熟悉接口上下文"]
+          },
+          {
+            "id": "S2-M03",
+            "type": "report_update",
+            "channel": "integration_readiness_report",
+            "subject": "接口集成准备度检查",
+            "facts": ["32项接口相关测试中14项等待真实接口", "18项可在接口结构稳定后通过Mock先行开发测试"]
+          }
+        ],
+        "corroboratingClues": [
+          {
+            "id": "S2-M04",
+            "type": "document_cross_check",
+            "documentIds": ["D14", "D15", "D24"],
+            "subject": "进度网络与资源可用性对照",
+            "facts": ["活动8.2和9.2均为零浮动关键活动", "原车端接口工程师第17至18周不可用"]
+          }
+        ],
+        "dashboardAnomalies": [
+          {
+            "id": "S2-M05",
+            "widget": "milestone_gantt_and_forecast",
+            "metric": "unmitigated_forecast_completion_week",
+            "from": 32,
+            "to": 35,
+            "effects": ["week20_integration_gate_forecast_delay_weeks_3"],
+            "displayLabel": "W20集成阶段门预测延后3周，项目完工预测移至W35"
+          }
+        ]
+      },
+      "necessaryManagementActions": [
+        { "id": "S2-A1", "title": "核实供应商延期与人员抽调事实并登记关联问题", "completedEffect": { "supplierDelayWeeksConfirmed": 3, "engineerUnavailableWeeksConfirmed": 2, "provisionalIssuesVerifiedAndLinked": 2, "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1650 } },
+        { "id": "S2-A2", "title": "重算关键路径、接口依赖、资源日历及受影响里程碑", "completedEffect": { "affectedCriticalActivityIds": ["WBS-8.2", "WBS-9.2"], "unmitigatedForecastCompletionWeek": 35, "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
+        { "id": "S2-A3", "title": "与供应商联合排障并确定最小可交付接口和分阶段日期", "completedEffect": { "supplierCommitments": [{ "deliverable": "mock_response", "week": 18 }, { "deliverable": "minimum_vehicle_status_interface", "week": 19 }, { "deliverable": "complete_interface", "week": 22 }], "incrementalWorkPersonDays": 2, "incrementalLaborCostCny": 3300, "incrementalSupplierSupportCostCny": 19600, "incrementalActualCostCny": 22900 } },
+        { "id": "S2-A4", "title": "启用Mock接口以保持独立开发与测试并行", "completedEffect": { "parallelItemsUnblocked": 18, "forecastCompletionWeek": 34, "incrementalWorkPersonDays": 6, "incrementalActualCostCny": 9300 } },
+        { "id": "S2-A5", "title": "安排替补工程师和结构化交接且不压缩集成与质量门禁", "prerequisiteActionIdsForForecastRecovery": ["S2-A2", "S2-A3", "S2-A4"], "completedEffect": { "backupAssigned": true, "structuredHandoffComplete": true, "qualityGatesCompressed": false, "forecastCompletionWeekWhenPrerequisitesComplete": 33, "incrementalWorkPersonDays": 3, "incrementalActualCostCny": 5150 } },
+        { "id": "S2-A6", "title": "更新进度预测、风险登记册、责任分配及供应商绩效记录", "completedEffect": { "documentRevisions": ["D08", "D13", "D14", "D17", "D24", "D26", "D27", "D29"], "riskUpdates": [{ "riskId": "R02", "lifecycleState": "triggered", "controlStatus": "active_controlled" }, { "riskId": "R03", "lifecycleState": "triggered", "controlStatus": "active_controlled" }], "governanceConfirmationPending": true } },
+        { "id": "S2-A7", "title": "沟通顺延一周且质量优先的方案并取得关键干系人一致", "completedEffect": { "approvedDelayWorkDays": 5, "sponsorAligned": true, "productOwnerAligned": true, "governanceGapClosed": true } }
+      ],
+      "requiredObservations": [
+        { "source": "document", "id": "D17", "title": "项目团队派工单" },
+        { "source": "document", "id": "D24", "title": "资源日历" },
+        { "source": "document", "id": "D29", "title": "进度预测" }
+      ],
+      "idealOutcome": {
+        "advanceToWeek": 18,
+        "scheduleDelayWorkDays": 5,
+        "forecastCompletionWeek": 33,
+        "incrementalWorkPersonDays": 14,
+        "incrementalActualCostCny": 42500,
+        "forecastFinalActualCostCny": 2592500,
+        "budgetAtCompletionCny": 2600000,
+        "performanceAtAdvanceWeek": { "spi": 0.95, "cpi": 0.98 },
+        "riskTransitions": [
+          { "riskId": "R02", "lifecycleState": "triggered", "controlStatus": "active_controlled" },
+          { "riskId": "R03", "lifecycleState": "triggered", "controlStatus": "active_controlled" }
+        ],
+        "qualityGateChanges": [],
+        "approvedScopeChanged": false,
+        "documentRevisions": ["D08", "D13", "D14", "D17", "D24", "D26", "D27", "D29"],
+        "scenarioState": "closed",
+        "pathClassification": "near_mainline_success",
+        "managementConclusion": "controlled_one_week_delay_quality_first"
+      },
+      "missingActionConsequences": [
+        { "actionId": "S2-A1", "gapCategories": ["evidence", "issue_management"], "effects": ["supplier_and_staffing_facts_unverified", "R02_remains_triggered", "R03_remains_triggered"] },
+        { "actionId": "S2-A2", "gapCategories": ["analysis"], "effects": ["schedule_forecast_invalid", "one_week_delay_cannot_be_confirmed"] },
+        { "actionId": "S2-A3", "gapCategories": ["procurement", "supplier_management"], "effects": ["staged_interface_commitment_missing", "supplier_delivery_remains_uncontrolled"] },
+        { "actionId": "S2-A4", "gapCategories": ["execution"], "effects": ["development_and_testing_become_serial", "forecast_delay_expands"] },
+        { "actionId": "S2-A5", "gapCategories": ["resource", "quality"], "effects": ["knowledge_handoff_gap_open", "integration_defect_risk_increases"] },
+        { "actionId": "S2-A6", "gapCategories": ["documentation", "monitoring"], "effects": ["risks_reduced_not_closed", "dashboard_retains_stale_forecast"] },
+        { "actionId": "S2-A7", "gapCategories": ["communication", "governance"], "effects": ["delay_plan_not_aligned", "sponsor_engagement_decreases", "product_owner_engagement_decreases"] }
+      ],
+      "incompleteOutcomePolicy": {
+        "scenarioRemainsOpen": true,
+        "minimumAdditionalRounds": 1
+      },
+      "unresolvedIssueDegradation": {
+        "perOpenRound": { "managementWorkPersonDays": 2, "incrementalActualCostCny": 3500, "newSupplierOverdueActions": 1 },
+        "whenMockAndMinimumInterfaceUnavailablePerRound": { "unproductiveOrBlockedPersonDays": 8, "addToIncrementalActualCost": false, "effects": ["earned_value_decreases", "cpi_decreases"] },
+        "weekThresholds": [
+          { "week": 18, "effects": { "spi": 0.93, "forecastCompletionWeek": 35 } },
+          { "week": 19, "conditions": ["no_staged_supplier_commitment", "mock_unavailable"], "effects": { "forecastCompletionWeek": 36, "week20GateStatus": "high_risk" } },
+          { "week": 20, "effects": { "week20GateStatus": "missed", "forecastCompletionWeek": 37, "supplierPerformanceStatus": "red" } },
+          { "week": 21, "conditions": ["no_minimum_delivery_commitment", "mock_unavailable"], "effects": { "terminalCondition": "week_21_without_executable_supplier_minimum_delivery_and_mock" } }
+        ],
+        "stopEffectsForClosedGaps": true,
+        "oneTimeThresholdEffectsApplyOnce": true
+      },
+      "harmfulConsequences": [
+        {
+          "cardId": "S2-C20",
+          "id": "unsafe_dual_project_overtime",
+          "effects": {
+            "overtimePersonDays": 6,
+            "incrementalActualCostCny": 14850,
+            "forecastCompressionWorkDays": 1,
+            "handoffGapResolved": false,
+            "riskTransition": { "riskId": "R03", "lifecycleState": "triggered", "controlStatus": "active_partially_controlled", "residual": { "probability": 4, "impact": 4 } },
+            "fatigueAndDefectRiskIncreased": true
+          }
+        },
+        {
+          "cardId": "S2-C21",
+          "id": "quality_gate_bypass",
+          "effects": {
+            "apparentForecastCompletionWeek": 32,
+            "qualityGateBypassed": true,
+            "escapedDefectForecast": { "severity1": 1, "severity2": 3 },
+            "mandatoryRetestWorkDays": 10,
+            "mandatoryRetestCostCny": 32000,
+            "qualityRedLineTriggered": true,
+            "successBlockedThisRound": true
+          }
+        },
+        {
+          "cardId": "S2-C22",
+          "id": "passive_serial_wait",
+          "effects": {
+            "blockedPersonDays": 30,
+            "forecastCompletionWeek": 35,
+            "performanceAtAdvanceWeek": { "spi": 0.89 },
+            "riskTransition": { "riskId": "R02", "lifecycleState": "triggered", "controlStatus": "active_uncontrolled" }
+          }
+        }
+      ],
+      "harmfulEffectsStack": true,
+      "terminalRules": [
+        { "classification": "near_mainline_success", "closeWeek": 18, "conditions": ["all_necessary_actions_complete", "no_harmful_cards"], "forecastCompletionWeek": 33 },
+        { "classification": "detour_success", "minimumCloseWeek": 19, "maximumCloseWeek": 20, "conditions": ["all_necessary_actions_complete", "no_unresolved_quality_red_line"], "forecastCompletionWeek": 34 },
+        { "classification": "delayed_success", "minimumForecastCompletionWeek": 35, "maximumForecastCompletionWeek": 36, "conditions": ["all_necessary_actions_complete", "all_corrective_actions_complete", "mandatory_retests_complete", "R02_and_R03_controlled"] },
+        { "classification": "scenario_failure", "conditionsAny": ["week_21_without_executable_supplier_minimum_delivery_and_mock", "unverified_build_advanced_after_quality_gate_bypass", "R02_or_R03_uncontrolled_for_three_consecutive_rounds", "forecast_completion_after_week_38", "forecast_final_cost_at_least_2860000"], "terminal": true, "failureReason": "critical_supply_and_resource_constraints_out_of_control" }
+      ],
+      "cards": [
+        { "id": "S2-C01", "column": "evidence_document", "referenceId": "D08", "title": "问题日志", "satisfiesActionIds": ["S2-A1", "S2-A6"] },
+        { "id": "S2-C02", "column": "evidence_document", "referenceId": "D14", "title": "项目进度计划", "satisfiesActionIds": ["S2-A2", "S2-A6"] },
+        { "id": "S2-C03", "column": "evidence_document", "referenceId": "D26", "title": "风险登记册", "satisfiesActionIds": ["S2-A1", "S2-A6"] },
+        { "id": "S2-C04", "column": "tool_technique", "referenceId": "tool.schedule_network_dependency_resource_impact_analysis", "title": "进度网络与资源影响分析", "satisfiesActionIds": ["S2-A2"] },
+        { "id": "S2-C05", "column": "tool_technique", "referenceId": "tool.supplier_joint_problem_solving_meeting", "title": "供应商联合问题解决会议", "satisfiesActionIds": ["S2-A1", "S2-A3"] },
+        { "id": "S2-C06", "column": "execution_action", "referenceId": "action.agree_minimum_interface_and_staged_delivery", "title": "约定最小接口与分阶段交付", "satisfiesActionIds": ["S2-A3"] },
+        { "id": "S2-C07", "column": "execution_action", "referenceId": "action.activate_mock_parallel_work", "title": "启用Mock并行开发测试", "satisfiesActionIds": ["S2-A4"] },
+        { "id": "S2-C08", "column": "execution_action", "referenceId": "action.assign_backup_and_structured_handoff", "title": "安排替补与结构化交接", "satisfiesActionIds": ["S2-A5"] },
+        { "id": "S2-C09", "column": "execution_action", "referenceId": "action.update_records_and_align_one_week_delay", "title": "更新记录并沟通顺延一周方案", "satisfiesActionIds": ["S2-A6", "S2-A7"] },
+        { "id": "S2-C10", "column": "stakeholder", "referenceId": "vehicle_vendor_pm", "title": "车端接口供应商项目经理", "satisfiesActionIds": ["S2-A1", "S2-A3"] },
+        { "id": "S2-C11", "column": "stakeholder", "referenceId": "tech_lead", "title": "技术负责人", "satisfiesActionIds": ["S2-A2", "S2-A4", "S2-A5", "S2-A7"] },
+        { "id": "S2-C12", "column": "stakeholder", "referenceId": "qa", "title": "测试工程师", "satisfiesActionIds": ["S2-A2", "S2-A4", "S2-A5"] },
+        { "id": "S2-C13", "column": "stakeholder", "referenceId": "product_ba", "title": "产品负责人/业务分析师", "satisfiesActionIds": ["S2-A2", "S2-A7"] },
+        { "id": "S2-C14", "column": "stakeholder", "referenceId": "sponsor", "title": "项目发起人", "satisfiesActionIds": ["S2-A7"] },
+        { "id": "S2-C15", "column": "evidence_document", "referenceId": "D17", "title": "项目团队派工单", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S2-C16", "column": "evidence_document", "referenceId": "D24", "title": "资源日历", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S2-C17", "column": "evidence_document", "referenceId": "D29", "title": "进度预测", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S2-C18", "column": "tool_technique", "referenceId": "tool.expert_judgment", "title": "专家判断", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S2-C19", "column": "stakeholder", "referenceId": "vehicle_integration", "title": "车端接口集成工程师", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S2-C20", "column": "execution_action", "referenceId": "action.require_reassigned_engineer_dual_project_overtime", "title": "要求被抽调工程师加班兼顾两个项目", "evaluationRole": "harmful", "consequenceId": "unsafe_dual_project_overtime" },
+        { "id": "S2-C21", "column": "execution_action", "referenceId": "action.skip_integration_tests_to_preserve_date", "title": "跳过部分集成测试以维持原上线日期", "evaluationRole": "harmful", "consequenceId": "quality_gate_bypass" },
+        { "id": "S2-C22", "column": "execution_action", "referenceId": "action.wait_for_complete_supplier_interface", "title": "等待供应商完整接口交付后再恢复工作", "evaluationRole": "harmful", "consequenceId": "passive_serial_wait" }
+      ],
+      "minimumCorrectCardIds": ["S2-C01", "S2-C02", "S2-C03", "S2-C04", "S2-C05", "S2-C06", "S2-C07", "S2-C08", "S2-C09", "S2-C10", "S2-C11", "S2-C12", "S2-C13", "S2-C14"],
+      "minimumCorrectConnections": [
+        { "fromCardId": "S2-C01", "toCardId": "S2-C05" },
+        { "fromCardId": "S2-C02", "toCardId": "S2-C04" },
+        { "fromCardId": "S2-C03", "toCardId": "S2-C04" },
+        { "fromCardId": "S2-C03", "toCardId": "S2-C05" },
+        { "fromCardId": "S2-C04", "toCardId": "S2-C06" },
+        { "fromCardId": "S2-C04", "toCardId": "S2-C07" },
+        { "fromCardId": "S2-C04", "toCardId": "S2-C08" },
+        { "fromCardId": "S2-C04", "toCardId": "S2-C09" },
+        { "fromCardId": "S2-C05", "toCardId": "S2-C06" },
+        { "fromCardId": "S2-C05", "toCardId": "S2-C09" },
+        { "fromCardId": "S2-C06", "toCardId": "S2-C10" },
+        { "fromCardId": "S2-C06", "toCardId": "S2-C11" },
+        { "fromCardId": "S2-C07", "toCardId": "S2-C11" },
+        { "fromCardId": "S2-C07", "toCardId": "S2-C12" },
+        { "fromCardId": "S2-C08", "toCardId": "S2-C11" },
+        { "fromCardId": "S2-C08", "toCardId": "S2-C12" },
+        { "fromCardId": "S2-C09", "toCardId": "S2-C10" },
+        { "fromCardId": "S2-C09", "toCardId": "S2-C11" },
+        { "fromCardId": "S2-C09", "toCardId": "S2-C12" },
+        { "fromCardId": "S2-C09", "toCardId": "S2-C13" },
+        { "fromCardId": "S2-C09", "toCardId": "S2-C14" }
+      ]
+    },
+    {
+      "id": "scenario-3",
+      "week": 25,
+      "title": "安全测试发现远程控制高危漏洞",
+      "initialImpact": {
+        "riskUpdates": [
+          { "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_uncontrolled", "assessment": { "probability": 3, "impact": 5 }, "severityOverride": "vehicle_control_red_line", "displaySeverity": "critical" },
+          { "riskId": "R10", "lifecycleState": "monitoring", "controlStatus": "active_uncontrolled", "assessment": { "probability": 5, "impact": 4 }, "displaySeverity": "critical" }
+        ],
+        "securityFindings": [{ "severity": "critical", "source": "third_party_security_test", "status": "pending_formal_project_registration_and_response", "productionExploitationEvidence": false }],
+        "qualityGateUpdates": [
+          { "capability": "remote_control", "status": "red_blocked" },
+          { "capability": "read_only_vehicle_status", "status": "green" }
+        ],
+        "week28ReleaseGateStatus": "blocked",
+        "scopeBaselineChanged": false,
+        "scopeBaselineStillIncludes": ["remote_control"],
+        "forecastCompletionWeek": 32,
+        "releaseForecastStatus": "blocked_pending_decision",
+        "performanceChanged": false,
+        "actualCostChanged": false
+      },
+      "eventMaterials": {
+        "primaryClues": [
+          {
+            "id": "S3-M01",
+            "type": "security_test_report",
+            "senderStakeholderId": "security_vendor",
+            "channel": "third_party_security_report",
+            "subject": "远程控制接口高危漏洞测试结果",
+            "facts": ["远程控制接口存在令牌重放与授权校验缺陷", "CVSS评分为9.1", "测试环境可触发未授权远程指令", "只读状态接口未复现该问题"]
+          },
+          {
+            "id": "S3-M02",
+            "type": "stakeholder_message",
+            "senderStakeholderId": "devsecops",
+            "channel": "security_incident_chat",
+            "subject": "高危漏洞内部复现结果",
+            "facts": ["内部已独立复现漏洞", "暂未发现生产环境利用证据", "远程指令链路可通过现有功能开关关闭", "仍需验证权限和接口隔离"]
+          },
+          {
+            "id": "S3-M03",
+            "type": "report_update",
+            "channel": "pilot_value_report",
+            "subject": "早期体验核心使用场景统计",
+            "facts": ["72%的核心操作是查看车辆状态", "只读能力已满足主要试点验收场景", "远程控制不是完成基础试点的必要条件"]
+          }
+        ],
+        "corroboratingClues": [
+          {
+            "id": "S3-M04",
+            "type": "document_cross_check",
+            "documentIds": ["D20", "D22", "D32"],
+            "subject": "质量结果与需求追踪对照",
+            "facts": ["远程控制安全验收失败", "只读需求测试通过", "两类能力具有独立需求与测试追踪关系"]
+          }
+        ],
+        "dashboardAnomalies": [
+          {
+            "id": "S3-M05",
+            "widget": "quality_and_release_gates",
+            "metric": "capability_gate_status",
+            "values": { "remote_control": "red_blocked", "read_only_vehicle_status": "green" },
+            "effects": ["week28_release_gate_blocked_by_remote_control"],
+            "displayLabel": "远程控制质量门红色并阻断W28上线门；只读能力质量门绿色"
+          }
+        ]
+      },
+      "necessaryManagementActions": [
+        { "id": "S3-A1", "title": "复核测试报告并复现漏洞以确认严重级别、影响范围和触发条件", "completedEffect": { "vulnerabilityValidated": true, "cvss": 9.1, "affectedCapabilities": ["remote_control"], "unaffectedCapabilities": ["read_only_vehicle_status"], "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3900 } },
+        { "id": "S3-A2", "title": "登记安全问题并触发R04和R10且立即冻结远程控制发布", "completedEffect": { "securityIssueCreated": true, "riskUpdates": [{ "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_uncontrolled" }, { "riskId": "R10", "lifecycleState": "monitoring", "controlStatus": "active_uncontrolled" }], "remoteControlReleaseStatus": "frozen", "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1675 } },
+        { "id": "S3-A3", "title": "综合评估范围、进度、成本、质量、安全及干系人影响", "completedEffect": { "assessedOptions": ["unsafe_full_release", "delay_entire_release", "phased_read_only_release"], "tradeoffComparisonComplete": true, "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
+        { "id": "S3-A4", "title": "组织安全分诊与专家评审并制定修复、复测和残余风险处置方案", "completedEffect": { "remediationPlanCreated": true, "retestPlanCreated": true, "riskOwnerAssigned": true, "residualRiskPlanCreated": true, "incrementalWorkPersonDays": 4, "incrementalExternalSecuritySupportCostCny": 14000, "incrementalActualCostCny": 21000 } },
+        { "id": "S3-A5", "title": "提交正式变更并完成CCB及上线阶段门决策以批准分阶段交付", "prerequisiteActionIds": ["S3-A1", "S3-A2", "S3-A3", "S3-A4"], "completedEffect": { "changeDecision": "approved_phased_release", "v1_0ReleaseScope": ["read_only_vehicle_status"], "v1_1DeferredScope": ["remote_control"], "riskUpdate": { "riskId": "R10", "lifecycleState": "monitoring", "controlStatus": "pending_execution" }, "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
+        { "id": "S3-A6", "title": "通过功能开关和权限隔离确保只读查看状态能力可独立安全上线", "completedEffect": { "remoteControlFeatureFlag": "off", "permissionAndInterfaceIsolationVerified": true, "readOnlyIndependentRegression": "passed", "incrementalWorkPersonDays": 5, "incrementalActualCostCny": 12275 } },
+        { "id": "S3-A7", "title": "更新关联资料并向关键干系人沟通分阶段发布预期", "completedEffect": { "documentRevisions": ["D05", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"], "releaseExpectationCommunicationComplete": true, "riskId": "R10", "lifecycleStateWhenA5AndA6Complete": "closed", "lifecycleStateOtherwise": "monitoring", "controlStatusOtherwise": "active_partially_controlled", "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1650 } }
+      ],
+      "idealDecision": "release_read_only_on_schedule_disable_remote_control",
+      "requiredObservations": [
+        { "source": "document", "id": "D05", "title": "变更日志" },
+        { "source": "document", "id": "D16", "title": "项目范围说明书" },
+        { "source": "document", "id": "D22", "title": "需求跟踪矩阵" },
+        { "source": "document", "id": "D29", "title": "进度预测" }
+      ],
+      "idealOutcome": {
+        "advanceToWeek": 26,
+        "scheduleDelayWorkDays": 0,
+        "forecastCompletionWeek": 32,
+        "incrementalWorkPersonDays": 17,
+        "incrementalActualCostCny": 47500,
+        "forecastFinalActualCostCny": 2597500,
+        "budgetAtCompletionCny": 2600000,
+        "performanceAtAdvanceWeek": { "spi": 0.99, "cpi": 0.98 },
+        "scopeDecision": {
+          "v1_0Included": ["read_only_vehicle_status"],
+          "v1_0Disabled": ["remote_control"],
+          "deferredToVersion": { "capability": "remote_control", "version": "1.1" }
+        },
+        "technicalControls": ["remote_control_feature_flag_off", "remote_control_permission_and_interface_isolated", "read_only_independent_security_regression_passed"],
+        "riskTransitions": [
+          { "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_controlled" },
+          { "riskId": "R10", "fromLifecycleState": "monitoring", "toLifecycleState": "closed", "controlStatus": null }
+        ],
+        "qualityGateResults": [
+          { "capability": "remote_control", "result": "failed_blocked" },
+          { "capability": "read_only_vehicle_status", "result": "passed" }
+        ],
+        "documentRevisions": ["D05", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"],
+        "scenarioState": "closed",
+        "pathClassification": "near_mainline_success",
+        "managementConclusion": "safe_minimum_scope_delivered_on_schedule"
+      },
+      "missingActionConsequences": [
+        { "actionId": "S3-A1", "gapCategories": ["evidence", "quality"], "effects": ["vulnerability_severity_unconfirmed", "subsequent_decision_basis_invalid"] },
+        { "actionId": "S3-A2", "gapCategories": ["risk", "release_control"], "effects": ["remote_control_remains_unsafe_release_candidate", "security_red_line_unresolved"] },
+        { "actionId": "S3-A3", "gapCategories": ["analysis"], "effects": ["phased_delivery_advantage_unproven", "scope_schedule_cost_and_risk_impacts_unclear"] },
+        { "actionId": "S3-A4", "gapCategories": ["security", "quality"], "effects": ["remediation_and_retest_plan_missing", "R04_cannot_be_controlled"] },
+        { "actionId": "S3-A5", "gapCategories": ["approval", "governance"], "effects": ["scope_reduction_unapproved", "release_gate_remains_blocked"] },
+        { "actionId": "S3-A6", "gapCategories": ["execution", "security"], "effects": ["read_only_independent_release_unproven", "security_red_line_unresolved"] },
+        { "actionId": "S3-A7", "gapCategories": ["documentation", "communication"], "effects": ["decision_not_organizationally_committed", "stakeholders_retain_full_feature_release_expectation"] }
+      ],
+      "incompleteOutcomePolicy": {
+        "scenarioRemainsOpen": true,
+        "minimumAdditionalRounds": 1,
+        "securityRedLineActionIds": ["S3-A2", "S3-A6"]
+      },
+      "unresolvedIssueDegradation": {
+        "perOpenRound": { "managementWorkPersonDays": 2, "incrementalActualCostCny": 4000, "newOverdueSecurityActions": 1 },
+        "securityRedLineCounter": { "incrementWhenAnyActionIncomplete": ["S3-A2", "S3-A6"], "failureAtConsecutiveRounds": 2, "terminalCondition": "security_red_line_unresolved_for_two_consecutive_rounds" },
+        "weekThresholds": [
+          { "week": 26, "effects": { "releaseForecastStatus": "blocked_pending_decision", "riskUpdate": { "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_uncontrolled" } } },
+          { "week": 27, "conditions": ["remediation_or_retest_plan_missing"], "effects": { "externalRetestWindowMissed": true, "incrementalActualCostCny": 12000, "forecastCompletionWeek": 33 } },
+          { "week": 28, "conditions": ["approved_safe_release_scope_missing"], "effects": { "week28ReleaseGateStatus": "missed", "forecastCompletionWeek": 34 } },
+          { "week": 29, "conditions": ["isolation_or_read_only_validation_incomplete"], "effects": { "pilotStartDelayed": true, "forecastCompletionWeek": 35 } },
+          { "week": 30, "conditions": ["approved_safe_release_scope_missing"], "effects": { "terminalCondition": "week_30_without_approved_safe_release_scope" } }
+        ],
+        "stopEffectsForClosedGaps": true,
+        "countersAndThresholdEffectsIdempotent": true
+      },
+      "harmfulConsequences": [
+        {
+          "cardId": "S3-C22",
+          "id": "unsafe_remote_control_release",
+          "effects": {
+            "riskTransition": { "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_uncontrolled", "assessment": { "probability": 5, "impact": 5 } },
+            "week28ReleaseGateResult": "rejected",
+            "successBlockedThisRound": true,
+            "failureIfUnverifiedBuildEntersPilot": true
+          }
+        },
+        {
+          "cardId": "S3-C23",
+          "id": "unverified_security_hotfix",
+          "effects": {
+            "incrementalWorkPersonDays": 12,
+            "incrementalActualCostCny": 26400,
+            "reopenedSecurityDefects": { "severity2": 2 },
+            "forecastCompletionWeek": 33,
+            "riskTransition": { "riskId": "R04", "lifecycleState": "triggered", "controlStatus": "active_partially_controlled" },
+            "countsAsEffectiveRiskResponse": false
+          }
+        },
+        {
+          "cardId": "S3-C24",
+          "id": "unnecessary_full_release_delay",
+          "effects": {
+            "securityRiskIncreased": false,
+            "safeReadOnlyCapabilityBlocked": true,
+            "coordinationAndWaitingPersonDays": 24,
+            "incrementalActualCostCny": 38000,
+            "forecastCompletionWeek": 35,
+            "pilotParticipationForecastDeltaPercent": -20
+          }
+        }
+      ],
+      "harmfulEffectsStack": true,
+      "terminalRules": [
+        { "classification": "near_mainline_success", "closeWeek": 26, "conditions": ["all_necessary_actions_complete", "remote_control_disabled", "read_only_security_gate_passed", "no_harmful_cards"], "forecastCompletionWeek": 32 },
+        { "classification": "detour_success", "minimumCloseWeek": 27, "maximumCloseWeek": 28, "conditions": ["all_necessary_actions_complete", "security_red_line_resolved"], "minimumForecastCompletionWeek": 32, "maximumForecastCompletionWeek": 33 },
+        { "classification": "delayed_success", "minimumCloseWeek": 29, "maximumCloseWeek": 30, "conditions": ["all_necessary_actions_complete", "remote_control_disabled", "read_only_independent_regression_passed", "all_corrective_actions_complete"], "minimumForecastCompletionWeek": 33, "maximumForecastCompletionWeek": 35 },
+        { "classification": "scenario_failure", "conditionsAny": ["unverified_remote_control_build_enters_pilot", "week_28_gate_submitted_with_remote_control_enabled_and_R04_extreme", "security_red_line_unresolved_for_two_consecutive_rounds", "week_30_without_approved_safe_release_scope", "forecast_completion_after_week_38", "forecast_final_cost_at_least_2860000"], "terminal": true, "failureReason": "security_governance_and_release_control_out_of_control" }
+      ],
+      "cards": [
+        { "id": "S3-C01", "column": "evidence_document", "referenceId": "D32", "title": "测试与评估文件", "satisfiesActionIds": ["S3-A1", "S3-A4"] },
+        { "id": "S3-C02", "column": "evidence_document", "referenceId": "D20", "title": "质量报告", "satisfiesActionIds": ["S3-A1", "S3-A3", "S3-A4"] },
+        { "id": "S3-C03", "column": "evidence_document", "referenceId": "D26", "title": "风险登记册", "satisfiesActionIds": ["S3-A2", "S3-A3", "S3-A4"] },
+        { "id": "S3-C04", "column": "tool_technique", "referenceId": "tool.vulnerability_reproduction_and_security_validation", "title": "漏洞复现与安全验证", "satisfiesActionIds": ["S3-A1"] },
+        { "id": "S3-C05", "column": "tool_technique", "referenceId": "tool.integrated_impact_and_alternative_analysis", "title": "综合影响与备选方案分析", "satisfiesActionIds": ["S3-A3", "S3-A4"] },
+        { "id": "S3-C06", "column": "tool_technique", "referenceId": "tool.ccb_and_release_gate_review", "title": "CCB及上线阶段门审查", "satisfiesActionIds": ["S3-A5"] },
+        { "id": "S3-C07", "column": "execution_action", "referenceId": "action.freeze_remote_control_and_create_change", "title": "冻结远程控制并创建正式变更", "satisfiesActionIds": ["S3-A2", "S3-A5"] },
+        { "id": "S3-C08", "column": "execution_action", "referenceId": "action.isolate_remote_control_and_validate_read_only", "title": "启用功能开关与权限隔离并验证只读能力", "satisfiesActionIds": ["S3-A6"] },
+        { "id": "S3-C09", "column": "execution_action", "referenceId": "action.update_records_and_communicate_phased_release", "title": "更新资料并沟通分阶段发布及修复计划", "satisfiesActionIds": ["S3-A4", "S3-A7"] },
+        { "id": "S3-C10", "column": "stakeholder", "referenceId": "devsecops", "title": "DevOps/安全工程师", "satisfiesActionIds": ["S3-A1", "S3-A2", "S3-A3", "S3-A4", "S3-A5", "S3-A6"] },
+        { "id": "S3-C11", "column": "stakeholder", "referenceId": "security_vendor", "title": "第三方安全测试负责人", "satisfiesActionIds": ["S3-A1", "S3-A4", "S3-A6"] },
+        { "id": "S3-C12", "column": "stakeholder", "referenceId": "tech_lead", "title": "技术负责人", "satisfiesActionIds": ["S3-A3", "S3-A4", "S3-A5", "S3-A6"] },
+        { "id": "S3-C13", "column": "stakeholder", "referenceId": "product_ba", "title": "产品负责人/业务分析师", "satisfiesActionIds": ["S3-A3", "S3-A5", "S3-A7"] },
+        { "id": "S3-C14", "column": "stakeholder", "referenceId": "sponsor", "title": "项目发起人", "satisfiesActionIds": ["S3-A5", "S3-A7"] },
+        { "id": "S3-C15", "column": "evidence_document", "referenceId": "D05", "title": "变更日志", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C16", "column": "evidence_document", "referenceId": "D16", "title": "项目范围说明书", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C17", "column": "evidence_document", "referenceId": "D22", "title": "需求跟踪矩阵", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C18", "column": "evidence_document", "referenceId": "D29", "title": "进度预测", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C19", "column": "stakeholder", "referenceId": "pilot_owner_representative", "title": "试点车主代表", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C20", "column": "stakeholder", "referenceId": "operations_support", "title": "运营与客服负责人", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C21", "column": "stakeholder", "referenceId": "marketing_release", "title": "市场与发布负责人", "evaluationRole": "useful_optional", "managementLoad": 1 },
+        { "id": "S3-C22", "column": "execution_action", "referenceId": "action.accept_high_security_risk_and_release_remote_control", "title": "接受高危残余风险并照常上线远程控制", "evaluationRole": "harmful", "consequenceId": "unsafe_remote_control_release" },
+        { "id": "S3-C23", "column": "execution_action", "referenceId": "action.hotfix_without_root_cause_or_full_retest", "title": "未经根因分析和完整复测直接热修复上线", "evaluationRole": "harmful", "consequenceId": "unverified_security_hotfix" },
+        { "id": "S3-C24", "column": "execution_action", "referenceId": "action.delay_entire_release_until_remote_control_fixed", "title": "暂停整个版本等待远程控制修复后统一上线", "evaluationRole": "harmful", "consequenceId": "unnecessary_full_release_delay" }
+      ],
+      "minimumCorrectCardIds": ["S3-C01", "S3-C02", "S3-C03", "S3-C04", "S3-C05", "S3-C06", "S3-C07", "S3-C08", "S3-C09", "S3-C10", "S3-C11", "S3-C12", "S3-C13", "S3-C14"],
+      "minimumCorrectConnections": [
+        { "fromCardId": "S3-C01", "toCardId": "S3-C04" },
+        { "fromCardId": "S3-C02", "toCardId": "S3-C04" },
+        { "fromCardId": "S3-C02", "toCardId": "S3-C05" },
+        { "fromCardId": "S3-C03", "toCardId": "S3-C05" },
+        { "fromCardId": "S3-C03", "toCardId": "S3-C06" },
+        { "fromCardId": "S3-C04", "toCardId": "S3-C07" },
+        { "fromCardId": "S3-C04", "toCardId": "S3-C08" },
+        { "fromCardId": "S3-C05", "toCardId": "S3-C07" },
+        { "fromCardId": "S3-C05", "toCardId": "S3-C08" },
+        { "fromCardId": "S3-C05", "toCardId": "S3-C09" },
+        { "fromCardId": "S3-C06", "toCardId": "S3-C07" },
+        { "fromCardId": "S3-C06", "toCardId": "S3-C08" },
+        { "fromCardId": "S3-C06", "toCardId": "S3-C09" },
+        { "fromCardId": "S3-C07", "toCardId": "S3-C10" },
+        { "fromCardId": "S3-C07", "toCardId": "S3-C12" },
+        { "fromCardId": "S3-C07", "toCardId": "S3-C13" },
+        { "fromCardId": "S3-C07", "toCardId": "S3-C14" },
+        { "fromCardId": "S3-C08", "toCardId": "S3-C10" },
+        { "fromCardId": "S3-C08", "toCardId": "S3-C11" },
+        { "fromCardId": "S3-C08", "toCardId": "S3-C12" },
+        { "fromCardId": "S3-C09", "toCardId": "S3-C13" },
+        { "fromCardId": "S3-C09", "toCardId": "S3-C14" }
+      ]
+    }
+  ]
+}

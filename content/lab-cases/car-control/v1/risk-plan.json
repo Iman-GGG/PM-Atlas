@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "caseId": "car-control",
+  "caseVersion": "v1",
+  "probabilityScale": [
+    { "level": 1, "label": "很低", "range": "≤10%" },
+    { "level": 2, "label": "较低", "range": "11–30%" },
+    { "level": 3, "label": "中等", "range": "31–50%" },
+    { "level": 4, "label": "较高", "range": "51–70%" },
+    { "level": 5, "label": "很高", "range": ">70%" }
+  ],
+  "impactDimensions": ["schedule", "cost", "scope", "quality", "safety"],
+  "impactAggregation": "maximum",
+  "impactScale": [
+    { "level": 1, "schedule": "不超过2个工作日", "cost": "不超过BAC的1%（26000元）", "scopeQuality": "局部瑕疵，不影响验收", "safety": "无安全影响" },
+    { "level": 2, "schedule": "不超过1周", "cost": "不超过BAC的3%（78000元）", "scopeQuality": "非核心调整，有简易替代方案", "safety": "控制弱点，无用户暴露" },
+    { "level": 3, "schedule": "不超过2周", "cost": "不超过BAC的5%（130000元）", "scopeQuality": "单个核心能力或迭代受影响", "safety": "存在有限暴露可能" },
+    { "level": 4, "schedule": "3至4周或里程碑延期", "cost": "不超过BAC的10%（260000元）", "scopeQuality": "多项核心能力受影响或阻断验收", "safety": "高危漏洞但已隔离" },
+    { "level": 5, "schedule": "超过4周或上线失败", "cost": "超过BAC的10%（260000元）", "scopeQuality": "成功标准无法满足或产品不可用", "safety": "确认隐私泄露、越权或车辆控制风险" }
+  ],
+  "scoreFormula": "probabilityLevel * maximumImpactLevel",
+  "severityBands": [
+    { "id": "low", "label": "低", "minimum": 1, "maximum": 4 },
+    { "id": "medium", "label": "中", "minimum": 5, "maximum": 9 },
+    { "id": "high", "label": "高", "minimum": 10, "maximum": 16 },
+    { "id": "critical", "label": "极高", "minimum": 17, "maximum": 25 }
+  ],
+  "criticalOverrides": ["safety_red_line", "privacy_red_line", "vehicle_control_red_line"],
+  "dashboardDefaultAssessment": "residual",
+  "lifecycle": {
+    "states": ["identified", "assessed", "response_approved", "monitoring", "triggered", "closed"],
+    "transitions": {
+      "identified": ["assessed"],
+      "assessed": ["response_approved"],
+      "response_approved": ["monitoring"],
+      "monitoring": ["triggered", "closed"],
+      "triggered": ["closed"],
+      "closed": []
+    },
+    "triggerCreatesLinkedIssue": true,
+    "triggeredCloseRequirements": ["linked_issue_closed", "residual_risk_decision_recorded"]
+  },
+  "controlStatusModel": {
+    "states": ["prepared", "active_uncontrolled", "active_partially_controlled", "active_controlled", "pending_execution"],
+    "closedRiskControlStatus": null,
+    "assessmentStoredSeparately": true
+  },
+  "initialRisks": [
+    { "id": "R01", "title": "试点反馈引发范围变更", "owner": "产品/业务分析师", "inherent": { "probability": 3, "impact": 4 }, "residual": { "probability": 2, "impact": 3 } },
+    { "id": "R02", "title": "车端供应商接口延期", "owner": "车端接口集成工程师", "inherent": { "probability": 4, "impact": 4 }, "residual": { "probability": 3, "impact": 4 } },
+    { "id": "R03", "title": "关键专业人员临时不可用", "owner": "项目经理", "inherent": { "probability": 3, "impact": 4 }, "residual": { "probability": 2, "impact": 3 } },
+    { "id": "R04", "title": "远程控制安全控制未通过验证", "owner": "DevOps/安全工程师", "inherent": { "probability": 3, "impact": 5 }, "residual": { "probability": 2, "impact": 5 } },
+    { "id": "R05", "title": "集成环境或测试车辆不可用", "owner": "测试工程师", "inherent": { "probability": 3, "impact": 3 }, "residual": { "probability": 2, "impact": 3 } },
+    { "id": "R06", "title": "不同车型接口兼容性偏差", "owner": "技术负责人", "inherent": { "probability": 3, "impact": 4 }, "residual": { "probability": 2, "impact": 3 } },
+    { "id": "R07", "title": "需求追踪或验收标准不完整", "owner": "产品/业务分析师", "inherent": { "probability": 3, "impact": 3 }, "residual": { "probability": 2, "impact": 2 } },
+    { "id": "R08", "title": "试点参与度和支持能力不足", "owner": "运营负责人", "inherent": { "probability": 3, "impact": 3 }, "residual": { "probability": 2, "impact": 2 } },
+    { "id": "R09", "title": "隐私、授权或审计要求遗漏", "owner": "安全负责人", "inherent": { "probability": 2, "impact": 5 }, "residual": { "probability": 1, "impact": 4 } },
+    { "id": "R10", "title": "固定上线窗口与质量门槛冲突", "owner": "项目发起人", "inherent": { "probability": 3, "impact": 4 }, "residual": { "probability": 2, "impact": 3 } }
+  ],
+  "mainlineLifecycleEvents": [
+    { "week": 1, "riskIds": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10"], "toLifecycleState": "identified" },
+    { "week": 2, "riskIds": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10"], "toLifecycleState": "assessed" },
+    { "week": 4, "riskIds": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10"], "toLifecycleState": "response_approved", "controlStatus": "prepared" },
+    { "week": 5, "riskIds": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10"], "toLifecycleState": "monitoring", "controlStatus": "prepared" },
+    { "week": 12, "riskIds": ["R07"], "toLifecycleState": "closed" },
+    { "week": 26, "riskIds": ["R05"], "toLifecycleState": "closed" },
+    { "week": 27, "riskIds": ["R03", "R06"], "toLifecycleState": "closed" },
+    { "week": 28, "riskIds": ["R02"], "toLifecycleState": "closed" },
+    { "week": 29, "riskIds": ["R01", "R08"], "toLifecycleState": "closed" },
+    { "week": 30, "riskIds": ["R04", "R09"], "toLifecycleState": "closed" },
+    { "week": 32, "riskIds": ["R10"], "toLifecycleState": "closed" }
+  ],
+  "scenarioOverrides": [
+    { "scenarioId": "scenario-1", "week": 9, "riskIds": ["R01"], "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled" },
+    { "scenarioId": "scenario-2", "week": 17, "riskIds": ["R02", "R03"], "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled" },
+    { "scenarioId": "scenario-3", "week": 25, "riskIds": ["R04"], "toLifecycleState": "triggered", "controlStatus": "active_uncontrolled" },
+    { "scenarioId": "scenario-3", "week": 25, "riskIds": ["R10"], "toLifecycleState": "monitoring", "controlStatus": "active_uncontrolled", "assessmentChange": { "probability": 5, "impact": 4 } }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pm-atlas.local/schemas/lab-scenario-plan.schema.json",
+  "title": "项目实验室情景配置",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "caseId",
+    "caseVersion",
+    "eventDiscoveryPolicy",
+    "decisionReasoningPolicy",
+    "aiReviewPolicy",
+    "engineSettlementPolicy",
+    "branchComparisonPolicy",
+    "scenarios"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "caseId": { "type": "string", "minLength": 1 },
+    "caseVersion": { "type": "string", "minLength": 1 },
+    "eventDiscoveryPolicy": { "$ref": "#/$defs/policy" },
+    "decisionReasoningPolicy": {
+      "allOf": [
+        { "$ref": "#/$defs/policy" },
+        {
+          "type": "object",
+          "required": ["fields"],
+          "properties": {
+            "fields": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": { "$ref": "#/$defs/reasoningField" }
+            }
+          }
+        }
+      ]
+    },
+    "aiReviewPolicy": { "$ref": "#/$defs/policy" },
+    "engineSettlementPolicy": { "$ref": "#/$defs/policy" },
+    "branchComparisonPolicy": { "$ref": "#/$defs/policy" },
+    "scenarios": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "stateEffect": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "reasoningField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "required", "minimumCharacters", "maximumCharacters"],
+      "properties": {
+        "id": { "enum": ["observed_signals", "risk_or_root_cause", "action_rationale"] },
+        "label": { "type": "string", "minLength": 1 },
+        "required": { "const": true },
+        "minimumCharacters": { "type": "integer", "minimum": 1 },
+        "maximumCharacters": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "material": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string" },
+        "channel": { "type": "string" },
+        "subject": { "type": "string" },
+        "facts": { "type": "array", "items": { "type": "string" } },
+        "senderStakeholderId": { "type": "string" },
+        "documentIds": { "type": "array", "items": { "type": "string" } },
+        "widget": { "type": "string" },
+        "metric": { "type": "string" },
+        "displayLabel": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "eventMaterials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryClues", "corroboratingClues", "dashboardAnomalies"],
+      "properties": {
+        "primaryClues": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/material" } },
+        "corroboratingClues": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/material" } },
+        "dashboardAnomalies": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/material" } }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "completedEffect"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^S[1-9]-A[0-9]+$" },
+        "title": { "type": "string", "minLength": 1 },
+        "completedEffect": { "$ref": "#/$defs/stateEffect" },
+        "prerequisiteActionIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "prerequisiteActionIdsForForecastRecovery": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "id", "title"],
+      "properties": {
+        "source": { "enum": ["document", "dashboard", "event_material"] },
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 }
+      }
+    },
+    "missingActionConsequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "gapCategories", "effects"],
+      "properties": {
+        "actionId": { "type": "string" },
+        "gapCategories": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "effects": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      }
+    },
+    "harmfulConsequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cardId", "id", "effects"],
+      "properties": {
+        "cardId": { "type": "string" },
+        "id": { "type": "string" },
+        "effects": { "$ref": "#/$defs/stateEffect" }
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "column", "referenceId", "title"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^S[1-9]-C[0-9]+$" },
+        "column": { "enum": ["evidence_document", "tool_technique", "execution_action", "stakeholder"] },
+        "referenceId": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "satisfiesActionIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "evaluationRole": { "enum": ["useful_optional", "harmful"] },
+        "managementLoad": { "type": "number", "minimum": 0 },
+        "consequenceId": { "type": "string" }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromCardId", "toCardId"],
+      "properties": {
+        "fromCardId": { "type": "string" },
+        "toCardId": { "type": "string" }
+      }
+    },
+    "terminalRule": {
+      "type": "object",
+      "required": ["classification"],
+      "properties": {
+        "classification": { "enum": ["near_mainline_success", "detour_success", "delayed_success", "scenario_failure"] },
+        "conditions": { "type": "array", "items": { "type": "string" } },
+        "conditionsAny": { "type": "array", "items": { "type": "string" } },
+        "closeWeek": { "type": "integer" },
+        "minimumCloseWeek": { "type": "integer" },
+        "maximumCloseWeek": { "type": "integer" },
+        "forecastCompletionWeek": { "type": "integer" },
+        "minimumForecastCompletionWeek": { "type": "integer" },
+        "maximumForecastCompletionWeek": { "type": "integer" },
+        "terminal": { "type": "boolean" },
+        "failureReason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "week",
+        "title",
+        "initialImpact",
+        "eventMaterials",
+        "necessaryManagementActions",
+        "requiredObservations",
+        "idealOutcome",
+        "missingActionConsequences",
+        "incompleteOutcomePolicy",
+        "unresolvedIssueDegradation",
+        "harmfulConsequences",
+        "harmfulEffectsStack",
+        "terminalRules",
+        "cards",
+        "minimumCorrectCardIds",
+        "minimumCorrectConnections"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^scenario-[1-9][0-9]*$" },
+        "week": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "initialImpact": { "$ref": "#/$defs/stateEffect" },
+        "eventMaterials": { "$ref": "#/$defs/eventMaterials" },
+        "necessaryManagementActions": { "type": "array", "minItems": 5, "maxItems": 7, "items": { "$ref": "#/$defs/action" } },
+        "idealDecision": { "type": "string" },
+        "requiredObservations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
+        "idealOutcome": { "$ref": "#/$defs/stateEffect" },
+        "missingActionConsequences": { "type": "array", "items": { "$ref": "#/$defs/missingActionConsequence" } },
+        "incompleteOutcomePolicy": { "$ref": "#/$defs/stateEffect" },
+        "unresolvedIssueDegradation": { "$ref": "#/$defs/stateEffect" },
+        "harmfulConsequences": { "type": "array", "items": { "$ref": "#/$defs/harmfulConsequence" } },
+        "harmfulEffectsStack": { "type": "boolean" },
+        "terminalRules": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/terminalRule" } },
+        "cards": { "type": "array", "minItems": 18, "maxItems": 24, "items": { "$ref": "#/$defs/card" } },
+        "minimumCorrectCardIds": { "type": "array", "minItems": 8, "maxItems": 14, "uniqueItems": true, "items": { "type": "string" } },
+        "minimumCorrectConnections": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/connection" } }
+      }
+    }
+  }
+}

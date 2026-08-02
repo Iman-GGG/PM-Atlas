@@ -50,6 +50,8 @@
 
 运行 `tools/validate_samples.py` 会检查 JSON、访谈与推理引用、章程来源、风险计算、汇总数量和矩阵配置。生成 Word 使用 `tools/generate_project_charter_docx.py`。
 
+项目实验室案例运行 `node scripts/validate-lab-case.mjs`，校验 32 份文件、干系人、活动、风险以及三个情景的材料包、行动链、量化效果和终局规则。运行 `node scripts/generate-lab-workload-baseline.mjs` 时会先自动执行同一校验，内容不一致将直接阻止生成。
+
 当前基线已通过 581 项数据检查；Word 样例已完成 9 页逐页渲染检查，所有表格均使用明确列宽并通过几何审计。
 
 所有样本均用于验证产品机制，不代表组织已正式批准项目。
