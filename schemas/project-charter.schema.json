@@ -1,0 +1,580 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "template.project-charter",
+  "objectType": "template-definition",
+  "title": "项目章程",
+  "description": "用于正式批准项目、授权项目经理使用组织资源，并记录项目高层级目标、边界、里程碑、资源、风险和审批要求。",
+  "knowledgeRefs": [
+    "note.制定项目章程",
+    "note.项目章程",
+    "domain.项目整合管理"
+  ],
+  "sourceRefs": [
+    {
+      "type": "obsidian",
+      "path": "信息系统项目管理师2026/项目章程.md"
+    },
+    {
+      "type": "workbook",
+      "path": "高项论文/高项论文-整合管理.xlsx",
+      "sheet": "项目章程",
+      "range": "A1:B12"
+    }
+  ],
+  "producedBy": "process.develop-project-charter",
+  "relatedArtifacts": [
+    "template.assumption-log",
+    "template.stakeholder-register",
+    "template.risk-register",
+    "template.project-management-plan"
+  ],
+  "valueEnvelope": {
+    "requiredKeys": [
+      "value",
+      "status",
+      "sourceIds"
+    ],
+    "statusEnum": [
+      "confirmed",
+      "inferred",
+      "assumed",
+      "missing"
+    ],
+    "precedence": [
+      "user-confirmed",
+      "imported-confirmed",
+      "user-overridden",
+      "system-inferred",
+      "system-assumed",
+      "default"
+    ]
+  },
+  "sections": [
+    {
+      "id": "document-control",
+      "title": "文档控制",
+      "ui": {
+        "layout": "metadata-grid",
+        "collapsible": false
+      },
+      "fields": [
+        {
+          "id": "project_name",
+          "label": "项目名称",
+          "type": "short-text",
+          "required": true,
+          "autofill": [
+            "interview.project_name"
+          ],
+          "validation": {
+            "minLength": 4,
+            "maxLength": 80
+          }
+        },
+        {
+          "id": "charter_version",
+          "label": "章程版本",
+          "type": "version",
+          "required": true,
+          "default": "0.1"
+        },
+        {
+          "id": "document_status",
+          "label": "文档状态",
+          "type": "enum",
+          "required": true,
+          "options": [
+            "推演草案",
+            "待评审",
+            "待批准",
+            "已批准",
+            "已作废"
+          ],
+          "default": "推演草案"
+        },
+        {
+          "id": "prepared_date",
+          "label": "编制日期",
+          "type": "date",
+          "required": true,
+          "defaultFrom": "system.current_date"
+        },
+        {
+          "id": "approval_date",
+          "label": "批准日期",
+          "type": "date",
+          "requiredWhen": "document_status == '已批准'"
+        }
+      ]
+    },
+    {
+      "id": "purpose-and-value",
+      "title": "项目目的与预期价值",
+      "ui": {
+        "layout": "narrative",
+        "mentorPrompt": "先说明为什么要做，再说明成功后为谁创造什么价值。"
+      },
+      "fields": [
+        {
+          "id": "project_purpose",
+          "label": "项目目的",
+          "type": "long-text",
+          "required": true,
+          "autofill": [
+            "interview.business_problem",
+            "interview.solution_summary",
+            "reasoning.decision.lifecycle"
+          ],
+          "validation": {
+            "minLength": 40,
+            "mustDescribeProblemAndOutcome": true
+          }
+        },
+        {
+          "id": "business_need",
+          "label": "业务需求",
+          "type": "long-text",
+          "required": true,
+          "autofill": [
+            "interview.business_problem",
+            "interview.target_users"
+          ]
+        },
+        {
+          "id": "expected_value",
+          "label": "预期价值",
+          "type": "bullet-list",
+          "required": true,
+          "autofill": [
+            "interview.expected_value"
+          ],
+          "validation": {
+            "minItems": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "objectives",
+      "title": "可测量的项目目标与成功标准",
+      "ui": {
+        "layout": "editable-list",
+        "addLabel": "添加目标",
+        "mentorPrompt": "每项目标应包含指标、目标值、期限、验证方法和确认角色。"
+      },
+      "fields": [
+        {
+          "id": "measurable_objectives",
+          "label": "项目目标",
+          "type": "array",
+          "required": true,
+          "minItems": 3,
+          "itemSchema": {
+            "required": [
+              "id",
+              "objective",
+              "metric",
+              "target",
+              "deadline",
+              "verificationMethod",
+              "ownerRole"
+            ],
+            "properties": {
+              "id": {
+                "type": "stable-id"
+              },
+              "objective": {
+                "type": "short-text"
+              },
+              "metric": {
+                "type": "short-text"
+              },
+              "target": {
+                "type": "short-text"
+              },
+              "deadline": {
+                "type": "date-or-milestone"
+              },
+              "verificationMethod": {
+                "type": "long-text"
+              },
+              "ownerRole": {
+                "type": "role-reference"
+              }
+            }
+          },
+          "autofill": [
+            "interview.success_metrics",
+            "reasoning.actions.quality-gates"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scope-and-deliverables",
+      "title": "高层级范围、需求与交付成果",
+      "ui": {
+        "layout": "grouped-editor"
+      },
+      "fields": [
+        {
+          "id": "high_level_requirements",
+          "label": "高层级需求",
+          "type": "bullet-list",
+          "required": true,
+          "autofill": [
+            "interview.core_capabilities",
+            "interview.nonfunctional_requirements"
+          ],
+          "validation": {
+            "minItems": 3
+          }
+        },
+        {
+          "id": "scope_boundary",
+          "label": "范围边界",
+          "type": "long-text",
+          "required": true,
+          "autofill": [
+            "interview.in_scope",
+            "interview.out_of_scope"
+          ]
+        },
+        {
+          "id": "key_deliverables",
+          "label": "主要交付成果",
+          "type": "array",
+          "required": true,
+          "itemSchema": {
+            "properties": {
+              "id": {
+                "type": "stable-id"
+              },
+              "name": {
+                "type": "short-text"
+              },
+              "description": {
+                "type": "long-text"
+              },
+              "acceptanceOwner": {
+                "type": "role-reference"
+              }
+            }
+          },
+          "autofill": [
+            "interview.deliverables",
+            "reasoning.lifecycle.stages"
+          ]
+        },
+        {
+          "id": "out_of_scope",
+          "label": "明确不在范围内",
+          "type": "bullet-list",
+          "required": true,
+          "autofill": [
+            "interview.out_of_scope"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overall-risks",
+      "title": "整体项目风险",
+      "ui": {
+        "layout": "linked-summary",
+        "sourceArtifact": "template.risk-register"
+      },
+      "fields": [
+        {
+          "id": "overall_risk_summary",
+          "label": "高层级风险摘要",
+          "type": "risk-reference-list",
+          "required": true,
+          "maxItemsInCharter": 6,
+          "autofill": [
+            "reasoning.risk-nodes",
+            "risk-register.top-threats"
+          ],
+          "sort": [
+            "rating desc",
+            "score desc"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestones",
+      "title": "总体里程碑进度计划",
+      "ui": {
+        "layout": "timeline-editor",
+        "addLabel": "添加里程碑"
+      },
+      "fields": [
+        {
+          "id": "milestone_plan",
+          "label": "里程碑",
+          "type": "array",
+          "required": true,
+          "minItems": 4,
+          "itemSchema": {
+            "properties": {
+              "id": {
+                "type": "stable-id"
+              },
+              "name": {
+                "type": "short-text"
+              },
+              "targetDate": {
+                "type": "date"
+              },
+              "exitCriteria": {
+                "type": "long-text"
+              },
+              "ownerRole": {
+                "type": "role-reference"
+              }
+            }
+          },
+          "autofill": [
+            "reasoning.lifecycle.stages",
+            "interview.target_window"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "financial-resources",
+      "title": "预先批准的财务资源",
+      "ui": {
+        "layout": "budget-summary",
+        "mentorPrompt": "如果预算尚未批准，应明确标记为待确认，不能由系统编造。"
+      },
+      "fields": [
+        {
+          "id": "approved_budget_total",
+          "label": "批准预算总额",
+          "type": "money",
+          "required": false,
+          "autofill": [
+            "interview.approved_budget"
+          ]
+        },
+        {
+          "id": "currency",
+          "label": "币种",
+          "type": "currency-code",
+          "default": "CNY"
+        },
+        {
+          "id": "funding_source",
+          "label": "资金来源",
+          "type": "short-text",
+          "required": false,
+          "autofill": [
+            "interview.funding_source"
+          ]
+        },
+        {
+          "id": "budget_allocation",
+          "label": "高层级预算分配",
+          "type": "array",
+          "required": false,
+          "itemSchema": {
+            "properties": {
+              "category": {
+                "type": "short-text"
+              },
+              "amount": {
+                "type": "money"
+              },
+              "note": {
+                "type": "short-text"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "key-stakeholders",
+      "title": "关键干系人",
+      "ui": {
+        "layout": "linked-table",
+        "sourceArtifact": "template.stakeholder-register"
+      },
+      "fields": [
+        {
+          "id": "key_stakeholders",
+          "label": "关键干系人名单",
+          "type": "stakeholder-reference-list",
+          "required": true,
+          "autofill": [
+            "interview.stakeholder_roles",
+            "stakeholder-register.key-stakeholders"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "approval",
+      "title": "项目审批要求",
+      "ui": {
+        "layout": "approval-workflow"
+      },
+      "fields": [
+        {
+          "id": "acceptance_requirements",
+          "label": "验收要求",
+          "type": "bullet-list",
+          "required": true,
+          "autofill": [
+            "interview.acceptance_requirements",
+            "reasoning.actions.quality-gates"
+          ]
+        },
+        {
+          "id": "approval_process",
+          "label": "审批流程",
+          "type": "ordered-step-list",
+          "required": true,
+          "autofill": [
+            "reasoning.lifecycle.stage-gates"
+          ]
+        },
+        {
+          "id": "final_approver",
+          "label": "最终批准角色",
+          "type": "role-reference",
+          "required": true,
+          "autofill": [
+            "interview.sponsor_role"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exit-criteria",
+      "title": "项目退出标准",
+      "ui": {
+        "layout": "checklist"
+      },
+      "fields": [
+        {
+          "id": "exit_criteria",
+          "label": "退出标准",
+          "type": "checklist",
+          "required": true,
+          "autofill": [
+            "interview.acceptance_requirements",
+            "reasoning.lifecycle.final-gate"
+          ],
+          "validation": {
+            "minItems": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "project-manager",
+      "title": "项目经理及其职责和职权",
+      "ui": {
+        "layout": "role-card"
+      },
+      "fields": [
+        {
+          "id": "project_manager",
+          "label": "项目经理",
+          "type": "person-or-role",
+          "required": true,
+          "autofill": [
+            "interview.project_manager"
+          ]
+        },
+        {
+          "id": "project_manager_responsibilities",
+          "label": "主要职责",
+          "type": "bullet-list",
+          "required": true
+        },
+        {
+          "id": "project_manager_authority",
+          "label": "职权边界",
+          "type": "bullet-list",
+          "required": true,
+          "mentorPrompt": "应明确哪些事项可直接决定，哪些需要提交发起人或 CCB。"
+        }
+      ]
+    },
+    {
+      "id": "sponsor",
+      "title": "发起人与批准权限",
+      "ui": {
+        "layout": "role-card"
+      },
+      "fields": [
+        {
+          "id": "sponsor",
+          "label": "发起人",
+          "type": "person-or-role",
+          "required": true,
+          "autofill": [
+            "interview.sponsor_role"
+          ]
+        },
+        {
+          "id": "sponsor_authority",
+          "label": "批准权限",
+          "type": "bullet-list",
+          "required": true
+        },
+        {
+          "id": "approval_decision",
+          "label": "批准结论",
+          "type": "enum",
+          "options": [
+            "待批准",
+            "批准",
+            "有条件批准",
+            "退回修改",
+            "不批准"
+          ],
+          "default": "待批准"
+        }
+      ]
+    }
+  ],
+  "crossFieldRules": [
+    {
+      "id": "RULE-CHARTER-001",
+      "when": "document_status == '已批准'",
+      "require": [
+        "approval_date",
+        "sponsor",
+        "approval_decision"
+      ]
+    },
+    {
+      "id": "RULE-CHARTER-002",
+      "when": "approved_budget_total.status == 'missing'",
+      "message": "预算尚未批准：允许生成推演草案，但不允许将章程标记为已批准。"
+    },
+    {
+      "id": "RULE-CHARTER-003",
+      "when": "project_manager.status == 'missing' or sponsor.status == 'missing'",
+      "message": "项目经理或发起人尚未指定：允许导出草案，但必须在封面和审批区显示待确认。"
+    },
+    {
+      "id": "RULE-CHARTER-004",
+      "when": "overall_risk_summary contains safety-or-compliance risk",
+      "require": [
+        "acceptance_requirements contains security gate",
+        "milestone_plan contains security baseline"
+      ]
+    }
+  ],
+  "audit": {
+    "createdBy": "Codex product modeling sample",
+    "createdDate": "2026-07-18",
+    "reviewStatus": "sample-pending-domain-review"
+  }
+}

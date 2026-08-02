@@ -1,0 +1,199 @@
+{
+  "mapVersion": "0.1.0",
+  "templateId": "template.project-charter",
+  "output": {
+    "format": "docx",
+    "fileNamePattern": "{project_name}-项目章程-{charter_version}.docx",
+    "statusWatermark": false,
+    "draftNotice": "当文档状态不是“已批准”时，在首页显示“推演草案｜待组织确认”。"
+  },
+  "design": {
+    "preset": "compact_reference_guide",
+    "headerPattern": "memo_masthead",
+    "page": {
+      "size": "US Letter",
+      "orientation": "portrait",
+      "marginsInches": 1,
+      "contentWidthDxa": 9360
+    },
+    "fonts": {
+      "latin": "Calibri",
+      "eastAsia": "PingFang SC"
+    },
+    "namedOverrides": {
+      "charterTitle": {
+        "sizePt": 24,
+        "color": "#0B2545",
+        "bold": true,
+        "spaceAfterPt": 4
+      },
+      "draftCallout": {
+        "fill": "#FFF8E8",
+        "leftBorder": "#B7791F"
+      },
+      "missingValue": {
+        "text": "待确认",
+        "color": "#9B1C1C"
+      }
+    }
+  },
+  "renderSequence": [
+    {
+      "id": "title-block",
+      "type": "title",
+      "fields": [
+        "project_name",
+        "document_status",
+        "charter_version",
+        "prepared_date"
+      ]
+    },
+    {
+      "id": "decision-callout",
+      "type": "lead-callout",
+      "source": "reasoning.decision.lifecycle"
+    },
+    {
+      "id": "purpose-and-value",
+      "heading": "1. 项目目的与预期价值",
+      "type": "prose-and-bullets",
+      "fields": [
+        "project_purpose",
+        "business_need",
+        "expected_value"
+      ]
+    },
+    {
+      "id": "objectives",
+      "heading": "2. 可测量的项目目标与成功标准",
+      "type": "table",
+      "fields": [
+        "measurable_objectives"
+      ],
+      "columns": [
+        "目标",
+        "指标与目标值",
+        "期限",
+        "验证方式",
+        "责任角色"
+      ],
+      "widthsDxa": [
+        1700,
+        2100,
+        1100,
+        2860,
+        1600
+      ]
+    },
+    {
+      "id": "scope",
+      "heading": "3. 高层级范围、需求与交付成果",
+      "type": "mixed",
+      "fields": [
+        "high_level_requirements",
+        "scope_boundary",
+        "key_deliverables",
+        "out_of_scope"
+      ]
+    },
+    {
+      "id": "milestones",
+      "heading": "4. 总体里程碑进度计划",
+      "type": "table",
+      "fields": [
+        "milestone_plan"
+      ],
+      "columns": [
+        "里程碑",
+        "目标日期",
+        "退出条件",
+        "责任角色"
+      ],
+      "widthsDxa": [
+        1900,
+        1200,
+        4460,
+        1800
+      ]
+    },
+    {
+      "id": "risks",
+      "heading": "5. 整体项目风险",
+      "type": "table",
+      "fields": [
+        "overall_risk_summary"
+      ],
+      "columns": [
+        "风险",
+        "等级",
+        "责任角色",
+        "高层级应对"
+      ],
+      "widthsDxa": [
+        2800,
+        900,
+        1700,
+        3960
+      ]
+    },
+    {
+      "id": "budget-and-stakeholders",
+      "heading": "6. 财务资源与关键干系人",
+      "type": "prose-and-table",
+      "fields": [
+        "approved_budget_total",
+        "currency",
+        "funding_source",
+        "key_stakeholders"
+      ]
+    },
+    {
+      "id": "approval-and-exit",
+      "heading": "7. 审批要求与退出标准",
+      "type": "steps-and-checklist",
+      "fields": [
+        "acceptance_requirements",
+        "approval_process",
+        "final_approver",
+        "exit_criteria"
+      ]
+    },
+    {
+      "id": "roles",
+      "heading": "8. 项目经理与发起人权限",
+      "type": "definition-list",
+      "fields": [
+        "project_manager",
+        "project_manager_responsibilities",
+        "project_manager_authority",
+        "sponsor",
+        "sponsor_authority",
+        "approval_decision"
+      ]
+    },
+    {
+      "id": "traceability",
+      "heading": "附录 A：自动带入与推理追踪",
+      "type": "table",
+      "source": "autofillTrace",
+      "columns": [
+        "章程字段",
+        "输入事实",
+        "推理/规则",
+        "状态"
+      ],
+      "widthsDxa": [
+        1900,
+        3000,
+        3160,
+        1300
+      ]
+    }
+  ],
+  "missingValuePolicy": {
+    "neverInvent": true,
+    "renderAs": "待确认",
+    "blockApproval": true,
+    "allowDraftExport": true
+  }
+}

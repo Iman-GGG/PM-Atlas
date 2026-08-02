@@ -1,0 +1,270 @@
+{
+  "sampleVersion": "0.1.0",
+  "projectId": "car-control-app-001",
+  "title": "汽车手机端控制应用项目访谈样本",
+  "scenarioStatus": "illustrative-assumptions-pending-user-review",
+  "answers": [
+    {
+      "id": "INT-001",
+      "topic": "project_name",
+      "question": "这个项目暂时叫什么？",
+      "answer": "汽车手机端控制应用项目",
+      "status": "confirmed",
+      "mapsTo": [
+        "project-charter.project_name"
+      ]
+    },
+    {
+      "id": "INT-002",
+      "topic": "business_problem",
+      "question": "为什么要做这个项目？当前用户和业务面临什么问题？",
+      "answer": "车主需要在不进入车辆的情况下查看车况、管理充电并执行少量受控的远程操作；现有服务入口分散、状态反馈慢，且不同车型的数字服务体验不一致。",
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.business_need",
+        "project-charter.project_purpose"
+      ]
+    },
+    {
+      "id": "INT-003",
+      "topic": "solution_summary",
+      "question": "准备交付什么产品或服务？",
+      "answer": "建设 iOS 与 Android 车主应用、配套云端服务及车端接口集成能力，提供车辆绑定、车况、远程车门与空调控制、充电管理、位置查询、消息通知和操作审计。",
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.project_purpose",
+        "project-charter.high_level_requirements"
+      ]
+    },
+    {
+      "id": "INT-004",
+      "topic": "target_users",
+      "question": "主要用户是谁？",
+      "answer": "已完成实名认证并绑定车辆的个人车主；客服、运营与安全团队是内部管理用户。",
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.business_need",
+        "project-charter.key_stakeholders"
+      ]
+    },
+    {
+      "id": "INT-005",
+      "topic": "expected_value",
+      "question": "项目成功后希望产生什么价值？",
+      "answer": [
+        "为车主提供统一、可信、易用的车辆数字服务入口",
+        "提升远程服务成功率和车主满意度",
+        "形成可复用于多车型的移动端、云端和车端集成能力",
+        "通过审计、监控和安全控制降低远程车辆操作风险"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.expected_value"
+      ]
+    },
+    {
+      "id": "INT-006",
+      "topic": "core_capabilities",
+      "question": "第一阶段必须包含哪些核心能力？",
+      "answer": [
+        "账号实名认证与车辆绑定",
+        "车辆状态查看",
+        "远程车门与空调控制",
+        "充电状态与预约充电管理",
+        "车辆位置查询",
+        "消息通知、操作结果反馈与操作审计"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.high_level_requirements",
+        "project-charter.key_deliverables"
+      ]
+    },
+    {
+      "id": "INT-007",
+      "topic": "nonfunctional_requirements",
+      "question": "有哪些不能妥协的非功能要求？",
+      "answer": [
+        "远程控制必须进行强身份认证、授权校验和完整审计",
+        "个人信息、位置数据和车辆数据必须按最小必要原则处理",
+        "关键指令必须具备幂等、超时、重试和状态一致性处理",
+        "应用与云端需要具备可观测性、故障降级和应急回滚能力",
+        "满足目标车型、移动操作系统和弱网环境的兼容性要求"
+      ],
+      "status": "inferred",
+      "mapsTo": [
+        "project-charter.high_level_requirements",
+        "project-charter.acceptance_requirements"
+      ]
+    },
+    {
+      "id": "INT-008",
+      "topic": "out_of_scope",
+      "question": "第一阶段明确不做什么？",
+      "answer": [
+        "自动驾驶、远程驾驶与远程泊车控制",
+        "面向维修站的完整售后工单系统",
+        "车辆硬件改造和既有车端控制器重构",
+        "海外市场与海外法规适配",
+        "未经单独安全论证的高风险车辆控制能力"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.scope_boundary",
+        "project-charter.out_of_scope"
+      ]
+    },
+    {
+      "id": "INT-009",
+      "topic": "target_window",
+      "question": "希望什么时候上线？日期是否刚性？",
+      "answer": "计划于 2026-08-03 启动，2027-03-26 开始灰度试点，2027-04-30 正式发布；正式发布日期具有中等刚性。",
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.milestone_plan",
+        "project-charter.measurable_objectives"
+      ]
+    },
+    {
+      "id": "INT-010",
+      "topic": "success_metrics",
+      "question": "怎样判断项目成功？",
+      "answer": [
+        "按批准范围在 2027-04-30 前完成正式发布",
+        "正常网络下远程指令执行结果反馈 P95 不超过 8 秒",
+        "正常服务条件下远程控制成功率不低于 99.5%",
+        "上线前高风险安全测试用例通过率 100%，无未关闭 P0/P1 安全缺陷",
+        "移动端无崩溃会话比例不低于 99.8%",
+        "灰度用户满意度不低于 85/100"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.measurable_objectives",
+        "project-charter.exit_criteria"
+      ]
+    },
+    {
+      "id": "INT-011",
+      "topic": "stakeholder_roles",
+      "question": "哪些角色会决定项目能否成功？",
+      "answer": [
+        "数字产品中心负责人（项目发起人）",
+        "项目经理",
+        "移动产品负责人",
+        "App、云端和车端技术负责人",
+        "信息安全与数据合规负责人",
+        "测试与质量负责人",
+        "运营、客服和运维负责人",
+        "车型项目与供应商代表",
+        "灰度车主代表"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.key_stakeholders"
+      ]
+    },
+    {
+      "id": "INT-012",
+      "topic": "dependencies",
+      "question": "项目依赖哪些团队或外部能力？",
+      "answer": [
+        "车端控制协议与车辆网关团队",
+        "统一账号、实名认证和消息推送平台",
+        "地图与定位服务商",
+        "移动应用商店审核",
+        "目标车型测试车辆、台架和集成环境"
+      ],
+      "status": "assumed",
+      "mapsTo": [
+        "project-charter.overall_risk_summary",
+        "risk-register.external_dependencies"
+      ]
+    },
+    {
+      "id": "INT-013",
+      "topic": "requirement_certainty",
+      "question": "哪些需求已经明确，哪些需要持续探索？",
+      "answer": "安全边界、合规要求、关键车端接口和发布门槛需要前置明确；移动端信息架构、交互细节和部分运营能力需要通过原型与灰度反馈持续细化。",
+      "status": "inferred",
+      "mapsTo": [
+        "reasoning.decision.lifecycle"
+      ]
+    },
+    {
+      "id": "INT-014",
+      "topic": "team_and_organization",
+      "question": "团队和组织条件是什么？",
+      "answer": "核心团队约 24 人，包含产品、设计、App、云端、车端集成、测试、安全、运维和项目管理；存在跨部门与外部供应商协作，组织要求正式评审关键基线。",
+      "status": "assumed",
+      "mapsTo": [
+        "reasoning.decision.lifecycle",
+        "project-charter.key_stakeholders"
+      ]
+    },
+    {
+      "id": "INT-015",
+      "topic": "approved_budget",
+      "question": "预算是否已经批准？",
+      "answer": null,
+      "status": "missing",
+      "mapsTo": [
+        "project-charter.approved_budget_total"
+      ]
+    },
+    {
+      "id": "INT-016",
+      "topic": "project_manager",
+      "question": "项目经理是否已经任命？",
+      "answer": "项目经理角色已确定，但姓名待组织任命文件确认。",
+      "status": "missing",
+      "mapsTo": [
+        "project-charter.project_manager"
+      ]
+    },
+    {
+      "id": "INT-017",
+      "topic": "sponsor_role",
+      "question": "谁有权批准项目章程并协调关键资源？",
+      "answer": "数字产品中心负责人；具体姓名待确认。",
+      "status": "inferred",
+      "mapsTo": [
+        "project-charter.sponsor",
+        "project-charter.final_approver"
+      ]
+    },
+    {
+      "id": "INT-018",
+      "topic": "acceptance_requirements",
+      "question": "项目最终需要经过哪些验收？",
+      "answer": [
+        "功能范围和需求跟踪验证",
+        "App、云端、车端端到端集成测试",
+        "信息安全、隐私合规和远程控制专项评审",
+        "性能、稳定性、弱网与多车型兼容性测试",
+        "灰度试点指标达标并完成运营与运维移交"
+      ],
+      "status": "inferred",
+      "mapsTo": [
+        "project-charter.acceptance_requirements",
+        "project-charter.exit_criteria"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "OPEN-001",
+      "question": "项目预算总额、资金来源和批准边界是什么？",
+      "blocks": "章程批准"
+    },
+    {
+      "id": "OPEN-002",
+      "question": "项目经理和发起人的具体姓名与正式授权是什么？",
+      "blocks": "章程批准"
+    },
+    {
+      "id": "OPEN-003",
+      "question": "首批覆盖车型、地区和移动操作系统最低版本是什么？",
+      "blocks": "范围基线"
+    }
+  ]
+}

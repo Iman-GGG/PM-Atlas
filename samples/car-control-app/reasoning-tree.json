@@ -1,0 +1,365 @@
+{
+  "treeVersion": "0.1.0",
+  "projectId": "car-control-app-001",
+  "rootNodeId": "P-ROOT",
+  "nodes": [
+    {
+      "id": "P-ROOT",
+      "type": "project",
+      "title": "汽车手机端控制应用项目",
+      "status": "confirmed",
+      "sourceIds": [
+        "INT-001"
+      ]
+    },
+    {
+      "id": "F-SAFETY",
+      "type": "fact",
+      "title": "包含车门、空调等远程车辆控制",
+      "status": "assumed",
+      "sourceIds": [
+        "INT-003",
+        "INT-006"
+      ]
+    },
+    {
+      "id": "F-PRIVACY",
+      "type": "fact",
+      "title": "处理身份、位置、车辆状态与操作记录",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-004",
+        "INT-007"
+      ]
+    },
+    {
+      "id": "F-FEEDBACK",
+      "type": "fact",
+      "title": "移动端体验和部分运营能力需要持续反馈",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-013"
+      ]
+    },
+    {
+      "id": "F-INTEGRATION",
+      "type": "fact",
+      "title": "App、云端、车端与外部平台存在多团队集成",
+      "status": "assumed",
+      "sourceIds": [
+        "INT-012",
+        "INT-014"
+      ]
+    },
+    {
+      "id": "J-GOVERNANCE",
+      "type": "judgment",
+      "title": "安全、隐私、关键接口和验收门槛必须前置治理",
+      "status": "inferred",
+      "sourceIds": [
+        "F-SAFETY",
+        "F-PRIVACY"
+      ],
+      "knowledgeRefs": [
+        "note.开发方法和生命周期绩效域",
+        "note.信息安全"
+      ]
+    },
+    {
+      "id": "J-ITERATION",
+      "type": "judgment",
+      "title": "移动端体验和可拆分业务能力适合短周期迭代",
+      "status": "inferred",
+      "sourceIds": [
+        "F-FEEDBACK"
+      ],
+      "knowledgeRefs": [
+        "note.开发方法和生命周期绩效域",
+        "note.敏捷或适应性发布规划"
+      ]
+    },
+    {
+      "id": "J-INTEGRATION",
+      "type": "judgment",
+      "title": "跨团队接口需要统一架构基线、集成节奏与阶段门",
+      "status": "inferred",
+      "sourceIds": [
+        "F-INTEGRATION"
+      ],
+      "knowledgeRefs": [
+        "note.项目整合管理",
+        "note.配置管理计划"
+      ]
+    },
+    {
+      "id": "D-LIFECYCLE",
+      "type": "decision",
+      "title": "采用混合型生命周期",
+      "status": "recommended",
+      "confidence": "medium",
+      "rationale": "关键安全、合规、接口与验收工作采用预测型治理；移动端体验和可拆分功能采用迭代开发；通过固定集成列车与阶段门衔接。",
+      "sourceIds": [
+        "J-GOVERNANCE",
+        "J-ITERATION",
+        "J-INTEGRATION"
+      ],
+      "alternatives": [
+        {
+          "id": "ALT-PREDICTIVE",
+          "title": "纯预测型",
+          "rejectedBecause": "难以及时吸收车主对移动端体验的反馈。"
+        },
+        {
+          "id": "ALT-ADAPTIVE",
+          "title": "纯适应型",
+          "rejectedBecause": "不足以支撑安全边界、关键接口、合规证据与发布审批的前置治理。"
+        }
+      ]
+    },
+    {
+      "id": "A-SAFETY-BASELINE",
+      "type": "activity",
+      "title": "建立安全、隐私与远程控制边界基线",
+      "status": "recommended",
+      "sourceIds": [
+        "D-LIFECYCLE"
+      ]
+    },
+    {
+      "id": "A-ARCH-BASELINE",
+      "type": "activity",
+      "title": "建立 App、云端、车端接口与集成架构基线",
+      "status": "recommended",
+      "sourceIds": [
+        "D-LIFECYCLE"
+      ]
+    },
+    {
+      "id": "A-ITERATIONS",
+      "type": "activity",
+      "title": "按两周迭代验证移动端体验和业务能力",
+      "status": "recommended",
+      "sourceIds": [
+        "D-LIFECYCLE"
+      ]
+    },
+    {
+      "id": "A-INTEGRATION-TRAIN",
+      "type": "activity",
+      "title": "建立固定集成列车、车型矩阵和端到端测试门禁",
+      "status": "recommended",
+      "sourceIds": [
+        "D-LIFECYCLE"
+      ]
+    },
+    {
+      "id": "A-GRAY-RELEASE",
+      "type": "activity",
+      "title": "灰度发布并以指标决定正式发布",
+      "status": "recommended",
+      "sourceIds": [
+        "D-LIFECYCLE",
+        "INT-010",
+        "INT-018"
+      ]
+    },
+    {
+      "id": "R-UNAUTHORIZED",
+      "type": "risk",
+      "title": "认证或授权缺陷导致未授权远程车辆控制",
+      "status": "inferred",
+      "sourceIds": [
+        "F-SAFETY",
+        "F-PRIVACY"
+      ]
+    },
+    {
+      "id": "R-DATA",
+      "type": "risk",
+      "title": "位置与车辆数据泄露或被超范围使用",
+      "status": "inferred",
+      "sourceIds": [
+        "F-PRIVACY"
+      ]
+    },
+    {
+      "id": "R-PROTOCOL",
+      "type": "risk",
+      "title": "车型协议与 App/云端状态语义不一致",
+      "status": "inferred",
+      "sourceIds": [
+        "F-INTEGRATION"
+      ]
+    },
+    {
+      "id": "ART-CHARTER",
+      "type": "artifact",
+      "title": "项目章程",
+      "status": "generated-draft",
+      "knowledgeRefs": [
+        "note.项目章程"
+      ]
+    },
+    {
+      "id": "ART-RISK-REGISTER",
+      "type": "artifact",
+      "title": "风险登记册",
+      "status": "generated-draft",
+      "knowledgeRefs": [
+        "note.风险登记册"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "P-ROOT",
+      "relation": "has_fact",
+      "to": "F-SAFETY"
+    },
+    {
+      "from": "P-ROOT",
+      "relation": "has_fact",
+      "to": "F-PRIVACY"
+    },
+    {
+      "from": "P-ROOT",
+      "relation": "has_fact",
+      "to": "F-FEEDBACK"
+    },
+    {
+      "from": "P-ROOT",
+      "relation": "has_fact",
+      "to": "F-INTEGRATION"
+    },
+    {
+      "from": "F-SAFETY",
+      "relation": "supports",
+      "to": "J-GOVERNANCE"
+    },
+    {
+      "from": "F-PRIVACY",
+      "relation": "supports",
+      "to": "J-GOVERNANCE"
+    },
+    {
+      "from": "F-FEEDBACK",
+      "relation": "supports",
+      "to": "J-ITERATION"
+    },
+    {
+      "from": "F-INTEGRATION",
+      "relation": "supports",
+      "to": "J-INTEGRATION"
+    },
+    {
+      "from": "J-GOVERNANCE",
+      "relation": "supports",
+      "to": "D-LIFECYCLE"
+    },
+    {
+      "from": "J-ITERATION",
+      "relation": "supports",
+      "to": "D-LIFECYCLE"
+    },
+    {
+      "from": "J-INTEGRATION",
+      "relation": "supports",
+      "to": "D-LIFECYCLE"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "requires",
+      "to": "A-SAFETY-BASELINE"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "requires",
+      "to": "A-ARCH-BASELINE"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "requires",
+      "to": "A-ITERATIONS"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "requires",
+      "to": "A-INTEGRATION-TRAIN"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "requires",
+      "to": "A-GRAY-RELEASE"
+    },
+    {
+      "from": "F-SAFETY",
+      "relation": "creates_risk",
+      "to": "R-UNAUTHORIZED"
+    },
+    {
+      "from": "F-PRIVACY",
+      "relation": "creates_risk",
+      "to": "R-DATA"
+    },
+    {
+      "from": "F-INTEGRATION",
+      "relation": "creates_risk",
+      "to": "R-PROTOCOL"
+    },
+    {
+      "from": "D-LIFECYCLE",
+      "relation": "documented_in",
+      "to": "ART-CHARTER"
+    },
+    {
+      "from": "R-UNAUTHORIZED",
+      "relation": "documented_in",
+      "to": "ART-RISK-REGISTER"
+    },
+    {
+      "from": "R-DATA",
+      "relation": "documented_in",
+      "to": "ART-RISK-REGISTER"
+    },
+    {
+      "from": "R-PROTOCOL",
+      "relation": "documented_in",
+      "to": "ART-RISK-REGISTER"
+    }
+  ],
+  "autofillBindings": [
+    {
+      "targetField": "project-charter.project_purpose",
+      "sourceIds": [
+        "INT-002",
+        "INT-003",
+        "D-LIFECYCLE"
+      ]
+    },
+    {
+      "targetField": "project-charter.high_level_requirements",
+      "sourceIds": [
+        "INT-006",
+        "INT-007"
+      ]
+    },
+    {
+      "targetField": "project-charter.overall_risk_summary",
+      "sourceIds": [
+        "R-UNAUTHORIZED",
+        "R-DATA",
+        "R-PROTOCOL"
+      ]
+    },
+    {
+      "targetField": "project-charter.milestone_plan",
+      "sourceIds": [
+        "A-SAFETY-BASELINE",
+        "A-ARCH-BASELINE",
+        "A-ITERATIONS",
+        "A-INTEGRATION-TRAIN",
+        "A-GRAY-RELEASE"
+      ]
+    }
+  ]
+}

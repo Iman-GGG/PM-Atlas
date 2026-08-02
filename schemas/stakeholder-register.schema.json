@@ -1,0 +1,43 @@
+{
+  "id": "template.stakeholder-register",
+  "version": "0.1.0",
+  "title": "干系人登记册",
+  "description": "记录干系人基本信息、评估信息、分类信息和参与程度差距。",
+  "rowType": "stakeholder",
+  "powerScale": { "min": 1, "max": 5 },
+  "interestScale": { "min": 1, "max": 5 },
+  "engagementLevels": [
+    { "id": "unaware", "label": "不了解", "order": 1 },
+    { "id": "resistant", "label": "抵制", "order": 2 },
+    { "id": "neutral", "label": "中立", "order": 3 },
+    { "id": "supportive", "label": "支持", "order": 4 },
+    { "id": "leading", "label": "领导", "order": 5 }
+  ],
+  "quadrantRules": [
+    { "id": "manage-closely", "label": "重点管理", "powerMin": 4, "interestMin": 4 },
+    { "id": "keep-satisfied", "label": "令其满意", "powerMin": 4, "interestMax": 3 },
+    { "id": "keep-informed", "label": "随时告知", "powerMax": 3, "interestMin": 4 },
+    { "id": "monitor", "label": "监督", "powerMax": 3, "interestMax": 3 }
+  ],
+  "fields": [
+    { "id": "id", "label": "编号", "type": "text", "required": true, "editable": false },
+    { "id": "role", "label": "角色", "type": "text", "required": true },
+    { "id": "organization", "label": "组织或群体", "type": "text", "required": true },
+    { "id": "internalExternal", "label": "内部/外部", "type": "enum", "values": ["internal", "external"], "required": true },
+    { "id": "needs", "label": "主要需求与期望", "type": "longText", "required": true },
+    { "id": "influence", "label": "影响方式", "type": "longText", "required": true },
+    { "id": "power", "label": "权力", "type": "integer", "min": 1, "max": 5, "required": true },
+    { "id": "interest", "label": "利益", "type": "integer", "min": 1, "max": 5, "required": true },
+    { "id": "quadrant", "label": "权力利益分类", "type": "derived", "required": true },
+    { "id": "attitude", "label": "态度", "type": "enum", "values": ["supportive", "neutral", "resistant"], "required": true },
+    { "id": "currentEngagement", "label": "当前参与程度", "type": "enum", "required": true },
+    { "id": "desiredEngagement", "label": "期望参与程度", "type": "enum", "required": true },
+    { "id": "strategy", "label": "管理策略", "type": "longText", "required": true },
+    { "id": "sourceIds", "label": "来源依据", "type": "referenceList", "required": true }
+  ],
+  "views": [
+    { "id": "register", "title": "干系人登记册", "type": "dynamicTable" },
+    { "id": "power-interest", "title": "权力利益方格", "type": "quadrant" },
+    { "id": "engagement", "title": "干系人参与度评估矩阵", "type": "currentDesiredMatrix" }
+  ]
+}

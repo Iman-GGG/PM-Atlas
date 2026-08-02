@@ -1,0 +1,226 @@
+{
+  "rulesVersion": "0.1.0",
+  "id": "rules.risk-scoring.default-v1",
+  "title": "风险概率与影响评分规则",
+  "sourceRefs": [
+    "note.风险概率和影响评估",
+    "note.概率和影响矩阵",
+    "workbook.高项论文-风险管理.概率和影响矩阵"
+  ],
+  "probabilityScale": [
+    {
+      "score": 1,
+      "label": "极低",
+      "range": "< 2%"
+    },
+    {
+      "score": 2,
+      "label": "低",
+      "range": "2%–<10%"
+    },
+    {
+      "score": 3,
+      "label": "中",
+      "range": "10%–<30%"
+    },
+    {
+      "score": 4,
+      "label": "高",
+      "range": "30%–50%"
+    },
+    {
+      "score": 5,
+      "label": "极高",
+      "range": "> 50%"
+    }
+  ],
+  "impactScale": [
+    {
+      "score": 1,
+      "label": "极低",
+      "definition": "影响轻微，可在日常工作内处理。"
+    },
+    {
+      "score": 2,
+      "label": "低",
+      "definition": "对单一目标产生有限影响，不改变关键里程碑或验收结论。"
+    },
+    {
+      "score": 3,
+      "label": "中",
+      "definition": "需要专项纠正并可能影响局部范围、进度、成本或质量。"
+    },
+    {
+      "score": 4,
+      "label": "高",
+      "definition": "显著影响一个或多个项目目标，需要管理层介入或调整基准。"
+    },
+    {
+      "score": 5,
+      "label": "极高",
+      "definition": "可能导致安全、合规或项目目标不可接受，或使项目无法继续。"
+    }
+  ],
+  "impactDimensions": [
+    "scope",
+    "schedule",
+    "cost",
+    "quality",
+    "safety",
+    "privacy",
+    "compliance"
+  ],
+  "calculations": {
+    "overallImpact": "max(scope, schedule, cost, quality, safety, privacy, compliance)",
+    "baseScore": "probability * overallImpact",
+    "ratingThresholds": [
+      {
+        "min": 1,
+        "max": 4,
+        "rating": "Low",
+        "label": "低"
+      },
+      {
+        "min": 5,
+        "max": 9,
+        "rating": "Medium",
+        "label": "中"
+      },
+      {
+        "min": 10,
+        "max": 16,
+        "rating": "High",
+        "label": "高"
+      },
+      {
+        "min": 17,
+        "max": 25,
+        "rating": "Critical",
+        "label": "极高"
+      }
+    ],
+    "safetyComplianceFloor": {
+      "condition": "safety == 5 or compliance == 5",
+      "minimumRating": "High",
+      "explanation": "极高安全或合规影响不得被低概率掩盖。"
+    },
+    "residualScore": "residualProbability * residualOverallImpact",
+    "derivedFieldsReadOnly": [
+      "overallImpact",
+      "baseScore",
+      "rating",
+      "residualOverallImpact",
+      "residualScore",
+      "residualRating"
+    ]
+  },
+  "matrix": {
+    "columns": [
+      {
+        "impact": 1,
+        "label": "极低"
+      },
+      {
+        "impact": 2,
+        "label": "低"
+      },
+      {
+        "impact": 3,
+        "label": "中"
+      },
+      {
+        "impact": 4,
+        "label": "高"
+      },
+      {
+        "impact": 5,
+        "label": "极高"
+      }
+    ],
+    "rows": [
+      {
+        "probability": 5,
+        "label": "极高",
+        "cells": [
+          "Medium",
+          "High",
+          "High",
+          "Critical",
+          "Critical"
+        ]
+      },
+      {
+        "probability": 4,
+        "label": "高",
+        "cells": [
+          "Low",
+          "Medium",
+          "High",
+          "High",
+          "Critical"
+        ]
+      },
+      {
+        "probability": 3,
+        "label": "中",
+        "cells": [
+          "Low",
+          "Medium",
+          "Medium",
+          "High",
+          "High"
+        ]
+      },
+      {
+        "probability": 2,
+        "label": "低",
+        "cells": [
+          "Low",
+          "Low",
+          "Medium",
+          "Medium",
+          "High"
+        ]
+      },
+      {
+        "probability": 1,
+        "label": "极低",
+        "cells": [
+          "Low",
+          "Low",
+          "Low",
+          "Low",
+          "Medium"
+        ]
+      }
+    ],
+    "colors": {
+      "Low": "#D9F0E3",
+      "Medium": "#FFF1B8",
+      "High": "#FFD1A6",
+      "Critical": "#F5B7B1"
+    }
+  },
+  "responseStrategies": {
+    "threat": [
+      "规避",
+      "减轻",
+      "转移",
+      "接受",
+      "上报"
+    ],
+    "opportunity": [
+      "开拓",
+      "提高",
+      "分享",
+      "接受",
+      "上报"
+    ]
+  },
+  "ratingActions": {
+    "Low": "由责任人纳入日常观察，按例会节奏复核。",
+    "Medium": "制定应对措施和触发条件，至少双周复核。",
+    "High": "指定责任人和到期日，纳入项目周报并跟踪剩余风险。",
+    "Critical": "立即上报发起人或治理机构，未降至可接受水平前不得进入受影响阶段门。"
+  }
+}

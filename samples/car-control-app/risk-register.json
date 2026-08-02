@@ -1,0 +1,506 @@
+{
+  "instanceVersion": "0.1.0",
+  "projectId": "car-control-app-001",
+  "templateId": "template.risk-register",
+  "scoringRulesRef": "rules.risk-scoring.default-v1",
+  "generatedAt": "2026-07-18",
+  "status": "推演草案",
+  "risks": [
+    {
+      "id": "RISK-001",
+      "riskType": "threat",
+      "title": "未授权远程车辆控制",
+      "cause": "身份认证、设备绑定、授权校验或指令签名存在设计或实现缺陷",
+      "event": "攻击者或无权用户可能发起车门、空调等远程控制指令",
+      "effect": "可能造成人身财产安全影响、用户信任损失和监管事件",
+      "category": "安全",
+      "ownerRole": "信息安全负责人",
+      "probability": 2,
+      "impacts": {
+        "scope": 3,
+        "schedule": 4,
+        "cost": 4,
+        "quality": 5,
+        "safety": 5,
+        "privacy": 4,
+        "compliance": 5
+      },
+      "overallImpact": 5,
+      "baseScore": 10,
+      "rating": "High",
+      "strategy": "减轻",
+      "responseActions": [
+        "采用强身份认证、可信设备绑定和最小权限授权",
+        "对关键指令执行签名、重放防护、风控校验和全量审计",
+        "开展授权绕过、会话劫持和远程控制专项安全测试",
+        "建立异常指令熔断和紧急停用能力"
+      ],
+      "trigger": "出现异常地点登录、设备快速切换、重复失败控制或越权访问告警",
+      "contingencyPlan": "立即停用受影响的远程控制能力，吊销会话与密钥，启动安全事件响应和用户通知评估。",
+      "dueDate": "2026-12-04",
+      "residualProbability": 1,
+      "residualImpacts": {
+        "scope": 2,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 4,
+        "safety": 5,
+        "privacy": 4,
+        "compliance": 5
+      },
+      "residualOverallImpact": 5,
+      "residualScore": 5,
+      "residualRating": "High",
+      "residualExplanation": "控制措施主要降低发生概率；一旦事件发生，安全与合规后果仍然极高，因此等级保持 High。",
+      "status": "response-planned",
+      "sourceIds": [
+        "INT-006",
+        "INT-007",
+        "R-UNAUTHORIZED"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-002",
+      "riskType": "threat",
+      "title": "位置与车辆数据泄露或超范围使用",
+      "cause": "数据收集边界不清、访问控制薄弱、日志脱敏不足或第三方使用范围不受控",
+      "event": "身份、位置、车辆状态或操作记录可能被泄露、滥用或保存超期",
+      "effect": "可能导致隐私侵害、监管处罚、品牌损害和项目暂停",
+      "category": "隐私与合规",
+      "ownerRole": "数据合规负责人",
+      "probability": 4,
+      "impacts": {
+        "scope": 4,
+        "schedule": 4,
+        "cost": 4,
+        "quality": 4,
+        "safety": 3,
+        "privacy": 5,
+        "compliance": 5
+      },
+      "overallImpact": 5,
+      "baseScore": 20,
+      "rating": "Critical",
+      "strategy": "规避",
+      "responseActions": [
+        "开展数据清单和隐私影响评估，删除非必要采集项",
+        "对传输、存储和备份实施加密与密钥隔离",
+        "实施按角色和场景的访问控制、脱敏与访问审计",
+        "明确留存期限、删除流程和第三方数据处理边界"
+      ],
+      "trigger": "发现未登记数据字段、异常批量查询、脱敏失败或第三方用途超出协议",
+      "contingencyPlan": "隔离访问、暂停相关处理、保全证据、评估通知义务并执行监管和用户沟通预案。",
+      "dueDate": "2026-09-18",
+      "residualProbability": 2,
+      "residualImpacts": {
+        "scope": 3,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 3,
+        "safety": 2,
+        "privacy": 5,
+        "compliance": 5
+      },
+      "residualOverallImpact": 5,
+      "residualScore": 10,
+      "residualRating": "High",
+      "residualExplanation": "数据最小化和访问控制可降低概率，但重大隐私或合规事件的后果仍高。",
+      "status": "response-in-progress",
+      "sourceIds": [
+        "INT-004",
+        "INT-007",
+        "R-DATA"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-003",
+      "riskType": "threat",
+      "title": "车型协议或状态语义不一致",
+      "cause": "不同车型、年款和供应商对控制指令、状态码和超时行为定义不一致",
+      "event": "App 或云端可能错误解释车辆状态或控制结果",
+      "effect": "可能造成错误反馈、重复操作、兼容性缺陷和发布延期",
+      "category": "集成",
+      "ownerRole": "车端技术负责人",
+      "probability": 4,
+      "impacts": {
+        "scope": 4,
+        "schedule": 4,
+        "cost": 3,
+        "quality": 4,
+        "safety": 4,
+        "privacy": 1,
+        "compliance": 2
+      },
+      "overallImpact": 4,
+      "baseScore": 16,
+      "rating": "High",
+      "strategy": "减轻",
+      "responseActions": [
+        "建立统一接口契约、错误码和状态机定义",
+        "建设协议模拟器与自动化契约测试",
+        "维护车型、年款、软件版本兼容矩阵",
+        "对异常状态实施幂等、去重和用户可理解反馈"
+      ],
+      "trigger": "契约测试失败率上升、同一指令在不同车型出现不一致结果或状态长时间未知",
+      "contingencyPlan": "关闭受影响车型的控制入口，回退到查询模式并启动协议适配修复。",
+      "dueDate": "2026-10-09",
+      "residualProbability": 2,
+      "residualImpacts": {
+        "scope": 2,
+        "schedule": 3,
+        "cost": 2,
+        "quality": 3,
+        "safety": 3,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "residualOverallImpact": 3,
+      "residualScore": 6,
+      "residualRating": "Medium",
+      "residualExplanation": "接口契约和模拟测试降低发生概率，车型级熔断降低影响范围。",
+      "status": "response-planned",
+      "sourceIds": [
+        "INT-012",
+        "F-INTEGRATION",
+        "R-PROTOCOL"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-004",
+      "riskType": "threat",
+      "title": "外部 SDK 或供应商交付延期",
+      "cause": "地图、推送、车辆通信组件或供应商资源不受项目团队直接控制",
+      "event": "关键 SDK、接口文档或适配版本可能晚于集成窗口交付",
+      "effect": "可能压缩集成测试时间并导致灰度发布延期",
+      "category": "供应商",
+      "ownerRole": "供应商管理负责人",
+      "probability": 3,
+      "impacts": {
+        "scope": 3,
+        "schedule": 4,
+        "cost": 3,
+        "quality": 3,
+        "safety": 2,
+        "privacy": 2,
+        "compliance": 2
+      },
+      "overallImpact": 4,
+      "baseScore": 12,
+      "rating": "High",
+      "strategy": "转移",
+      "responseActions": [
+        "在合同和工作说明中明确里程碑、验收标准与延期责任",
+        "设置接口模拟层和替代服务方案",
+        "将供应商交付纳入每周集成准备度检查"
+      ],
+      "trigger": "供应商里程碑延迟超过五个工作日或接口问题连续两个周期未关闭",
+      "contingencyPlan": "启用模拟服务或替代供应商，调整非关键范围并保护核心集成窗口。",
+      "dueDate": "2026-10-23",
+      "residualProbability": 2,
+      "residualImpacts": {
+        "scope": 2,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 2,
+        "safety": 1,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "residualOverallImpact": 3,
+      "residualScore": 6,
+      "residualRating": "Medium",
+      "residualExplanation": "合同约束与模拟服务降低延期概率和对主路径的影响。",
+      "status": "identified",
+      "sourceIds": [
+        "INT-012",
+        "INT-014"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-005",
+      "riskType": "threat",
+      "title": "弱网与重复指令造成状态不一致",
+      "cause": "移动网络不稳定、车辆离线、超时重试或消息重复",
+      "event": "用户可能重复提交控制，App、云端与车辆对最终状态产生不同理解",
+      "effect": "可能造成错误提示、重复操作、用户投诉或安全疑虑",
+      "category": "技术",
+      "ownerRole": "云端技术负责人",
+      "probability": 4,
+      "impacts": {
+        "scope": 3,
+        "schedule": 3,
+        "cost": 2,
+        "quality": 4,
+        "safety": 4,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "overallImpact": 4,
+      "baseScore": 16,
+      "rating": "High",
+      "strategy": "减轻",
+      "responseActions": [
+        "为指令分配唯一 ID 并实施幂等、去重与状态机",
+        "区分已接收、执行中、成功、失败和未知状态",
+        "设计超时、重试、补偿查询和用户提示规则",
+        "覆盖弱网、断网、乱序和重复消息测试"
+      ],
+      "trigger": "未知状态比例或重复指令比例超过质量阈值",
+      "contingencyPlan": "暂时禁止受影响操作的自动重试，提示用户刷新车况并由客服处理异常会话。",
+      "dueDate": "2026-12-18",
+      "residualProbability": 2,
+      "residualImpacts": {
+        "scope": 2,
+        "schedule": 2,
+        "cost": 2,
+        "quality": 3,
+        "safety": 3,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "residualOverallImpact": 3,
+      "residualScore": 6,
+      "residualRating": "Medium",
+      "residualExplanation": "状态机和幂等控制降低重复执行概率，明确反馈降低用户影响。",
+      "status": "response-planned",
+      "sourceIds": [
+        "INT-007",
+        "INT-010"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-006",
+      "riskType": "threat",
+      "title": "多车型兼容性覆盖不足",
+      "cause": "首批车型、年款、车端软件版本和真实车辆资源尚未完全冻结",
+      "event": "测试样本可能无法覆盖关键组合，导致上线后出现车型特有缺陷",
+      "effect": "可能影响质量、车主体验和正式发布范围",
+      "category": "质量",
+      "ownerRole": "测试与质量负责人",
+      "probability": 4,
+      "impacts": {
+        "scope": 3,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 3,
+        "safety": 3,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "overallImpact": 3,
+      "baseScore": 12,
+      "rating": "High",
+      "strategy": "减轻",
+      "responseActions": [
+        "冻结首批车型、年款和软件版本范围",
+        "建立按风险优先级排序的车型兼容矩阵",
+        "结合模拟器、台架和真实车辆分层测试",
+        "按车型设置功能开关与灰度准入"
+      ],
+      "trigger": "首批车型范围变更、测试车辆交付延迟或特定车型失败率显著上升",
+      "contingencyPlan": "缩小首发车型范围，对未达到门槛的车型关闭相关功能。",
+      "dueDate": "2027-01-22",
+      "residualProbability": 2,
+      "residualImpacts": {
+        "scope": 2,
+        "schedule": 2,
+        "cost": 2,
+        "quality": 3,
+        "safety": 2,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "residualOverallImpact": 3,
+      "residualScore": 6,
+      "residualRating": "Medium",
+      "residualExplanation": "风险分层测试和车型级功能开关限制受影响范围。",
+      "status": "identified",
+      "sourceIds": [
+        "INT-003",
+        "INT-012",
+        "OPEN-003"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-007",
+      "riskType": "threat",
+      "title": "应用商店审核影响发布日期",
+      "cause": "审核周期、隐私说明或权限使用可能触发补充材料与重新提交",
+      "event": "应用可能未能按计划通过 iOS 或 Android 渠道审核",
+      "effect": "可能造成正式发布延期或双平台发布时间不一致",
+      "category": "外部",
+      "ownerRole": "发布负责人",
+      "probability": 2,
+      "impacts": {
+        "scope": 2,
+        "schedule": 3,
+        "cost": 2,
+        "quality": 2,
+        "safety": 1,
+        "privacy": 3,
+        "compliance": 3
+      },
+      "overallImpact": 3,
+      "baseScore": 6,
+      "rating": "Medium",
+      "strategy": "减轻",
+      "responseActions": [
+        "提前完成隐私标签、权限说明和审核材料",
+        "预留至少两个审核周期并进行预审",
+        "将服务端启用与应用发布解耦"
+      ],
+      "trigger": "预审发现隐私说明缺失或首次审核被拒",
+      "contingencyPlan": "调整分平台发布日期并通过服务端开关控制功能开放。",
+      "dueDate": "2027-02-26",
+      "residualProbability": 1,
+      "residualImpacts": {
+        "scope": 1,
+        "schedule": 2,
+        "cost": 1,
+        "quality": 1,
+        "safety": 1,
+        "privacy": 2,
+        "compliance": 2
+      },
+      "residualOverallImpact": 2,
+      "residualScore": 2,
+      "residualRating": "Low",
+      "residualExplanation": "预审和服务端开关降低被拒概率及双平台差异影响。",
+      "status": "identified",
+      "sourceIds": [
+        "INT-009",
+        "INT-012"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-008",
+      "riskType": "threat",
+      "title": "证书或密钥失效导致控制服务中断",
+      "cause": "证书生命周期、密钥轮换和多环境配置缺少统一管理",
+      "event": "生产证书可能过期、配置错误或轮换失败",
+      "effect": "远程控制不可用，或在错误处理时形成安全暴露",
+      "category": "安全",
+      "ownerRole": "平台运维负责人",
+      "probability": 2,
+      "impacts": {
+        "scope": 2,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 5,
+        "safety": 5,
+        "privacy": 4,
+        "compliance": 4
+      },
+      "overallImpact": 5,
+      "baseScore": 10,
+      "rating": "High",
+      "strategy": "规避",
+      "responseActions": [
+        "建立证书和密钥资产清单、责任人和到期预警",
+        "使用受控密钥管理服务并实施双人审批",
+        "定期演练轮换、回退和灾难恢复",
+        "禁止在代码、日志和非受控配置中保存密钥"
+      ],
+      "trigger": "证书距到期少于 60 天、轮换演练失败或发现非受控密钥副本",
+      "contingencyPlan": "启用上一受控版本或备用证书，暂停高风险操作并执行紧急轮换。",
+      "dueDate": "2027-01-08",
+      "residualProbability": 1,
+      "residualImpacts": {
+        "scope": 1,
+        "schedule": 2,
+        "cost": 2,
+        "quality": 4,
+        "safety": 5,
+        "privacy": 3,
+        "compliance": 3
+      },
+      "residualOverallImpact": 5,
+      "residualScore": 5,
+      "residualRating": "High",
+      "residualExplanation": "自动预警和轮换演练降低概率，但密钥失效或泄露的安全后果仍可能极高。",
+      "status": "identified",
+      "sourceIds": [
+        "INT-007",
+        "J-GOVERNANCE"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    },
+    {
+      "id": "RISK-009",
+      "riskType": "opportunity",
+      "title": "统一车辆服务能力可复用于后续车型",
+      "cause": "项目建设统一接口契约、状态模型和安全控制能力",
+      "event": "后续车型可能以较低成本接入同一移动与云端平台",
+      "effect": "可能缩短新车型数字服务交付周期并提升平台复用率",
+      "category": "技术",
+      "ownerRole": "总体技术负责人",
+      "probability": 3,
+      "impacts": {
+        "scope": 3,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 3,
+        "safety": 1,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "overallImpact": 3,
+      "baseScore": 9,
+      "rating": "Medium",
+      "strategy": "提高",
+      "responseActions": [
+        "将车型差异隔离在适配层并建立标准接口契约",
+        "把可复用组件和接入指南纳入交付成果",
+        "在首批之外选择一款车型做低成本验证"
+      ],
+      "trigger": "第二款车型接口差异可由现有适配层覆盖且接入工作量显著下降",
+      "contingencyPlan": "如复用成本不降，则停止泛化投入并保持首批车型专用实现。",
+      "dueDate": "2027-02-19",
+      "residualProbability": 4,
+      "residualImpacts": {
+        "scope": 3,
+        "schedule": 3,
+        "cost": 3,
+        "quality": 3,
+        "safety": 1,
+        "privacy": 1,
+        "compliance": 1
+      },
+      "residualOverallImpact": 3,
+      "residualScore": 12,
+      "residualRating": "High",
+      "residualExplanation": "通过标准化和第二车型验证主动提高机会发生概率，因此机会评分从 Medium 提升到 High。",
+      "status": "response-planned",
+      "sourceIds": [
+        "INT-005",
+        "INT-012",
+        "J-INTEGRATION"
+      ],
+      "updatedAt": "2026-07-18T12:00:00+08:00"
+    }
+  ],
+  "summary": {
+    "threatCount": 8,
+    "opportunityCount": 1,
+    "inherentRatings": {
+      "Critical": 1,
+      "High": 6,
+      "Medium": 2,
+      "Low": 0
+    },
+    "residualRatings": {
+      "Critical": 0,
+      "High": 4,
+      "Medium": 4,
+      "Low": 1
+    },
+    "note": "剩余等级中包含一项经主动提高后达到 High 的机会。"
+  }
+}

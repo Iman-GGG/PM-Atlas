@@ -1,0 +1,2602 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-19T09:12:38.293Z",
+  "source": {
+    "vaultName": "信息系统项目管理师2026",
+    "absolutePath": "/Users/iman/Library/Mobile Documents/iCloud~md~obsidian/Documents/Iman ☁️/信息系统项目管理师2026",
+    "policy": "read-only source; generated files are derived copies"
+  },
+  "catalogs": {
+    "processGroups": {
+      "key": "processGroups",
+      "title": "5大管理过程组",
+      "expected": 5,
+      "sourceNodeId": "5大管理过程组.md",
+      "members": [
+        {
+          "id": "启动过程组.md",
+          "title": "启动过程组",
+          "relativePath": "启动过程组.md"
+        },
+        {
+          "id": "规划过程组.md",
+          "title": "规划过程组",
+          "relativePath": "规划过程组.md"
+        },
+        {
+          "id": "执行过程组.md",
+          "title": "执行过程组",
+          "relativePath": "执行过程组.md"
+        },
+        {
+          "id": "监控过程组.md",
+          "title": "监控过程组",
+          "relativePath": "监控过程组.md"
+        },
+        {
+          "id": "收尾过程组.md",
+          "title": "收尾过程组",
+          "relativePath": "收尾过程组.md"
+        }
+      ],
+      "actual": 5,
+      "matchesExpected": true
+    },
+    "performanceDomains": {
+      "key": "performanceDomains",
+      "title": "8大绩效域",
+      "expected": 8,
+      "sourceNodeId": "8大绩效域.md",
+      "members": [
+        {
+          "id": "干系人绩效域.md",
+          "title": "干系人绩效域",
+          "relativePath": "干系人绩效域.md"
+        },
+        {
+          "id": "团队绩效域.md",
+          "title": "团队绩效域",
+          "relativePath": "团队绩效域.md"
+        },
+        {
+          "id": "开发方法和生命周期绩效域.md",
+          "title": "开发方法和生命周期绩效域",
+          "relativePath": "开发方法和生命周期绩效域.md"
+        },
+        {
+          "id": "规划绩效域.md",
+          "title": "规划绩效域",
+          "relativePath": "规划绩效域.md"
+        },
+        {
+          "id": "项目工作绩效域.md",
+          "title": "项目工作绩效域",
+          "relativePath": "项目工作绩效域.md"
+        },
+        {
+          "id": "交付绩效域.md",
+          "title": "交付绩效域",
+          "relativePath": "交付绩效域.md"
+        },
+        {
+          "id": "度量绩效域.md",
+          "title": "度量绩效域",
+          "relativePath": "度量绩效域.md"
+        },
+        {
+          "id": "不确定性绩效域.md",
+          "title": "不确定性绩效域",
+          "relativePath": "不确定性绩效域.md"
+        }
+      ],
+      "actual": 8,
+      "matchesExpected": true,
+      "extraction": "numbered-wiki-links"
+    },
+    "tailoringFactors": {
+      "key": "tailoringFactors",
+      "title": "10大管理需要裁剪因素",
+      "expected": 10,
+      "sourceNodeId": "10大管理需要裁剪因素.md",
+      "members": [
+        {
+          "id": "10大管理需要裁剪因素.md#整合",
+          "title": "整合",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "项目生命周期、开发生命周期、管理方法、知识管理、变更、治理、经验教训、效益",
+          "mnemonic": "2生2管理贝哥《谐音》治理得教经效",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#范围",
+          "title": "范围",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "知识和需求管理、确认和控制、开发方法、需求的稳定性、治理",
+          "mnemonic": "需求确认控制开发稳定治理",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#进度",
+          "title": "进度",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "生命周期方法、资源可用性、项目维度技术支持",
+          "mnemonic": "生命周期资源项维技支持",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#成本",
+          "title": "成本",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "知识管理、估算和预算、挣值管理、敏捷方法的使用、治理",
+          "mnemonic": "知识估预算，挣敏的使用哩",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#质量",
+          "title": "质量",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "政策合规与审计、标准与法规合规性、持续改进、干系人参与",
+          "mnemonic": "政策合规审计改进参与",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#资源",
+          "title": "资源",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "多元化、物理位置、行业特定资源、团队成员的获得、团队管理、生命周期方法",
+          "mnemonic": "多位行业获得管理方法",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#沟通",
+          "title": "沟通",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "干系人、物理地点、沟通技术、语言、知识管理",
+          "mnemonic": "人沟通相关地语言管理",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#风险",
+          "title": "风险",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "项目规模、项目复杂性、项目重要性、开发方法",
+          "mnemonic": "规模复杂重要开发方法",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#采购",
+          "title": "采购",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "采购的复杂性、物理地点、治理和法规环境、承包商的可用性",
+          "mnemonic": "承包商采购复杂地点治理环境",
+          "inlineRecord": true
+        },
+        {
+          "id": "10大管理需要裁剪因素.md#干系人",
+          "title": "干系人",
+          "relativePath": "10大管理需要裁剪因素.md",
+          "considerations": "干系人多样性、干系人关系的复杂性、沟通技术",
+          "mnemonic": "多样关系复杂沟通技术",
+          "inlineRecord": true
+        }
+      ],
+      "actual": 10,
+      "matchesExpected": true,
+      "extraction": "markdown-table-rows"
+    },
+    "knowledgeAreas": {
+      "key": "knowledgeAreas",
+      "title": "10大知识领域",
+      "expected": 10,
+      "sourceNodeId": "10大知识领域.md",
+      "members": [
+        {
+          "id": "项目整合管理.md",
+          "title": "项目整合管理",
+          "relativePath": "项目整合管理.md"
+        },
+        {
+          "id": "项目范围管理.md",
+          "title": "项目范围管理",
+          "relativePath": "项目范围管理.md"
+        },
+        {
+          "id": "项目进度管理.md",
+          "title": "项目进度管理",
+          "relativePath": "项目进度管理.md"
+        },
+        {
+          "id": "项目成本管理.md",
+          "title": "项目成本管理",
+          "relativePath": "项目成本管理.md"
+        },
+        {
+          "id": "项目质量管理.md",
+          "title": "项目质量管理",
+          "relativePath": "项目质量管理.md"
+        },
+        {
+          "id": "项目资源管理.md",
+          "title": "项目资源管理",
+          "relativePath": "项目资源管理.md"
+        },
+        {
+          "id": "项目沟通管理.md",
+          "title": "项目沟通管理",
+          "relativePath": "项目沟通管理.md"
+        },
+        {
+          "id": "项目风险管理.md",
+          "title": "项目风险管理",
+          "relativePath": "项目风险管理.md"
+        },
+        {
+          "id": "项目采购管理.md",
+          "title": "项目采购管理",
+          "relativePath": "项目采购管理.md"
+        },
+        {
+          "id": "项目干系人管理.md",
+          "title": "项目干系人管理",
+          "relativePath": "项目干系人管理.md"
+        }
+      ],
+      "actual": 10,
+      "matchesExpected": true
+    },
+    "projectDocuments": {
+      "key": "projectDocuments",
+      "title": "32项目文件",
+      "expected": 32,
+      "sourceNodeId": "32项目文件.md",
+      "members": [
+        {
+          "id": "活动属性.md",
+          "title": "活动属性",
+          "relativePath": "活动属性.md"
+        },
+        {
+          "id": "活动清单.md",
+          "title": "活动清单",
+          "relativePath": "活动清单.md"
+        },
+        {
+          "id": "假设日志.md",
+          "title": "假设日志",
+          "relativePath": "假设日志.md"
+        },
+        {
+          "id": "估算依据.md",
+          "title": "估算依据",
+          "relativePath": "估算依据.md"
+        },
+        {
+          "id": "变更日志.md",
+          "title": "变更日志",
+          "relativePath": "变更日志.md"
+        },
+        {
+          "id": "成本估算.md",
+          "title": "成本估算",
+          "relativePath": "成本估算.md"
+        },
+        {
+          "id": "持续时间估算.md",
+          "title": "持续时间估算",
+          "relativePath": "持续时间估算.md"
+        },
+        {
+          "id": "问题日志.md",
+          "title": "问题日志",
+          "relativePath": "问题日志.md"
+        },
+        {
+          "id": "经验教训登记册.md",
+          "title": "经验教训登记册",
+          "relativePath": "经验教训登记册.md"
+        },
+        {
+          "id": "里程碑清单.md",
+          "title": "里程碑清单",
+          "relativePath": "里程碑清单.md"
+        },
+        {
+          "id": "物质资源分配单.md",
+          "title": "物质资源分配单",
+          "relativePath": "物质资源分配单.md"
+        },
+        {
+          "id": "项目日历.md",
+          "title": "项目日历",
+          "relativePath": "项目日历.md"
+        },
+        {
+          "id": "项目沟通记录.md",
+          "title": "项目沟通记录",
+          "relativePath": "项目沟通记录.md"
+        },
+        {
+          "id": "项目进度计划.md",
+          "title": "项目进度计划",
+          "relativePath": "项目进度计划.md"
+        },
+        {
+          "id": "项目进度网络图.md",
+          "title": "项目进度网络图",
+          "relativePath": "项目进度网络图.md"
+        },
+        {
+          "id": "项目范围说明书.md",
+          "title": "项目范围说明书",
+          "relativePath": "项目范围说明书.md"
+        },
+        {
+          "id": "项目团队派工单.md",
+          "title": "项目团队派工单",
+          "relativePath": "项目团队派工单.md"
+        },
+        {
+          "id": "质量控制测量结果.md",
+          "title": "质量控制测量结果",
+          "relativePath": "质量控制测量结果.md"
+        },
+        {
+          "id": "质量测量指标.md",
+          "title": "质量测量指标",
+          "relativePath": "质量测量指标.md"
+        },
+        {
+          "id": "质量报告.md",
+          "title": "质量报告",
+          "relativePath": "质量报告.md"
+        },
+        {
+          "id": "需求文件.md",
+          "title": "需求文件",
+          "relativePath": "需求文件.md"
+        },
+        {
+          "id": "需求跟踪矩阵.md",
+          "title": "需求跟踪矩阵",
+          "relativePath": "需求跟踪矩阵.md"
+        },
+        {
+          "id": "资源分解结构.md",
+          "title": "资源分解结构",
+          "relativePath": "资源分解结构.md"
+        },
+        {
+          "id": "资源日历.md",
+          "title": "资源日历",
+          "relativePath": "资源日历.md"
+        },
+        {
+          "id": "资源需求.md",
+          "title": "资源需求",
+          "relativePath": "资源需求.md"
+        },
+        {
+          "id": "风险登记册.md",
+          "title": "风险登记册",
+          "relativePath": "风险登记册.md"
+        },
+        {
+          "id": "风险报告.md",
+          "title": "风险报告",
+          "relativePath": "风险报告.md"
+        },
+        {
+          "id": "进度数据.md",
+          "title": "进度数据",
+          "relativePath": "进度数据.md"
+        },
+        {
+          "id": "进度预测.md",
+          "title": "进度预测",
+          "relativePath": "进度预测.md"
+        },
+        {
+          "id": "干系人登记册.md",
+          "title": "干系人登记册",
+          "relativePath": "干系人登记册.md"
+        },
+        {
+          "id": "团队章程.md",
+          "title": "团队章程",
+          "relativePath": "团队章程.md"
+        },
+        {
+          "id": "测试与评估文件.md",
+          "title": "测试与评估文件",
+          "relativePath": "测试与评估文件.md"
+        }
+      ],
+      "actual": 32,
+      "matchesExpected": true
+    },
+    "toolCategories": {
+      "key": "toolCategories",
+      "title": "133个工具和技术",
+      "expected": 7,
+      "sourceNodeId": "133个工具和技术.md",
+      "members": [
+        {
+          "id": "数据收集.md",
+          "title": "数据收集",
+          "relativePath": "数据收集.md"
+        },
+        {
+          "id": "数据分析.md",
+          "title": "数据分析",
+          "relativePath": "数据分析.md"
+        },
+        {
+          "id": "数据表现.md",
+          "title": "数据表现",
+          "relativePath": "数据表现.md"
+        },
+        {
+          "id": "决策.md",
+          "title": "决策",
+          "relativePath": "决策.md"
+        },
+        {
+          "id": "沟通.md",
+          "title": "沟通",
+          "relativePath": "沟通.md"
+        },
+        {
+          "id": "人际关系和团队技能.md",
+          "title": "人际关系和团队技能",
+          "relativePath": "人际关系和团队技能.md"
+        },
+        {
+          "id": "其他工具和技术.md",
+          "title": "其他工具和技术",
+          "relativePath": "其他工具和技术.md"
+        }
+      ],
+      "actual": 7,
+      "matchesExpected": true
+    },
+    "processes": {
+      "title": "49子过程",
+      "expected": 49,
+      "actual": 49,
+      "matchesExpected": true,
+      "members": [
+        {
+          "id": "制定项目章程.md",
+          "title": "制定项目章程",
+          "relativePath": "制定项目章程.md",
+          "processGroups": [
+            "启动过程组"
+          ]
+        },
+        {
+          "id": "识别干系人.md",
+          "title": "识别干系人",
+          "relativePath": "识别干系人.md",
+          "processGroups": [
+            "启动过程组"
+          ]
+        },
+        {
+          "id": "制定项目管理计划.md",
+          "title": "制定项目管理计划",
+          "relativePath": "制定项目管理计划.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划范围管理.md",
+          "title": "规划范围管理",
+          "relativePath": "规划范围管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "收集需求.md",
+          "title": "收集需求",
+          "relativePath": "收集需求.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "定义范围.md",
+          "title": "定义范围",
+          "relativePath": "定义范围.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "创建 WBS.md",
+          "title": "创建 WBS",
+          "relativePath": "创建 WBS.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划进度管理.md",
+          "title": "规划进度管理",
+          "relativePath": "规划进度管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "定义活动.md",
+          "title": "定义活动",
+          "relativePath": "定义活动.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "排列活动顺序.md",
+          "title": "排列活动顺序",
+          "relativePath": "排列活动顺序.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "估算活动持续时间.md",
+          "title": "估算活动持续时间",
+          "relativePath": "估算活动持续时间.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "制定进度计划.md",
+          "title": "制定进度计划",
+          "relativePath": "制定进度计划.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划成本管理.md",
+          "title": "规划成本管理",
+          "relativePath": "规划成本管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "估算成本.md",
+          "title": "估算成本",
+          "relativePath": "估算成本.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "制定预算.md",
+          "title": "制定预算",
+          "relativePath": "制定预算.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划质量管理.md",
+          "title": "规划质量管理",
+          "relativePath": "规划质量管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划资源管理.md",
+          "title": "规划资源管理",
+          "relativePath": "规划资源管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "估算活动资源.md",
+          "title": "估算活动资源",
+          "relativePath": "估算活动资源.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划沟通管理.md",
+          "title": "规划沟通管理",
+          "relativePath": "规划沟通管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划风险管理.md",
+          "title": "规划风险管理",
+          "relativePath": "规划风险管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "识别风险.md",
+          "title": "识别风险",
+          "relativePath": "识别风险.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "实施定性风险管理.md",
+          "title": "实施定性风险管理",
+          "relativePath": "实施定性风险管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "实施定量风险管理.md",
+          "title": "实施定量风险管理",
+          "relativePath": "实施定量风险管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划风险应对.md",
+          "title": "规划风险应对",
+          "relativePath": "规划风险应对.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划采购管理.md",
+          "title": "规划采购管理",
+          "relativePath": "规划采购管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "规划干系人管理.md",
+          "title": "规划干系人管理",
+          "relativePath": "规划干系人管理.md",
+          "processGroups": [
+            "规划过程组"
+          ]
+        },
+        {
+          "id": "指导与管理项目工作.md",
+          "title": "指导与管理项目工作",
+          "relativePath": "指导与管理项目工作.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "管理项目知识.md",
+          "title": "管理项目知识",
+          "relativePath": "管理项目知识.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "管理质量.md",
+          "title": "管理质量",
+          "relativePath": "管理质量.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "获取资源.md",
+          "title": "获取资源",
+          "relativePath": "获取资源.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "建设团队.md",
+          "title": "建设团队",
+          "relativePath": "建设团队.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "管理团队.md",
+          "title": "管理团队",
+          "relativePath": "管理团队.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "管理沟通.md",
+          "title": "管理沟通",
+          "relativePath": "管理沟通.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "实施风险应对.md",
+          "title": "实施风险应对",
+          "relativePath": "实施风险应对.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "实施采购.md",
+          "title": "实施采购",
+          "relativePath": "实施采购.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "管理干系人参与.md",
+          "title": "管理干系人参与",
+          "relativePath": "管理干系人参与.md",
+          "processGroups": [
+            "执行过程组"
+          ]
+        },
+        {
+          "id": "监控项目工作.md",
+          "title": "监控项目工作",
+          "relativePath": "监控项目工作.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "实施整体变更控制.md",
+          "title": "实施整体变更控制",
+          "relativePath": "实施整体变更控制.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "确认范围.md",
+          "title": "确认范围",
+          "relativePath": "确认范围.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制范围.md",
+          "title": "控制范围",
+          "relativePath": "控制范围.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制进度.md",
+          "title": "控制进度",
+          "relativePath": "控制进度.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制成本.md",
+          "title": "控制成本",
+          "relativePath": "控制成本.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制质量.md",
+          "title": "控制质量",
+          "relativePath": "控制质量.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制资源.md",
+          "title": "控制资源",
+          "relativePath": "控制资源.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "监督沟通.md",
+          "title": "监督沟通",
+          "relativePath": "监督沟通.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "监督风险.md",
+          "title": "监督风险",
+          "relativePath": "监督风险.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "控制采购.md",
+          "title": "控制采购",
+          "relativePath": "控制采购.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "监督干系人参与.md",
+          "title": "监督干系人参与",
+          "relativePath": "监督干系人参与.md",
+          "processGroups": [
+            "监控过程组"
+          ]
+        },
+        {
+          "id": "结束项目或阶段.md",
+          "title": "结束项目或阶段",
+          "relativePath": "结束项目或阶段.md",
+          "processGroups": [
+            "收尾过程组"
+          ]
+        }
+      ]
+    },
+    "tools": {
+      "title": "133工具和技术",
+      "expected": 133,
+      "actualUnique": 132,
+      "actualMemberships": 132,
+      "matchesExpected": false,
+      "members": [
+        {
+          "id": "标杆对照.md",
+          "title": "标杆对照",
+          "relativePath": "标杆对照.md"
+        },
+        {
+          "id": "访谈.md",
+          "title": "访谈",
+          "relativePath": "访谈.md"
+        },
+        {
+          "id": "核查表.md",
+          "title": "核查表",
+          "relativePath": "核查表.md"
+        },
+        {
+          "id": "核对单.md",
+          "title": "核对单",
+          "relativePath": "核对单.md"
+        },
+        {
+          "id": "焦点小组.md",
+          "title": "焦点小组",
+          "relativePath": "焦点小组.md"
+        },
+        {
+          "id": "市场调研.md",
+          "title": "市场调研",
+          "relativePath": "市场调研.md"
+        },
+        {
+          "id": "统计抽样.md",
+          "title": "统计抽样",
+          "relativePath": "统计抽样.md"
+        },
+        {
+          "id": "头脑风暴.md",
+          "title": "头脑风暴",
+          "relativePath": "头脑风暴.md"
+        },
+        {
+          "id": "问卷调查.md",
+          "title": "问卷调查",
+          "relativePath": "问卷调查.md"
+        },
+        {
+          "id": "备选方案分析.md",
+          "title": "备选方案分析",
+          "relativePath": "备选方案分析.md"
+        },
+        {
+          "id": "成本效益分析.md",
+          "title": "成本效益分析",
+          "relativePath": "成本效益分析.md"
+        },
+        {
+          "id": "储备分析.md",
+          "title": "储备分析",
+          "relativePath": "储备分析.md"
+        },
+        {
+          "id": "迭代燃尽图.md",
+          "title": "迭代燃尽图",
+          "relativePath": "迭代燃尽图.md"
+        },
+        {
+          "id": "风险概率和影响评估.md",
+          "title": "风险概率和影响评估",
+          "relativePath": "风险概率和影响评估.md"
+        },
+        {
+          "id": "风险数据质量评估.md",
+          "title": "风险数据质量评估",
+          "relativePath": "风险数据质量评估.md"
+        },
+        {
+          "id": "干系人分析法.md",
+          "title": "干系人分析法",
+          "relativePath": "干系人分析法.md"
+        },
+        {
+          "id": "根本原因分析.md",
+          "title": "根本原因分析",
+          "relativePath": "根本原因分析.md"
+        },
+        {
+          "id": "过程分析.md",
+          "title": "过程分析",
+          "relativePath": "过程分析.md"
+        },
+        {
+          "id": "回归分析.md",
+          "title": "回归分析",
+          "relativePath": "回归分析.md"
+        },
+        {
+          "id": "技术绩效分析.md",
+          "title": "技术绩效分析",
+          "relativePath": "技术绩效分析.md"
+        },
+        {
+          "id": "绩效审查.md",
+          "title": "绩效审查",
+          "relativePath": "绩效审查.md"
+        },
+        {
+          "id": "假设情景分析.md",
+          "title": "假设情景分析",
+          "relativePath": "假设情景分析.md"
+        },
+        {
+          "id": "假设条件和制约因素分析.md",
+          "title": "假设条件和制约因素分析",
+          "relativePath": "假设条件和制约因素分析.md"
+        },
+        {
+          "id": "建议书评价.md",
+          "title": "建议书评价",
+          "relativePath": "建议书评价.md"
+        },
+        {
+          "id": "决策树分析.md",
+          "title": "决策树分析",
+          "relativePath": "决策树分析.md"
+        },
+        {
+          "id": "敏感性分析.md",
+          "title": "敏感性分析",
+          "relativePath": "敏感性分析.md"
+        },
+        {
+          "id": "模拟.md",
+          "title": "模拟",
+          "relativePath": "模拟.md"
+        },
+        {
+          "id": "偏差分析.md",
+          "title": "偏差分析",
+          "relativePath": "偏差分析.md"
+        },
+        {
+          "id": "其他风险参数评估.md",
+          "title": "其他风险参数评估",
+          "relativePath": "其他风险参数评估.md"
+        },
+        {
+          "id": "趋势分析.md",
+          "title": "趋势分析",
+          "relativePath": "趋势分析.md"
+        },
+        {
+          "id": "文件分析.md",
+          "title": "文件分析",
+          "relativePath": "文件分析.md"
+        },
+        {
+          "id": "影响图.md",
+          "title": "影响图",
+          "relativePath": "影响图.md"
+        },
+        {
+          "id": "挣值分析.md",
+          "title": "挣值分析",
+          "relativePath": "挣值分析.md"
+        },
+        {
+          "id": "质量成本.md",
+          "title": "质量成本",
+          "relativePath": "质量成本.md"
+        },
+        {
+          "id": "自制或外购决策.md",
+          "title": "自制或外购决策",
+          "relativePath": "自制或外购决策.md"
+        },
+        {
+          "id": "SWOT分析.md",
+          "title": "SWOT分析",
+          "relativePath": "SWOT分析.md"
+        },
+        {
+          "id": "层级图.md",
+          "title": "层级图",
+          "relativePath": "层级图.md"
+        },
+        {
+          "id": "概率和影响矩阵.md",
+          "title": "概率和影响矩阵",
+          "relativePath": "概率和影响矩阵.md"
+        },
+        {
+          "id": "干系人参与度评估矩阵.md",
+          "title": "干系人参与度评估矩阵",
+          "relativePath": "干系人参与度评估矩阵.md"
+        },
+        {
+          "id": "干系人映射分析和表现.md",
+          "title": "干系人映射分析和表现",
+          "relativePath": "干系人映射分析和表现.md"
+        },
+        {
+          "id": "矩阵图.md",
+          "title": "矩阵图",
+          "relativePath": "矩阵图.md"
+        },
+        {
+          "id": "控制图.md",
+          "title": "控制图",
+          "relativePath": "控制图.md"
+        },
+        {
+          "id": "流程图.md",
+          "title": "流程图",
+          "relativePath": "流程图.md"
+        },
+        {
+          "id": "逻辑数据模型.md",
+          "title": "逻辑数据模型",
+          "relativePath": "逻辑数据模型.md"
+        },
+        {
+          "id": "气泡图.md",
+          "title": "气泡图",
+          "relativePath": "气泡图.md"
+        },
+        {
+          "id": "亲和图.md",
+          "title": "亲和图",
+          "relativePath": "亲和图.md"
+        },
+        {
+          "id": "散点图.md",
+          "title": "散点图",
+          "relativePath": "散点图.md"
+        },
+        {
+          "id": "思维导图.md",
+          "title": "思维导图",
+          "relativePath": "思维导图.md"
+        },
+        {
+          "id": "文本型.md",
+          "title": "文本型",
+          "relativePath": "文本型.md"
+        },
+        {
+          "id": "因果图.md",
+          "title": "因果图",
+          "relativePath": "因果图.md"
+        },
+        {
+          "id": "直方图.md",
+          "title": "直方图",
+          "relativePath": "直方图.md"
+        },
+        {
+          "id": "RACI矩阵型.md",
+          "title": "RACI矩阵型",
+          "relativePath": "RACI矩阵型.md"
+        },
+        {
+          "id": "多标准决策分析.md",
+          "title": "多标准决策分析",
+          "relativePath": "多标准决策分析.md"
+        },
+        {
+          "id": "投票.md",
+          "title": "投票",
+          "relativePath": "投票.md"
+        },
+        {
+          "id": "独裁型决策制定.md",
+          "title": "独裁型决策制定",
+          "relativePath": "独裁型决策制定.md"
+        },
+        {
+          "id": "反馈.md",
+          "title": "反馈",
+          "relativePath": "反馈.md"
+        },
+        {
+          "id": "演示.md",
+          "title": "演示",
+          "relativePath": "演示.md"
+        },
+        {
+          "id": "冲突管理.md",
+          "title": "冲突管理",
+          "relativePath": "冲突管理.md"
+        },
+        {
+          "id": "沟通风格评估.md",
+          "title": "沟通风格评估",
+          "relativePath": "沟通风格评估.md"
+        },
+        {
+          "id": "观察和交谈.md",
+          "title": "观察和交谈",
+          "relativePath": "观察和交谈.md"
+        },
+        {
+          "id": "会议管理.md",
+          "title": "会议管理",
+          "relativePath": "会议管理.md"
+        },
+        {
+          "id": "积极倾听.md",
+          "title": "积极倾听",
+          "relativePath": "积极倾听.md"
+        },
+        {
+          "id": "激励.md",
+          "title": "激励",
+          "relativePath": "激励.md"
+        },
+        {
+          "id": "领导力.md",
+          "title": "领导力",
+          "relativePath": "领导力.md"
+        },
+        {
+          "id": "名义小组技术.md",
+          "title": "名义小组技术",
+          "relativePath": "名义小组技术.md"
+        },
+        {
+          "id": "情商.md",
+          "title": "情商",
+          "relativePath": "情商.md"
+        },
+        {
+          "id": "人际交往.md",
+          "title": "人际交往",
+          "relativePath": "人际交往.md"
+        },
+        {
+          "id": "谈判.md",
+          "title": "谈判",
+          "relativePath": "谈判.md"
+        },
+        {
+          "id": "团队建设.md",
+          "title": "团队建设",
+          "relativePath": "团队建设.md"
+        },
+        {
+          "id": "文化意识.md",
+          "title": "文化意识",
+          "relativePath": "文化意识.md"
+        },
+        {
+          "id": "引导.md",
+          "title": "引导",
+          "relativePath": "引导.md"
+        },
+        {
+          "id": "影响力.md",
+          "title": "影响力",
+          "relativePath": "影响力.md"
+        },
+        {
+          "id": "政策意识.md",
+          "title": "政策意识",
+          "relativePath": "政策意识.md"
+        },
+        {
+          "id": "制定决策.md",
+          "title": "制定决策",
+          "relativePath": "制定决策.md"
+        },
+        {
+          "id": "变更控制工具.md",
+          "title": "变更控制工具",
+          "relativePath": "变更控制工具.md"
+        },
+        {
+          "id": "不确定性表现方式.md",
+          "title": "不确定性表现方式",
+          "relativePath": "不确定性表现方式.md"
+        },
+        {
+          "id": "参数估算.md",
+          "title": "参数估算",
+          "relativePath": "参数估算.md"
+        },
+        {
+          "id": "测试与检查的规划.md",
+          "title": "测试与检查的规划",
+          "relativePath": "测试与检查的规划.md"
+        },
+        {
+          "id": "产品分析.md",
+          "title": "产品分析",
+          "relativePath": "产品分析.md"
+        },
+        {
+          "id": "成本汇总.md",
+          "title": "成本汇总",
+          "relativePath": "成本汇总.md"
+        },
+        {
+          "id": "风险分类.md",
+          "title": "风险分类",
+          "relativePath": "风险分类.md"
+        },
+        {
+          "id": "个人和团队评估.md",
+          "title": "个人和团队评估",
+          "relativePath": "个人和团队评估.md"
+        },
+        {
+          "id": "供方选择分析.md",
+          "title": "供方选择分析",
+          "relativePath": "供方选择分析.md"
+        },
+        {
+          "id": "沟通方法.md",
+          "title": "沟通方法",
+          "relativePath": "沟通方法.md"
+        },
+        {
+          "id": "沟通技术.md",
+          "title": "沟通技术",
+          "relativePath": "沟通技术.md"
+        },
+        {
+          "id": "沟通模型.md",
+          "title": "沟通模型",
+          "relativePath": "沟通模型.md"
+        },
+        {
+          "id": "沟通需求分析.md",
+          "title": "沟通需求分析",
+          "relativePath": "沟通需求分析.md"
+        },
+        {
+          "id": "关键路径法.md",
+          "title": "关键路径法",
+          "relativePath": "关键路径法.md"
+        },
+        {
+          "id": "广告.md",
+          "title": "广告",
+          "relativePath": "广告.md"
+        },
+        {
+          "id": "滚动式规划.md",
+          "title": "滚动式规划",
+          "relativePath": "滚动式规划.md"
+        },
+        {
+          "id": "机会应对策略.md",
+          "title": "机会应对策略",
+          "relativePath": "机会应对策略.md"
+        },
+        {
+          "id": "基本规则.md",
+          "title": "基本规则",
+          "relativePath": "基本规则.md"
+        },
+        {
+          "id": "集中办公.md",
+          "title": "集中办公",
+          "relativePath": "集中办公.md"
+        },
+        {
+          "id": "计划评审技术.md",
+          "title": "计划评审技术",
+          "relativePath": "计划评审技术.md"
+        },
+        {
+          "id": "检查.md",
+          "title": "检查",
+          "relativePath": "检查.md"
+        },
+        {
+          "id": "箭线图法.md",
+          "title": "箭线图法",
+          "relativePath": "箭线图法.md"
+        },
+        {
+          "id": "紧前关系绘图法.md",
+          "title": "紧前关系绘图法",
+          "relativePath": "紧前关系绘图法.md"
+        },
+        {
+          "id": "进度网络分析.md",
+          "title": "进度网络分析",
+          "relativePath": "进度网络分析.md"
+        },
+        {
+          "id": "进度压缩.md",
+          "title": "进度压缩",
+          "relativePath": "进度压缩.md"
+        },
+        {
+          "id": "类比估算.md",
+          "title": "类比估算",
+          "relativePath": "类比估算.md"
+        },
+        {
+          "id": "历史信息审核.md",
+          "title": "历史信息审核",
+          "relativePath": "历史信息审核.md"
+        },
+        {
+          "id": "面向X的设计.md",
+          "title": "面向X的设计",
+          "relativePath": "面向X的设计.md"
+        },
+        {
+          "id": "敏捷或适应性发布规划.md",
+          "title": "敏捷或适应性发布规划",
+          "relativePath": "敏捷或适应性发布规划.md"
+        },
+        {
+          "id": "培训.md",
+          "title": "培训",
+          "relativePath": "培训.md"
+        },
+        {
+          "id": "确定和整合依赖关系.md",
+          "title": "确定和整合依赖关系",
+          "relativePath": "确定和整合依赖关系.md"
+        },
+        {
+          "id": "认可与奖励.md",
+          "title": "认可与奖励",
+          "relativePath": "认可与奖励.md"
+        },
+        {
+          "id": "融资.md",
+          "title": "融资",
+          "relativePath": "融资.md"
+        },
+        {
+          "id": "审计.md",
+          "title": "审计",
+          "relativePath": "审计.md"
+        },
+        {
+          "id": "索赔管理.md",
+          "title": "索赔管理",
+          "relativePath": "索赔管理.md"
+        },
+        {
+          "id": "提前量和滞后量.md",
+          "title": "提前量和滞后量",
+          "relativePath": "提前量和滞后量.md"
+        },
+        {
+          "id": "提示清单.md",
+          "title": "提示清单",
+          "relativePath": "提示清单.md"
+        },
+        {
+          "id": "投标人会议.md",
+          "title": "投标人会议",
+          "relativePath": "投标人会议.md"
+        },
+        {
+          "id": "完工尚需绩效指数.md",
+          "title": "完工尚需绩效指数",
+          "relativePath": "完工尚需绩效指数.md"
+        },
+        {
+          "id": "威胁应对策略.md",
+          "title": "威胁应对策略",
+          "relativePath": "威胁应对策略.md"
+        },
+        {
+          "id": "问题解决.md",
+          "title": "问题解决",
+          "relativePath": "问题解决.md"
+        },
+        {
+          "id": "系统交互图.md",
+          "title": "系统交互图",
+          "relativePath": "系统交互图.md"
+        },
+        {
+          "id": "项目报告.md",
+          "title": "项目报告",
+          "relativePath": "项目报告.md"
+        },
+        {
+          "id": "项目管理信息系统.md",
+          "title": "项目管理信息系统",
+          "relativePath": "项目管理信息系统.md"
+        },
+        {
+          "id": "信息管理.md",
+          "title": "信息管理",
+          "relativePath": "信息管理.md"
+        },
+        {
+          "id": "虚拟团队.md",
+          "title": "虚拟团队",
+          "relativePath": "虚拟团队.md"
+        },
+        {
+          "id": "应急应对策略.md",
+          "title": "应急应对策略",
+          "relativePath": "应急应对策略.md"
+        },
+        {
+          "id": "预分派.md",
+          "title": "预分派",
+          "relativePath": "预分派.md"
+        },
+        {
+          "id": "原型法.md",
+          "title": "原型法",
+          "relativePath": "原型法.md"
+        },
+        {
+          "id": "整体项目风险应对策略.md",
+          "title": "整体项目风险应对策略",
+          "relativePath": "整体项目风险应对策略.md"
+        },
+        {
+          "id": "知识管理.md",
+          "title": "知识管理",
+          "relativePath": "知识管理.md"
+        },
+        {
+          "id": "质量改进方法.md",
+          "title": "质量改进方法",
+          "relativePath": "质量改进方法.md"
+        },
+        {
+          "id": "专家判断.md",
+          "title": "专家判断",
+          "relativePath": "专家判断.md"
+        },
+        {
+          "id": "资金限制平衡.md",
+          "title": "资金限制平衡",
+          "relativePath": "资金限制平衡.md"
+        },
+        {
+          "id": "资源优化.md",
+          "title": "资源优化",
+          "relativePath": "资源优化.md"
+        },
+        {
+          "id": "自下而上估算.md",
+          "title": "自下而上估算",
+          "relativePath": "自下而上估算.md"
+        },
+        {
+          "id": "组织理论.md",
+          "title": "组织理论",
+          "relativePath": "组织理论.md"
+        },
+        {
+          "id": "WBS分解.md",
+          "title": "WBS分解",
+          "relativePath": "WBS分解.md"
+        }
+      ],
+      "memberships": [
+        {
+          "category": "沟通",
+          "memberId": "反馈.md",
+          "memberTitle": "反馈",
+          "source": "direct-wiki-link",
+          "evidenceNodeId": "沟通.md"
+        },
+        {
+          "category": "沟通",
+          "memberId": "演示.md",
+          "memberTitle": "演示",
+          "source": "direct-wiki-link",
+          "evidenceNodeId": "沟通.md"
+        },
+        {
+          "category": "决策",
+          "memberId": "独裁型决策制定.md",
+          "memberTitle": "独裁型决策制定",
+          "source": "direct-wiki-link",
+          "evidenceNodeId": "决策.md"
+        },
+        {
+          "category": "决策",
+          "memberId": "多标准决策分析.md",
+          "memberTitle": "多标准决策分析",
+          "source": "direct-wiki-link",
+          "evidenceNodeId": "决策.md"
+        },
+        {
+          "category": "决策",
+          "memberId": "投票.md",
+          "memberTitle": "投票",
+          "source": "direct-wiki-link",
+          "evidenceNodeId": "决策.md"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "变更控制工具.md",
+          "memberTitle": "变更控制工具",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "不确定性表现方式.md",
+          "memberTitle": "不确定性表现方式",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "参数估算.md",
+          "memberTitle": "参数估算",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "测试与检查的规划.md",
+          "memberTitle": "测试与检查的规划",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "产品分析.md",
+          "memberTitle": "产品分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "成本汇总.md",
+          "memberTitle": "成本汇总",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "风险分类.md",
+          "memberTitle": "风险分类",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "个人和团队评估.md",
+          "memberTitle": "个人和团队评估",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "供方选择分析.md",
+          "memberTitle": "供方选择分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "沟通方法.md",
+          "memberTitle": "沟通方法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "沟通技术.md",
+          "memberTitle": "沟通技术",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "沟通模型.md",
+          "memberTitle": "沟通模型",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "沟通需求分析.md",
+          "memberTitle": "沟通需求分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "关键路径法.md",
+          "memberTitle": "关键路径法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "广告.md",
+          "memberTitle": "广告",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "滚动式规划.md",
+          "memberTitle": "滚动式规划",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "机会应对策略.md",
+          "memberTitle": "机会应对策略",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "基本规则.md",
+          "memberTitle": "基本规则",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "集中办公.md",
+          "memberTitle": "集中办公",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "计划评审技术.md",
+          "memberTitle": "计划评审技术",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "检查.md",
+          "memberTitle": "检查",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "箭线图法.md",
+          "memberTitle": "箭线图法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "紧前关系绘图法.md",
+          "memberTitle": "紧前关系绘图法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "进度网络分析.md",
+          "memberTitle": "进度网络分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "进度压缩.md",
+          "memberTitle": "进度压缩",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "类比估算.md",
+          "memberTitle": "类比估算",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "历史信息审核.md",
+          "memberTitle": "历史信息审核",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "面向X的设计.md",
+          "memberTitle": "面向X的设计",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "敏捷或适应性发布规划.md",
+          "memberTitle": "敏捷或适应性发布规划",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "培训.md",
+          "memberTitle": "培训",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "确定和整合依赖关系.md",
+          "memberTitle": "确定和整合依赖关系",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "认可与奖励.md",
+          "memberTitle": "认可与奖励",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "融资.md",
+          "memberTitle": "融资",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "审计.md",
+          "memberTitle": "审计",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "索赔管理.md",
+          "memberTitle": "索赔管理",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "提前量和滞后量.md",
+          "memberTitle": "提前量和滞后量",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "提示清单.md",
+          "memberTitle": "提示清单",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "投标人会议.md",
+          "memberTitle": "投标人会议",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "完工尚需绩效指数.md",
+          "memberTitle": "完工尚需绩效指数",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "威胁应对策略.md",
+          "memberTitle": "威胁应对策略",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "问题解决.md",
+          "memberTitle": "问题解决",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "系统交互图.md",
+          "memberTitle": "系统交互图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "项目报告.md",
+          "memberTitle": "项目报告",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "项目管理信息系统.md",
+          "memberTitle": "项目管理信息系统",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "信息管理.md",
+          "memberTitle": "信息管理",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "虚拟团队.md",
+          "memberTitle": "虚拟团队",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "应急应对策略.md",
+          "memberTitle": "应急应对策略",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "预分派.md",
+          "memberTitle": "预分派",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "原型法.md",
+          "memberTitle": "原型法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "整体项目风险应对策略.md",
+          "memberTitle": "整体项目风险应对策略",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "知识管理.md",
+          "memberTitle": "知识管理",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "质量改进方法.md",
+          "memberTitle": "质量改进方法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "专家判断.md",
+          "memberTitle": "专家判断",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "资金限制平衡.md",
+          "memberTitle": "资金限制平衡",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "资源优化.md",
+          "memberTitle": "资源优化",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "自下而上估算.md",
+          "memberTitle": "自下而上估算",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "组织理论.md",
+          "memberTitle": "组织理论",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "其他工具和技术",
+          "memberId": "WBS分解.md",
+          "memberTitle": "WBS分解",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "其他工具和技术的数据库.base",
+          "tag": "其他工具和技术"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "冲突管理.md",
+          "memberTitle": "冲突管理",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "沟通风格评估.md",
+          "memberTitle": "沟通风格评估",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "观察和交谈.md",
+          "memberTitle": "观察和交谈",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "会议管理.md",
+          "memberTitle": "会议管理",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "积极倾听.md",
+          "memberTitle": "积极倾听",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "激励.md",
+          "memberTitle": "激励",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "领导力.md",
+          "memberTitle": "领导力",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "名义小组技术.md",
+          "memberTitle": "名义小组技术",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "情商.md",
+          "memberTitle": "情商",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "人际交往.md",
+          "memberTitle": "人际交往",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "谈判.md",
+          "memberTitle": "谈判",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "团队建设.md",
+          "memberTitle": "团队建设",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "文化意识.md",
+          "memberTitle": "文化意识",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "引导.md",
+          "memberTitle": "引导",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "影响力.md",
+          "memberTitle": "影响力",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "政策意识.md",
+          "memberTitle": "政策意识",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "人际关系和团队技能",
+          "memberId": "制定决策.md",
+          "memberTitle": "制定决策",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "人际关系和团队技能的数据库.base",
+          "tag": "人际关系和团队技能"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "层级图.md",
+          "memberTitle": "层级图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "概率和影响矩阵.md",
+          "memberTitle": "概率和影响矩阵",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "干系人参与度评估矩阵.md",
+          "memberTitle": "干系人参与度评估矩阵",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "干系人映射分析和表现.md",
+          "memberTitle": "干系人映射分析和表现",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "矩阵图.md",
+          "memberTitle": "矩阵图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "控制图.md",
+          "memberTitle": "控制图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "流程图.md",
+          "memberTitle": "流程图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "逻辑数据模型.md",
+          "memberTitle": "逻辑数据模型",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "气泡图.md",
+          "memberTitle": "气泡图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "亲和图.md",
+          "memberTitle": "亲和图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "散点图.md",
+          "memberTitle": "散点图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "思维导图.md",
+          "memberTitle": "思维导图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "文本型.md",
+          "memberTitle": "文本型",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "因果图.md",
+          "memberTitle": "因果图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "直方图.md",
+          "memberTitle": "直方图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据表现",
+          "memberId": "RACI矩阵型.md",
+          "memberTitle": "RACI矩阵型",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据表现的数据库.base",
+          "tag": "数据表现"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "备选方案分析.md",
+          "memberTitle": "备选方案分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "成本效益分析.md",
+          "memberTitle": "成本效益分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "储备分析.md",
+          "memberTitle": "储备分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "迭代燃尽图.md",
+          "memberTitle": "迭代燃尽图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "风险概率和影响评估.md",
+          "memberTitle": "风险概率和影响评估",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "风险数据质量评估.md",
+          "memberTitle": "风险数据质量评估",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "干系人分析法.md",
+          "memberTitle": "干系人分析法",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "根本原因分析.md",
+          "memberTitle": "根本原因分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "过程分析.md",
+          "memberTitle": "过程分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "回归分析.md",
+          "memberTitle": "回归分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "技术绩效分析.md",
+          "memberTitle": "技术绩效分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "绩效审查.md",
+          "memberTitle": "绩效审查",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "假设情景分析.md",
+          "memberTitle": "假设情景分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "假设条件和制约因素分析.md",
+          "memberTitle": "假设条件和制约因素分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "建议书评价.md",
+          "memberTitle": "建议书评价",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "决策树分析.md",
+          "memberTitle": "决策树分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "敏感性分析.md",
+          "memberTitle": "敏感性分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "模拟.md",
+          "memberTitle": "模拟",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "偏差分析.md",
+          "memberTitle": "偏差分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "其他风险参数评估.md",
+          "memberTitle": "其他风险参数评估",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "趋势分析.md",
+          "memberTitle": "趋势分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "文件分析.md",
+          "memberTitle": "文件分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "影响图.md",
+          "memberTitle": "影响图",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "挣值分析.md",
+          "memberTitle": "挣值分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "质量成本.md",
+          "memberTitle": "质量成本",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "自制或外购决策.md",
+          "memberTitle": "自制或外购决策",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据分析",
+          "memberId": "SWOT分析.md",
+          "memberTitle": "SWOT分析",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据分析的数据库.base",
+          "tag": "数据分析"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "标杆对照.md",
+          "memberTitle": "标杆对照",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "访谈.md",
+          "memberTitle": "访谈",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "核查表.md",
+          "memberTitle": "核查表",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "核对单.md",
+          "memberTitle": "核对单",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "焦点小组.md",
+          "memberTitle": "焦点小组",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "市场调研.md",
+          "memberTitle": "市场调研",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "统计抽样.md",
+          "memberTitle": "统计抽样",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "头脑风暴.md",
+          "memberTitle": "头脑风暴",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        },
+        {
+          "category": "数据收集",
+          "memberId": "问卷调查.md",
+          "memberTitle": "问卷调查",
+          "source": "embedded-base-tag-rule",
+          "evidenceNodeId": "数据收集的数据库.base",
+          "tag": "数据收集"
+        }
+      ],
+      "diagnosticMatchingBase": {
+        "status": "not-authoritative; requires user confirmation",
+        "replacedEmbeddedBase": [
+          "人际关系和团队技能的数据库.base"
+        ],
+        "matchingBase": "人际关系和团队技能的数据库.base",
+        "actualMemberships": 132,
+        "actualUnique": 132
+      }
+    }
+  },
+  "warnings": [
+    {
+      "type": "catalog-count-mismatch",
+      "catalog": "133工具和技术",
+      "expected": 133,
+      "actual": 132
+    }
+  ]
+}

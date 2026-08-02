@@ -1,0 +1,583 @@
+{
+  "instanceVersion": "0.1.0",
+  "projectId": "car-control-app-001",
+  "templateId": "template.project-charter",
+  "documentStatus": "推演草案",
+  "generatedAt": "2026-07-18",
+  "fields": {
+    "project_name": {
+      "value": "汽车手机端控制应用项目",
+      "status": "confirmed",
+      "sourceIds": [
+        "INT-001"
+      ]
+    },
+    "charter_version": {
+      "value": "0.1",
+      "status": "confirmed",
+      "sourceIds": [
+        "system.version"
+      ]
+    },
+    "document_status": {
+      "value": "推演草案",
+      "status": "confirmed",
+      "sourceIds": [
+        "system.generation-state"
+      ]
+    },
+    "prepared_date": {
+      "value": "2026-07-18",
+      "status": "confirmed",
+      "sourceIds": [
+        "system.current-date"
+      ]
+    },
+    "approval_date": {
+      "value": null,
+      "status": "missing",
+      "sourceIds": []
+    },
+    "project_purpose": {
+      "value": "建设面向个人车主的统一手机端车辆服务入口，通过 iOS、Android、云端服务与车端接口协同，提供可信的车况查询、充电管理和受控远程操作能力。项目采用混合型生命周期：安全、隐私、关键接口和发布门槛前置治理，移动端体验与可拆分功能迭代验证。",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-002",
+        "INT-003",
+        "D-LIFECYCLE"
+      ]
+    },
+    "business_need": {
+      "value": "当前车主数字服务入口分散、状态反馈不一致，不同车型之间的服务体验存在差异。业务需要在不降低车辆控制安全和数据合规水平的前提下，建立统一、可扩展、可观测的移动服务能力。",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-002",
+        "INT-004"
+      ]
+    },
+    "expected_value": {
+      "value": [
+        "为车主提供统一、可信、易用的车辆数字服务入口",
+        "提升远程服务成功率和车主满意度",
+        "形成可复用于多车型的移动端、云端和车端集成能力",
+        "通过审计、监控和安全控制降低远程车辆操作风险"
+      ],
+      "status": "assumed",
+      "sourceIds": [
+        "INT-005"
+      ]
+    },
+    "measurable_objectives": {
+      "value": [
+        {
+          "id": "OBJ-001",
+          "objective": "完成首个正式版本发布",
+          "metric": "正式发布完成时间",
+          "target": "不晚于 2027-04-30",
+          "deadline": "2027-04-30",
+          "verificationMethod": "发布评审通过，生产环境版本、发布记录和回滚方案完整。",
+          "ownerRole": "项目经理"
+        },
+        {
+          "id": "OBJ-002",
+          "objective": "保证远程控制响应与成功率",
+          "metric": "执行结果反馈 P95；正常服务条件成功率",
+          "target": "P95 ≤ 8 秒；成功率 ≥ 99.5%",
+          "deadline": "系统验证阶段",
+          "verificationMethod": "在定义的车型、网络和负载基线下执行端到端性能与可靠性测试。",
+          "ownerRole": "云端与车端技术负责人"
+        },
+        {
+          "id": "OBJ-003",
+          "objective": "满足远程控制安全要求",
+          "metric": "高风险安全用例通过率；未关闭安全缺陷",
+          "target": "高风险用例 100% 通过；无未关闭 P0/P1 安全缺陷",
+          "deadline": "灰度发布前",
+          "verificationMethod": "安全评审、渗透测试、授权绕过测试和远程控制专项验证。",
+          "ownerRole": "信息安全负责人"
+        },
+        {
+          "id": "OBJ-004",
+          "objective": "保证移动端稳定性",
+          "metric": "无崩溃会话比例",
+          "target": "≥ 99.8%",
+          "deadline": "灰度试点结束",
+          "verificationMethod": "依据移动端监控平台连续四周数据计算。",
+          "ownerRole": "App 技术负责人"
+        },
+        {
+          "id": "OBJ-005",
+          "objective": "验证车主体验价值",
+          "metric": "灰度用户满意度",
+          "target": "≥ 85/100",
+          "deadline": "灰度试点结束",
+          "verificationMethod": "对完成核心任务的灰度车主进行问卷与访谈，样本量和计算方法在测量计划中定义。",
+          "ownerRole": "移动产品负责人"
+        }
+      ],
+      "status": "assumed",
+      "sourceIds": [
+        "INT-009",
+        "INT-010",
+        "A-GRAY-RELEASE"
+      ]
+    },
+    "high_level_requirements": {
+      "value": [
+        "支持账号实名认证、车辆绑定与解绑",
+        "支持车辆状态、充电状态和车辆位置查询",
+        "支持经过授权的车门与空调远程控制",
+        "支持预约充电、消息通知、操作反馈和完整审计",
+        "远程控制执行强身份认证、授权校验、幂等和状态一致性处理",
+        "个人信息、位置和车辆数据按最小必要原则处理并满足合规要求",
+        "具备监控、告警、故障降级、应急回滚和多车型兼容能力"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "INT-006",
+        "INT-007"
+      ]
+    },
+    "scope_boundary": {
+      "value": "第一阶段覆盖面向个人车主的 App、配套云端服务、目标车型接口集成及运营运维支撑；仅包含经过安全论证和批准的远程操作。自动驾驶、远程驾驶、远程泊车、完整售后工单、车辆硬件改造和海外适配不在本阶段范围内。",
+      "status": "assumed",
+      "sourceIds": [
+        "INT-006",
+        "INT-008"
+      ]
+    },
+    "key_deliverables": {
+      "value": [
+        {
+          "id": "DEL-001",
+          "name": "车主移动应用",
+          "description": "iOS 与 Android 应用、设计规范和发布包。",
+          "acceptanceOwner": "移动产品负责人"
+        },
+        {
+          "id": "DEL-002",
+          "name": "车辆服务云端能力",
+          "description": "账号与车辆关系、指令编排、状态同步、通知和审计服务。",
+          "acceptanceOwner": "云端技术负责人"
+        },
+        {
+          "id": "DEL-003",
+          "name": "车端接口集成",
+          "description": "目标车型协议适配、接口基线、异常语义和兼容性矩阵。",
+          "acceptanceOwner": "车端技术负责人"
+        },
+        {
+          "id": "DEL-004",
+          "name": "安全与合规证据包",
+          "description": "威胁分析、安全需求、隐私影响分析、测试报告和例外审批记录。",
+          "acceptanceOwner": "信息安全与数据合规负责人"
+        },
+        {
+          "id": "DEL-005",
+          "name": "运营与运维移交包",
+          "description": "监控告警、应急预案、客服知识、操作手册、发布与回滚文档。",
+          "acceptanceOwner": "运营与运维负责人"
+        }
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "INT-003",
+        "INT-006",
+        "INT-018",
+        "D-LIFECYCLE"
+      ]
+    },
+    "out_of_scope": {
+      "value": [
+        "自动驾驶、远程驾驶与远程泊车控制",
+        "面向维修站的完整售后工单系统",
+        "车辆硬件改造和既有车端控制器重构",
+        "海外市场与海外法规适配",
+        "未经单独安全论证的高风险车辆控制能力"
+      ],
+      "status": "assumed",
+      "sourceIds": [
+        "INT-008"
+      ]
+    },
+    "overall_risk_summary": {
+      "value": [
+        {
+          "riskId": "RISK-001",
+          "title": "认证或授权缺陷导致未授权远程车辆控制",
+          "rating": "High",
+          "ownerRole": "信息安全负责人",
+          "responseSummary": "强认证、设备绑定、最小权限、指令签名、风控与全量审计。"
+        },
+        {
+          "riskId": "RISK-002",
+          "title": "位置与车辆数据泄露或被超范围使用",
+          "rating": "Critical",
+          "ownerRole": "数据合规负责人",
+          "responseSummary": "数据最小化、分级分类、加密、留存控制和隐私影响评估。"
+        },
+        {
+          "riskId": "RISK-003",
+          "title": "车型协议或状态语义不一致导致错误反馈",
+          "rating": "High",
+          "ownerRole": "车端技术负责人",
+          "responseSummary": "接口契约、协议模拟器、车型矩阵、幂等和异常状态验证。"
+        },
+        {
+          "riskId": "RISK-005",
+          "title": "弱网与重复指令造成状态不一致",
+          "rating": "High",
+          "ownerRole": "云端技术负责人",
+          "responseSummary": "状态机、超时重试、去重、最终一致性与用户明确反馈。"
+        },
+        {
+          "riskId": "RISK-006",
+          "title": "多车型兼容性覆盖不足",
+          "rating": "High",
+          "ownerRole": "测试与质量负责人",
+          "responseSummary": "冻结首批车型、建立兼容矩阵并按风险选择真实车辆与台架。"
+        }
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "R-UNAUTHORIZED",
+        "R-DATA",
+        "R-PROTOCOL",
+        "risk-register.top-threats"
+      ]
+    },
+    "milestone_plan": {
+      "value": [
+        {
+          "id": "MS-001",
+          "name": "项目启动与章程批准",
+          "targetDate": "2026-08-14",
+          "exitCriteria": "发起人批准章程；项目经理、核心团队和治理机制明确。",
+          "ownerRole": "项目发起人"
+        },
+        {
+          "id": "MS-002",
+          "name": "产品、安全与合规边界基线",
+          "targetDate": "2026-09-18",
+          "exitCriteria": "核心场景、远程控制边界、安全需求、隐私要求和首批车型范围通过评审。",
+          "ownerRole": "产品与安全负责人"
+        },
+        {
+          "id": "MS-003",
+          "name": "架构与接口基线",
+          "targetDate": "2026-10-09",
+          "exitCriteria": "App、云端、车端接口契约、异常语义、环境与集成计划通过评审。",
+          "ownerRole": "总体技术负责人"
+        },
+        {
+          "id": "MS-004",
+          "name": "核心功能 MVP 完成",
+          "targetDate": "2026-12-18",
+          "exitCriteria": "车辆绑定、车况、车门与空调远程控制在集成环境可演示。",
+          "ownerRole": "移动产品负责人"
+        },
+        {
+          "id": "MS-005",
+          "name": "端到端系统验证完成",
+          "targetDate": "2027-02-19",
+          "exitCriteria": "目标车型端到端功能、安全、性能、弱网和兼容性测试达到灰度门槛。",
+          "ownerRole": "测试与质量负责人"
+        },
+        {
+          "id": "MS-006",
+          "name": "灰度试点开始",
+          "targetDate": "2027-03-26",
+          "exitCriteria": "发布评审通过；监控、应急、客服和回滚准备完成。",
+          "ownerRole": "发布负责人"
+        },
+        {
+          "id": "MS-007",
+          "name": "正式发布与运营移交",
+          "targetDate": "2027-04-30",
+          "exitCriteria": "灰度指标达标；遗留风险获批准；运营运维完成接收。",
+          "ownerRole": "项目经理"
+        }
+      ],
+      "status": "assumed",
+      "sourceIds": [
+        "INT-009",
+        "A-SAFETY-BASELINE",
+        "A-ARCH-BASELINE",
+        "A-ITERATIONS",
+        "A-INTEGRATION-TRAIN",
+        "A-GRAY-RELEASE"
+      ]
+    },
+    "approved_budget_total": {
+      "value": null,
+      "status": "missing",
+      "sourceIds": [
+        "INT-015"
+      ]
+    },
+    "currency": {
+      "value": "CNY",
+      "status": "assumed",
+      "sourceIds": [
+        "system.locale-default"
+      ]
+    },
+    "funding_source": {
+      "value": null,
+      "status": "missing",
+      "sourceIds": []
+    },
+    "budget_allocation": {
+      "value": [],
+      "status": "missing",
+      "sourceIds": []
+    },
+    "key_stakeholders": {
+      "value": [
+        {
+          "role": "数字产品中心负责人",
+          "relationship": "项目发起人和最终批准角色",
+          "status": "inferred"
+        },
+        {
+          "role": "项目经理",
+          "relationship": "负责项目整合与交付",
+          "status": "missing-name"
+        },
+        {
+          "role": "移动产品负责人",
+          "relationship": "负责产品价值、范围与优先级",
+          "status": "assumed"
+        },
+        {
+          "role": "App、云端与车端技术负责人",
+          "relationship": "负责实现、接口和系统集成",
+          "status": "assumed"
+        },
+        {
+          "role": "信息安全与数据合规负责人",
+          "relationship": "负责安全、隐私与合规门禁",
+          "status": "assumed"
+        },
+        {
+          "role": "测试与质量负责人",
+          "relationship": "负责验证策略和质量门禁",
+          "status": "assumed"
+        },
+        {
+          "role": "运营、客服与运维负责人",
+          "relationship": "负责上线准备和运营移交",
+          "status": "assumed"
+        },
+        {
+          "role": "车型项目与供应商代表",
+          "relationship": "提供车端能力、环境和外部交付",
+          "status": "assumed"
+        }
+      ],
+      "status": "assumed",
+      "sourceIds": [
+        "INT-011",
+        "INT-012",
+        "INT-014",
+        "INT-017"
+      ]
+    },
+    "acceptance_requirements": {
+      "value": [
+        "批准范围内的功能和需求跟踪项全部验证并有可追溯证据",
+        "App、云端、车端的端到端集成测试通过",
+        "信息安全、隐私合规和远程控制专项评审通过",
+        "性能、稳定性、弱网和首批车型兼容性指标达到批准门槛",
+        "灰度试点指标达标，运营、客服、运维和应急机制完成移交"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "INT-018",
+        "A-SAFETY-BASELINE",
+        "A-INTEGRATION-TRAIN",
+        "A-GRAY-RELEASE"
+      ]
+    },
+    "approval_process": {
+      "value": [
+        "产品、安全与合规边界评审",
+        "架构、接口和集成基线评审",
+        "核心功能 MVP 评审",
+        "系统验证与灰度发布评审",
+        "正式发布与项目验收评审"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "D-LIFECYCLE",
+        "A-SAFETY-BASELINE",
+        "A-ARCH-BASELINE",
+        "A-INTEGRATION-TRAIN",
+        "A-GRAY-RELEASE"
+      ]
+    },
+    "final_approver": {
+      "value": "数字产品中心负责人（姓名待确认）",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-017"
+      ]
+    },
+    "exit_criteria": {
+      "value": [
+        "批准范围内的交付成果完成验收",
+        "无未关闭 P0/P1 安全缺陷；其他重大遗留项已获得书面例外批准",
+        "正式发布指标达到目标，回滚和应急方案经过演练",
+        "项目文件、配置基线、源代码和测试证据完整归档",
+        "运营、客服和运维团队完成培训与接收",
+        "未决合同、财务和供应商事项有明确责任人与关闭计划",
+        "经验教训登记完成，后续产品迭代移交产品运营机制"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "INT-010",
+        "INT-018",
+        "A-GRAY-RELEASE"
+      ]
+    },
+    "project_manager": {
+      "value": "项目经理（姓名待确认）",
+      "status": "missing",
+      "sourceIds": [
+        "INT-016"
+      ]
+    },
+    "project_manager_responsibilities": {
+      "value": [
+        "整合产品、App、云端、车端、安全、测试、运营和供应商工作",
+        "维护项目管理计划、里程碑、风险、问题和变更闭环",
+        "组织关键阶段门评审并保证交付证据完整",
+        "向发起人报告项目状态、重大风险和需要升级的决策",
+        "推动项目在批准范围、时间、资源和质量边界内完成"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "domain.项目整合管理",
+        "D-LIFECYCLE"
+      ]
+    },
+    "project_manager_authority": {
+      "value": [
+        "在批准的团队和资源边界内安排项目工作",
+        "批准不影响安全、合规、关键接口、范围基准和发布门槛的日常调整",
+        "召集跨团队评审并要求责任角色提交纠正措施",
+        "涉及基准、重大预算、安全边界或正式发布日期的变更必须提交 CCB 或发起人",
+        "有权暂停存在不可接受安全风险的发布活动"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "note.项目整合管理",
+        "note.实施整体变更控制",
+        "J-GOVERNANCE"
+      ]
+    },
+    "sponsor": {
+      "value": "数字产品中心负责人（姓名待确认）",
+      "status": "inferred",
+      "sourceIds": [
+        "INT-017"
+      ]
+    },
+    "sponsor_authority": {
+      "value": [
+        "批准项目章程并正式授权项目经理",
+        "协调跨组织关键资源并解决超出项目经理权限的问题",
+        "批准重大范围、预算、发布日期和风险接受决策",
+        "主持关键治理评审并决定项目继续、调整、暂停或终止",
+        "批准最终验收和项目收尾"
+      ],
+      "status": "inferred",
+      "sourceIds": [
+        "note.制定项目章程",
+        "INT-017"
+      ]
+    },
+    "approval_decision": {
+      "value": "待批准",
+      "status": "confirmed",
+      "sourceIds": [
+        "system.generation-state"
+      ]
+    }
+  },
+  "autofillTrace": [
+    {
+      "targetField": "项目目的",
+      "inputFacts": [
+        "INT-002",
+        "INT-003"
+      ],
+      "reasoningIds": [
+        "D-LIFECYCLE"
+      ],
+      "status": "inferred"
+    },
+    {
+      "targetField": "高层级需求",
+      "inputFacts": [
+        "INT-006",
+        "INT-007"
+      ],
+      "reasoningIds": [],
+      "status": "inferred"
+    },
+    {
+      "targetField": "总体里程碑",
+      "inputFacts": [
+        "INT-009"
+      ],
+      "reasoningIds": [
+        "A-SAFETY-BASELINE",
+        "A-ARCH-BASELINE",
+        "A-INTEGRATION-TRAIN",
+        "A-GRAY-RELEASE"
+      ],
+      "status": "assumed"
+    },
+    {
+      "targetField": "整体项目风险",
+      "inputFacts": [
+        "INT-007",
+        "INT-012",
+        "INT-013"
+      ],
+      "reasoningIds": [
+        "R-UNAUTHORIZED",
+        "R-DATA",
+        "R-PROTOCOL"
+      ],
+      "status": "inferred"
+    },
+    {
+      "targetField": "预算",
+      "inputFacts": [
+        "INT-015"
+      ],
+      "reasoningIds": [],
+      "status": "missing"
+    },
+    {
+      "targetField": "项目经理",
+      "inputFacts": [
+        "INT-016"
+      ],
+      "reasoningIds": [],
+      "status": "missing"
+    }
+  ],
+  "validation": {
+    "canExportDraft": true,
+    "canApprove": false,
+    "blockingIssues": [
+      "批准预算总额和资金来源缺失",
+      "项目经理姓名与正式授权缺失",
+      "发起人姓名与批准信息缺失",
+      "首批车型与地区范围待确认"
+    ]
+  }
+}

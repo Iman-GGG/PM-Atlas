@@ -1,0 +1,338 @@
+{
+  "schemaVersion": "0.1.0",
+  "id": "template.risk-register",
+  "objectType": "template-definition",
+  "title": "风险登记册",
+  "description": "以动态行记录威胁和机会，并根据统一概率、影响和安全合规规则自动计算固有风险与剩余风险。",
+  "knowledgeRefs": [
+    "note.风险登记册",
+    "note.识别风险",
+    "note.实施定性风险管理",
+    "note.规划风险应对",
+    "domain.项目风险管理"
+  ],
+  "sourceRefs": [
+    {
+      "type": "obsidian",
+      "path": "信息系统项目管理师2026/风险登记册.md"
+    },
+    {
+      "type": "workbook",
+      "path": "高项论文/高项论文-风险管理.xlsx",
+      "sheet": "风险登记册",
+      "range": "A1:L4"
+    },
+    {
+      "type": "workbook",
+      "path": "高项论文/高项论文-风险管理.xlsx",
+      "sheet": "概率和影响矩阵",
+      "range": "A1:P13"
+    }
+  ],
+  "producedBy": "process.identify-risks",
+  "updatedBy": [
+    "process.perform-qualitative-risk-analysis",
+    "process.perform-quantitative-risk-analysis",
+    "process.plan-risk-responses",
+    "process.implement-risk-responses",
+    "process.monitor-risks"
+  ],
+  "scoringRulesRef": "rules.risk-scoring.default-v1",
+  "collection": {
+    "fieldId": "risks",
+    "type": "dynamic-array",
+    "minimumRows": 0,
+    "operations": [
+      "add",
+      "edit",
+      "duplicate",
+      "archive",
+      "restore",
+      "reorder"
+    ],
+    "stableRowId": true,
+    "softDelete": true,
+    "sortDefault": [
+      "rating desc",
+      "baseScore desc",
+      "updatedAt desc"
+    ]
+  },
+  "rowSchema": {
+    "required": [
+      "id",
+      "riskType",
+      "title",
+      "cause",
+      "event",
+      "effect",
+      "category",
+      "ownerRole",
+      "probability",
+      "impacts",
+      "strategy",
+      "responseActions",
+      "status"
+    ],
+    "fields": [
+      {
+        "id": "id",
+        "label": "风险编号",
+        "type": "stable-id",
+        "editable": false,
+        "generation": "RISK-{sequence:3}"
+      },
+      {
+        "id": "riskType",
+        "label": "类型",
+        "type": "enum",
+        "options": [
+          "threat",
+          "opportunity"
+        ]
+      },
+      {
+        "id": "title",
+        "label": "风险标题",
+        "type": "short-text",
+        "validation": {
+          "maxLength": 100
+        }
+      },
+      {
+        "id": "cause",
+        "label": "原因",
+        "type": "long-text"
+      },
+      {
+        "id": "event",
+        "label": "不确定事件",
+        "type": "long-text"
+      },
+      {
+        "id": "effect",
+        "label": "可能影响",
+        "type": "long-text"
+      },
+      {
+        "id": "category",
+        "label": "类别",
+        "type": "enum-or-custom",
+        "options": [
+          "需求",
+          "技术",
+          "集成",
+          "安全",
+          "隐私与合规",
+          "质量",
+          "进度",
+          "资源",
+          "供应商",
+          "运营",
+          "外部"
+        ]
+      },
+      {
+        "id": "ownerRole",
+        "label": "风险责任人",
+        "type": "role-reference"
+      },
+      {
+        "id": "probability",
+        "label": "概率",
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      {
+        "id": "impacts",
+        "label": "影响评分",
+        "type": "impact-object",
+        "properties": {
+          "scope": "integer:1-5",
+          "schedule": "integer:1-5",
+          "cost": "integer:1-5",
+          "quality": "integer:1-5",
+          "safety": "integer:1-5",
+          "privacy": "integer:1-5",
+          "compliance": "integer:1-5"
+        }
+      },
+      {
+        "id": "overallImpact",
+        "label": "综合影响",
+        "type": "derived-integer",
+        "editable": false,
+        "formula": "max(impacts.*)"
+      },
+      {
+        "id": "baseScore",
+        "label": "风险分数",
+        "type": "derived-integer",
+        "editable": false,
+        "formula": "probability * overallImpact"
+      },
+      {
+        "id": "rating",
+        "label": "等级",
+        "type": "derived-enum",
+        "editable": false,
+        "formulaRef": "rules.risk-scoring.default-v1"
+      },
+      {
+        "id": "strategy",
+        "label": "应对策略",
+        "type": "conditional-enum",
+        "optionsFrom": "responseStrategies.{riskType}"
+      },
+      {
+        "id": "responseActions",
+        "label": "应对措施",
+        "type": "action-list"
+      },
+      {
+        "id": "trigger",
+        "label": "触发条件或预警信号",
+        "type": "long-text"
+      },
+      {
+        "id": "contingencyPlan",
+        "label": "应急计划",
+        "type": "long-text"
+      },
+      {
+        "id": "dueDate",
+        "label": "应对完成日期",
+        "type": "date"
+      },
+      {
+        "id": "residualProbability",
+        "label": "剩余概率",
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      {
+        "id": "residualImpacts",
+        "label": "剩余影响",
+        "type": "impact-object"
+      },
+      {
+        "id": "residualScore",
+        "label": "剩余风险分数",
+        "type": "derived-integer",
+        "editable": false
+      },
+      {
+        "id": "residualRating",
+        "label": "剩余风险等级",
+        "type": "derived-enum",
+        "editable": false
+      },
+      {
+        "id": "residualExplanation",
+        "label": "剩余风险说明",
+        "type": "long-text"
+      },
+      {
+        "id": "status",
+        "label": "状态",
+        "type": "enum",
+        "options": [
+          "identified",
+          "assessing",
+          "response-planned",
+          "response-in-progress",
+          "monitoring",
+          "occurred",
+          "closed",
+          "accepted",
+          "archived"
+        ]
+      },
+      {
+        "id": "sourceIds",
+        "label": "识别来源",
+        "type": "reference-list"
+      },
+      {
+        "id": "updatedAt",
+        "label": "更新时间",
+        "type": "datetime",
+        "editable": false
+      }
+    ]
+  },
+  "ui": {
+    "primaryView": "table",
+    "secondaryViews": [
+      "probability-impact-matrix",
+      "category-summary",
+      "owner-summary",
+      "response-board"
+    ],
+    "tableColumns": [
+      "id",
+      "title",
+      "category",
+      "ownerRole",
+      "probability",
+      "overallImpact",
+      "baseScore",
+      "rating",
+      "strategy",
+      "status"
+    ],
+    "rowEditor": "side-panel",
+    "matrixInteraction": {
+      "clickCellFiltersRows": true,
+      "showCount": true,
+      "showThreatOpportunitySplit": true,
+      "respectSafetyComplianceFloor": true
+    },
+    "statusColors": {
+      "identified": "neutral",
+      "response-planned": "blue",
+      "response-in-progress": "amber",
+      "monitoring": "purple",
+      "occurred": "red",
+      "closed": "green"
+    }
+  },
+  "validationRules": [
+    {
+      "id": "RISK-VAL-001",
+      "rule": "cause, event and effect must be separately recorded",
+      "message": "请用“由于……可能发生……从而导致……”描述风险。"
+    },
+    {
+      "id": "RISK-VAL-002",
+      "rule": "High or Critical risk requires ownerRole, responseActions and dueDate"
+    },
+    {
+      "id": "RISK-VAL-003",
+      "rule": "Critical risk cannot enter closed state without acceptance evidence"
+    },
+    {
+      "id": "RISK-VAL-004",
+      "rule": "for threats, residual values cannot exceed inherent values without explanation; opportunities may increase after enhancement but require explanation"
+    }
+  ],
+  "wordExport": {
+    "summaryColumns": [
+      "id",
+      "title",
+      "rating",
+      "ownerRole",
+      "strategy",
+      "status"
+    ],
+    "detailAppendix": true,
+    "matrixImage": "render-native-table",
+    "pageOrientation": "landscape-for-wide-tables"
+  },
+  "audit": {
+    "createdDate": "2026-07-18",
+    "reviewStatus": "sample-pending-domain-review"
+  }
+}
