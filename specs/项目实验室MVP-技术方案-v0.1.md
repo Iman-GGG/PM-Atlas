@@ -42,7 +42,7 @@
 
 1. 现有“实验室”页面是知识展示型原型，尚没有接入新的时间轴状态、分支、回合结算或行动链逻辑。
 2. D1 schema、首个迁移和 `DB` 逻辑绑定已建立，但正式环境仍需在首次发布时应用迁移并验证表结构。
-3. Worker 已提供案例清单、主线分段读取、登录会话和受保护情景投影接口；创建分支、回合结算、文件物化和路径比较接口尚未实现。
+3. Worker 已提供案例清单、主线分段读取、登录会话、创建分支和受保护情景投影接口；回合结算、材料查看、文件物化和路径比较接口尚未实现。
 4. 现有项目文件模板以展示和编辑为主，尚没有“主线版本 + 分支增量 + 差异比较”的版本模型。
 5. 未配置 AI 服务密钥、调用限流、结构化输出校验和费用控制。
 
@@ -426,7 +426,7 @@ API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避�
 | 已实现 | `GET` | `/api/lab/cases/:caseId/:caseVersion` | 获取公开案例清单、学习策略和匿名接手点 |
 | 已实现 | `GET` | `/api/lab/cases/:caseId/:caseVersion/mainline?week=N&sections=A,B` | 按周和模块获取公开主线数据 |
 | 已实现 | `GET` | `/api/lab/branches/:branchId/scenarios/:scenarioId/projection` | 校验分支归属后获取当前可见材料和候选卡 |
-| 待实现 | `POST` | `/api/lab/cases/:caseId/:caseVersion/branches` | 从已解锁周次创建个人分支 |
+| 已实现 | `POST` | `/api/lab/cases/:caseId/:caseVersion/branches` | 从配置的接手点创建个人分支 |
 | 待实现 | `GET` | `/api/lab/branches/:branchId` | 获取当前分支状态和回合上下文 |
 | 待实现 | `POST` | `/api/lab/branches/:branchId/rounds` | 提交行动链并结算一周 |
 | 待实现 | `GET` | `/api/lab/branches/:branchId/documents/:documentId?week=N` | 获取分支文件物化版本 |
@@ -441,6 +441,12 @@ API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避�
 2. API 不返回 `requiredActionGroups`、未触发事件、主线答案卡或后续周完整状态。
 3. 用于比较和结局复盘的主线答案，只有在情景完成或项目结局后才返回。
 4. 所有响应包含 `caseVersion`、`week`、`stateHash`，便于缓存失效和错误排查。
+
+### 9.2 “从这里接手”创建语义
+
+创建分支请求只接受 `scenarioId` 和 8–128 字符的 `idempotencyKey`。接手周次、案例哈希、主线基线、情景初始冲击和可用材料全部由服务端案例包派生，客户端不能覆盖。服务端通过 D1 `batch` 原子写入案例版本登记、用户映射、最高解锁周、个人分支、第 0 回合状态快照和 `scenario_started` 事件。
+
+分支 ID 由用户身份键、案例版本、情景和幂等键共同哈希生成；相同请求重试返回同一分支且不重复创建快照或事件。创建响应返回分支位置、初始客观状态、入口信号和可用材料数量，但不返回未来材料正文、候选卡或判分字段。材料需要在后续“打开材料”接口中逐项读取并记录查看事件，满足观察条件后才解锁行动卡。
 
 ## 10. 鉴权、安全与隐私
 
@@ -999,6 +1005,8 @@ PM 表示项目经理，BA 表示产品/业务分析师，TL 表示技术负责�
 **已实现案例包分层**：`scripts/build-lab-case-packages.mjs` 在校验通过后生成带同一内容哈希的服务端私有案例包与前端公开投影；公开包只保留主线数据和匿名接手点。`prototype/worker/lab/project-case-for-client.ts` 按当前周、已发现材料和卡片解锁状态投影情景，并主动删除所有判分字段。`scripts/verify-lab-public-projection.mjs` 在自动化检查中阻止答案、后果规则和未来情景标题进入前端包。
 
 **已实现案例读取与身份边界**：Worker 在 Next/Vinext 处理前拦截 `/api/lab/*`。公开接口提供案例清单及按周、按模块裁剪的主线数据；受保护情景接口使用平台身份、D1 分支归属、案例内容哈希和用户可见事件共同决定响应。接口统一使用 JSON 错误结构、公开/私有缓存策略和 `nosniff`，越权访问不暴露分支是否存在。`prototype/.openai/hosting.json` 已启用 `DB` 逻辑绑定。
+
+**已实现“从这里接手”分支创建**：`POST /api/lab/cases/:caseId/:caseVersion/branches` 校验平台登录、案例版本、接手点和幂等键，以原子批处理创建用户进度、个人分支、第 0 回合状态快照及情景启动事件。状态根节点由接手周主线基线与情景初始客观冲击组成；重复请求返回原分支，不重复写入。启动事件只登记材料可用性与入口信号，材料正文和行动卡仍保持锁定。
 
 ## 17. 建议的下一步
 

@@ -5,7 +5,12 @@ const workerUrl = new URL("../dist/server/index.js", import.meta.url);
 workerUrl.searchParams.set("lab-api-test", `${process.pid}-${Date.now()}`);
 const { default: worker } = await import(workerUrl.href);
 
-function createEnv({ identityKey = "oai-user:user-123", contentHash = "", currentWeek = 9 } = {}) {
+function createEnv({
+  identityKey = "oai-user:user-123",
+  contentHash = "",
+  currentWeek = 9,
+  includeExistingBranch = true,
+} = {}) {
   const branch = {
     id: "branch-1",
     caseId: "car-control",
@@ -26,25 +31,107 @@ function createEnv({ identityKey = "oai-user:user-123", contentHash = "", curren
     },
   ];
 
+  const state = {
+    branches: new Map(includeExistingBranch ? [[branch.id, { ...branch, identityKey }]] : []),
+    caseVersions: new Map(contentHash ? [["car-control:v1", contentHash]] : []),
+    users: new Map(),
+    events: includeExistingBranch ? [...events] : [],
+    snapshots: [],
+    progress: [],
+  };
+
+  function prepare(query) {
+    let bindings = [];
+    return {
+      query,
+      get bindings() {
+        return bindings;
+      },
+      bind(...values) {
+        bindings = values;
+        return this;
+      },
+      async first() {
+        if (query.includes("FROM lab_case_versions")) {
+          const storedHash = state.caseVersions.get(`${bindings[0]}:${bindings[1]}`);
+          return storedHash ? { contentHash: storedHash } : null;
+        }
+        if (query.includes("FROM lab_users")) {
+          const user = state.users.get(bindings[0]);
+          return user ? { id: user.id } : null;
+        }
+        if (query.includes("FROM lab_branches")) {
+          const storedBranch = state.branches.get(bindings[0]);
+          return storedBranch?.identityKey === bindings[1] ? storedBranch : null;
+        }
+        return null;
+      },
+      async all() {
+        if (!query.includes("FROM lab_events")) return { results: [] };
+        return {
+          results: state.events
+            .filter((event) => event.branchId === undefined || event.branchId === bindings[0])
+            .map(({ eventType, payloadJson }) => ({ eventType, payloadJson })),
+        };
+      },
+      async run() {
+        return { results: [] };
+      },
+    };
+  }
+
+  function applyStatement(statement) {
+    const { query, bindings } = statement;
+    if (query.includes("INSERT INTO lab_case_versions")) {
+      if (!state.caseVersions.has(`${bindings[0]}:${bindings[1]}`)) {
+        state.caseVersions.set(`${bindings[0]}:${bindings[1]}`, bindings[2]);
+      }
+    } else if (query.includes("INSERT INTO lab_users")) {
+      state.users.set(bindings[1], { id: bindings[0], displayName: bindings[2] });
+    } else if (query.includes("INSERT INTO lab_progress")) {
+      state.progress.push({ id: bindings[0], userId: bindings[1], highestUnlockedWeek: bindings[4] });
+    } else if (query.includes("INSERT OR IGNORE INTO lab_branches")) {
+      if (!state.branches.has(bindings[0])) {
+        const caseHash = state.caseVersions.get(`${bindings[2]}:${bindings[3]}`);
+        state.branches.set(bindings[0], {
+          id: bindings[0],
+          identityKey,
+          caseId: bindings[2],
+          caseVersion: bindings[3],
+          contentHash: caseHash,
+          currentWeek: bindings[5],
+          currentRoundNumber: 0,
+          status: "active",
+        });
+      }
+    } else if (query.includes("INSERT OR IGNORE INTO lab_state_snapshots")) {
+      state.snapshots.push({
+        id: bindings[0],
+        branchId: bindings[1],
+        week: bindings[2],
+        scenarioId: bindings[3],
+        stateJson: bindings[4],
+        stateHash: bindings[5],
+      });
+    } else if (query.includes("INSERT OR IGNORE INTO lab_events")) {
+      state.events.push({
+        id: bindings[0],
+        branchId: bindings[1],
+        week: bindings[2],
+        eventType: "scenario_started",
+        payloadJson: bindings[3],
+      });
+    }
+  }
+
   return {
     ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+    __state: state,
     DB: {
-      prepare(query) {
-        let bindings = [];
-        return {
-          bind(...values) {
-            bindings = values;
-            return this;
-          },
-          async first() {
-            if (!query.includes("FROM lab_branches")) return null;
-            return bindings[0] === branch.id && bindings[1] === identityKey ? branch : null;
-          },
-          async all() {
-            if (!query.includes("FROM lab_events")) return { results: [] };
-            return { results: bindings[0] === branch.id ? events : [] };
-          },
-        };
+      prepare,
+      async batch(statements) {
+        statements.forEach(applyStatement);
+        return statements.map(() => ({ results: [] }));
       },
     },
   };
@@ -115,6 +202,72 @@ test("rejects protected scenario reads without platform identity", async () => {
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection");
   assert.equal(response.status, 401);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+});
+
+test("creates an idempotent branch from a configured takeover point", async () => {
+  const env = createEnv({ includeExistingBranch: false });
+  const options = {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "oai-authenticated-user-id": "user-123",
+      "oai-authenticated-user-email": "iman@example.com",
+    },
+    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-001" }),
+  };
+  const response = await request("/api/lab/cases/car-control/v1/branches", options, env);
+  assert.equal(response.status, 201);
+  assert.match(response.headers.get("location") ?? "", /^\/api\/lab\/branches\/branch-/);
+  const body = await response.json();
+  assert.equal(body.branch.currentWeek, 9);
+  assert.equal(body.scenario.id, "scenario-1");
+  assert.equal(body.scenario.availableMaterialCount, 5);
+  assert.equal(body.scenario.cardsUnlocked, false);
+  assert.equal(body.initialState.scenario.initialImpact.forecastCompletionWeek, 32);
+  assert.equal(env.__state.branches.size, 1);
+  assert.equal(env.__state.snapshots.length, 1);
+  assert.equal(env.__state.events.length, 1);
+  assert.equal(env.__state.progress[0].highestUnlockedWeek, 9);
+
+  const replay = await request("/api/lab/cases/car-control/v1/branches", options, env);
+  assert.equal(replay.status, 200);
+  const replayBody = await replay.json();
+  assert.equal(replayBody.branch.id, body.branch.id);
+  assert.equal(replayBody.idempotentReplay, true);
+  assert.equal(env.__state.branches.size, 1);
+  assert.equal(env.__state.snapshots.length, 1);
+
+  const projection = await request(response.headers.get("location"), {
+    headers: {
+      "oai-authenticated-user-id": "user-123",
+      "oai-authenticated-user-email": "iman@example.com",
+    },
+  }, env);
+  assert.equal(projection.status, 200);
+  const projectionBody = await projection.json();
+  assert.equal(projectionBody.scenario.title, "试点车主反馈引发的需求变更");
+  assert.deepEqual(projectionBody.scenario.cards, []);
+  assert.deepEqual(projectionBody.scenario.eventMaterials.primaryClues, []);
+});
+
+test("requires login and a valid takeover request when creating a branch", async () => {
+  const anonymous = await request("/api/lab/cases/car-control/v1/branches", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-002" }),
+  }, createEnv({ includeExistingBranch: false }));
+  assert.equal(anonymous.status, 401);
+
+  const invalid = await request("/api/lab/cases/car-control/v1/branches", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "oai-authenticated-user-id": "user-123",
+      "oai-authenticated-user-email": "iman@example.com",
+    },
+    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "short" }),
+  }, createEnv({ includeExistingBranch: false }));
+  assert.equal(invalid.status, 400);
 });
 
 test("validates branch ownership and strips scenario scoring fields", async () => {
