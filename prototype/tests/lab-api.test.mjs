@@ -114,12 +114,19 @@ function createEnv({
         stateHash: bindings[5],
       });
     } else if (query.includes("INSERT OR IGNORE INTO lab_events")) {
+      if (state.events.some((event) => event.id === bindings[0])) return;
+      const isScenarioStarted = query.includes("'scenario_started'");
+      const isMaterialViewed = query.includes("'scenario_material_viewed'");
       state.events.push({
         id: bindings[0],
         branchId: bindings[1],
-        week: bindings[2],
-        eventType: "scenario_started",
-        payloadJson: bindings[3],
+        week: bindings[isScenarioStarted ? 2 : 3],
+        eventType: isScenarioStarted
+          ? "scenario_started"
+          : isMaterialViewed
+            ? "scenario_material_viewed"
+            : "scenario_cards_unlocked",
+        payloadJson: bindings[isScenarioStarted ? 3 : 4],
       });
     }
   }
@@ -248,6 +255,39 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(projectionBody.scenario.title, "试点车主反馈引发的需求变更");
   assert.deepEqual(projectionBody.scenario.cards, []);
   assert.deepEqual(projectionBody.scenario.eventMaterials.primaryClues, []);
+
+  const materialsResponse = await request(
+    `/api/lab/branches/${body.branch.id}/scenarios/scenario-1/materials`,
+    {
+      headers: {
+        "oai-authenticated-user-id": "user-123",
+        "oai-authenticated-user-email": "iman@example.com",
+      },
+    },
+    env,
+  );
+  assert.equal(materialsResponse.status, 200);
+  const materialsBody = await materialsResponse.json();
+  assert.equal(materialsBody.totalCount, 5);
+  assert.equal(materialsBody.openedCount, 0);
+  assert.equal(materialsBody.materials[0].title, "家庭成员临时用车时无法查看车辆状态");
+  assert.equal(JSON.stringify(materialsBody).includes("希望允许家庭成员共享车辆"), false);
+
+  const openedResponse = await request(
+    `/api/lab/branches/${body.branch.id}/scenarios/scenario-1/materials/S1-M01/view`,
+    {
+      method: "POST",
+      headers: {
+        "oai-authenticated-user-id": "user-123",
+        "oai-authenticated-user-email": "iman@example.com",
+      },
+    },
+    env,
+  );
+  assert.equal(openedResponse.status, 200);
+  const openedBody = await openedResponse.json();
+  assert.deepEqual(openedBody.material.facts, ["配偶临时用车时无法查看车辆状态", "希望允许家庭成员共享车辆"]);
+  assert.equal(openedBody.cardsUnlocked, false);
 });
 
 test("requires login and a valid takeover request when creating a branch", async () => {

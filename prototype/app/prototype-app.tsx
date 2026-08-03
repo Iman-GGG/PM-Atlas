@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CASE_PROJECT_NAME,
   deliverables,
@@ -18,6 +18,7 @@ import { ActivityInputOutputSummary, ManagementAreaPage } from "./management-are
 import { DocumentWorkspace } from "./document-workspace";
 import { managementAreaById, managementAreas, type LabAreaId } from "./management-area-data";
 import { StakeholderPage } from "./stakeholder-page";
+import { LabTimelinePage } from "./lab-timeline-page";
 
 type ProductPage = LabAreaId;
 type PrimarySection = "knowledge" | "lab";
@@ -65,11 +66,13 @@ function AppHeader({
   setSection,
   onExport,
   canExport,
+  page,
 }: {
   section: PrimarySection;
   setSection: (section: PrimarySection) => void;
   onExport: () => void;
   canExport: boolean;
+  page: ProductPage;
 }) {
   return (
     <header className="app-header">
@@ -88,7 +91,7 @@ function AppHeader({
         </button>
       </nav>
       <div className="header-actions">
-        <span className="header-mode-label">{section === "knowledge" ? "教材分类标准" : "BIM 报建案例"}</span>
+        <span className="header-mode-label">{section === "knowledge" ? "教材分类标准" : page === "schedule" ? "车主应用案例 · 学习模式" : "BIM 报建案例"}</span>
         <button className={`button button-dark button-small ${canExport ? "" : "header-export-hidden"}`} onClick={onExport}>
           导出 Word
         </button>
@@ -111,12 +114,12 @@ function ProjectContext({ page }: { page: ProductPage }) {
     <div className="project-context">
       <div>
         <span className="context-label">当前推演项目</span>
-        <strong>{CASE_PROJECT_NAME}</strong>
+        <strong>{page === "schedule" ? "车主远程控车应用项目" : CASE_PROJECT_NAME}</strong>
       </div>
       <div className="context-meta">
         <span>推演草案 v0.1</span>
         <span className="dot-separator" />
-        <span>{progress}</span>
+        <span>{page === "schedule" ? "32 周主线 · 3 个接手点" : progress}</span>
       </div>
     </div>
   );
@@ -128,7 +131,7 @@ function LabSubnav({ page, setPage }: { page: ProductPage; setPage: (page: Produ
     ...managementAreas.map((area) => ({
       id: area.id,
       label: area.tabLabel,
-      state: area.id === "integration" || area.id === "risk" ? "已有样本" : area.id === "stakeholder" ? "推荐下一步" : `${area.processes.length} 个活动`,
+      state: area.id === "schedule" ? "时间轴与接手" : area.id === "integration" || area.id === "risk" ? "已有样本" : area.id === "stakeholder" ? "推荐下一步" : `${area.processes.length} 个活动`,
     })),
   ];
   return (
@@ -744,6 +747,18 @@ export function PrototypeApp() {
   const [page, setPage] = useState<ProductPage>("overview");
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    const applyHash = () => {
+      const match = window.location.hash.match(/^#lab-([a-z]+)/);
+      if (!match || (!(match[1] in managementAreaById) && match[1] !== "overview")) return;
+      setSection("lab");
+      setPage(match[1] as ProductPage);
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
+
   const showExportToast = () => {
     window.dispatchEvent(new CustomEvent("pm-atlas-export-word"));
     setToast("正在生成当前文档 Word…");
@@ -763,13 +778,14 @@ export function PrototypeApp() {
         section={section}
         setSection={setSection}
         onExport={showExportToast}
-        canExport={section === "lab" && page !== "overview"}
+        canExport={section === "lab" && page !== "overview" && page !== "schedule"}
+        page={page}
       />
       {section === "lab" && (
         <>
           <LabSubnav page={page} setPage={switchPage} />
           <ProjectContext page={page} />
-          {page !== "overview" && <ManagementProcessStrip page={page} />}
+          {page !== "overview" && page !== "schedule" && <ManagementProcessStrip page={page} />}
         </>
       )}
       {section === "knowledge" ? (
@@ -780,6 +796,8 @@ export function PrototypeApp() {
         <CharterPage onContinue={() => switchPage("risk")} />
       ) : page === "risk" ? (
         <RiskPage />
+      ) : page === "schedule" ? (
+        <LabTimelinePage />
       ) : page === "stakeholder" ? (
         <StakeholderPage />
       ) : (
@@ -787,7 +805,7 @@ export function PrototypeApp() {
       )}
       <footer className="app-footer">
         <span>PM Atlas · 信息系统项目管理知识实验室</span>
-        <span>{section === "knowledge" ? "知识库 · 教材分类与关系模型" : `样本：${CASE_PROJECT_NAME} · 本地原型`}</span>
+        <span>{section === "knowledge" ? "知识库 · 教材分类与关系模型" : page === "schedule" ? "样本：车主远程控车应用项目 · 学习模式" : `样本：${CASE_PROJECT_NAME} · 本地原型`}</span>
       </footer>
       {toast && <div className="toast" role="status"><i>✓</i>{toast}</div>}
     </div>

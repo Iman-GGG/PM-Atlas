@@ -9,6 +9,7 @@ import {
   findOwnedBranch,
   findStoredCaseVersion,
   readBranchEvents,
+  recordMaterialView,
   type BranchEvent,
   type LabD1,
 } from "./repository";
@@ -102,9 +103,11 @@ function projectSection(section: SectionName, week: number | null): StateEffect 
 }
 
 function parseEventVisibility(events: BranchEvent[], scenarioId: string): {
+  availableMaterialIds: string[];
   visibleMaterialIds: string[];
   cardsUnlocked: boolean;
 } {
+  const availableMaterialIds = new Set<string>();
   const visibleMaterialIds = new Set<string>();
   let cardsUnlocked = false;
 
@@ -116,6 +119,11 @@ function parseEventVisibility(events: BranchEvent[], scenarioId: string): {
       continue;
     }
     if (payload.scenarioId !== scenarioId) continue;
+    if (Array.isArray(payload.availableMaterialIds)) {
+      for (const materialId of payload.availableMaterialIds) {
+        if (typeof materialId === "string") availableMaterialIds.add(materialId);
+      }
+    }
     if (typeof payload.materialId === "string") visibleMaterialIds.add(payload.materialId);
     if (Array.isArray(payload.materialIds)) {
       for (const materialId of payload.materialIds) {
@@ -125,7 +133,32 @@ function parseEventVisibility(events: BranchEvent[], scenarioId: string): {
     if (payload.cardsUnlocked === true || event.eventType === "scenario_cards_unlocked") cardsUnlocked = true;
   }
 
-  return { visibleMaterialIds: [...visibleMaterialIds], cardsUnlocked };
+  return {
+    availableMaterialIds: [...availableMaterialIds],
+    visibleMaterialIds: [...visibleMaterialIds],
+    cardsUnlocked,
+  };
+}
+
+function findScenarioMaterial(scenarioId: string, materialId: string) {
+  const scenario = privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === scenarioId);
+  if (!scenario) return null;
+  for (const [group, materials] of Object.entries(scenario.eventMaterials)) {
+    const material = materials.find((item) => item.id === materialId);
+    if (material) return { scenario, group, material };
+  }
+  return null;
+}
+
+function materialSummary(group: string, material: Record<string, unknown>, opened: boolean) {
+  return {
+    id: material.id,
+    group,
+    type: material.type ?? (group === "dashboardAnomalies" ? "dashboard_anomaly" : "project_material"),
+    channel: material.channel ?? null,
+    title: material.subject ?? material.displayLabel ?? "项目状态出现新信号",
+    opened,
+  };
 }
 
 function caseMatches(caseId: string, caseVersion: string): boolean {
@@ -275,6 +308,101 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
   return withPrivateCache(response);
 }
 
+async function readOwnedScenarioContext(
+  request: Request,
+  env: LabApiEnv,
+  branchId: string,
+  scenarioId: string,
+): Promise<{
+  branch: Awaited<ReturnType<typeof findOwnedBranch>> & {};
+  events: BranchEvent[];
+  visibility: ReturnType<typeof parseEventVisibility>;
+} | Response> {
+  const identity = await getPlatformIdentity(request);
+  if (!identity) {
+    return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
+  }
+  if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
+  const branch = await findOwnedBranch(env.DB, branchId, identity.identityKey);
+  if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+  if (!caseMatches(branch.caseId, branch.caseVersion) || branch.contentHash !== publicLabCaseBaseline.contentHash) {
+    return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
+  }
+  const events = await readBranchEvents(env.DB, branch.id, branch.currentWeek);
+  return { branch, events, visibility: parseEventVisibility(events, scenarioId) };
+}
+
+async function listScenarioMaterials(
+  request: Request,
+  env: LabApiEnv,
+  branchId: string,
+  scenarioId: string,
+): Promise<Response> {
+  const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
+  if (context instanceof Response) return context;
+  const opened = new Set(context.visibility.visibleMaterialIds);
+  const materials = context.visibility.availableMaterialIds.flatMap((materialId) => {
+    const found = findScenarioMaterial(scenarioId, materialId);
+    return found ? [materialSummary(found.group, found.material, opened.has(materialId))] : [];
+  });
+  if (materials.length === 0) {
+    return withPrivateCache(errorResponse(404, "SCENARIO_MATERIALS_NOT_FOUND", "Scenario materials are not available for this branch."));
+  }
+  return withPrivateCache(jsonResponse({
+    branchId,
+    scenarioId,
+    currentWeek: context.branch.currentWeek,
+    openedCount: materials.filter((material) => material.opened).length,
+    totalCount: materials.length,
+    cardsUnlocked: context.visibility.cardsUnlocked,
+    materials,
+  }));
+}
+
+async function openScenarioMaterial(
+  request: Request,
+  env: LabApiEnv,
+  branchId: string,
+  scenarioId: string,
+  materialId: string,
+): Promise<Response> {
+  const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
+  if (context instanceof Response) return context;
+  if (!context.visibility.availableMaterialIds.includes(materialId)) {
+    return withPrivateCache(errorResponse(404, "MATERIAL_NOT_AVAILABLE", "This material is not available for the branch."));
+  }
+  const found = findScenarioMaterial(scenarioId, materialId);
+  if (!found || context.branch.currentWeek < found.scenario.week) {
+    return withPrivateCache(errorResponse(403, "MATERIAL_LOCKED", "This material is not available at the branch's current week."));
+  }
+  const openedMaterialIds = new Set(context.visibility.visibleMaterialIds);
+  openedMaterialIds.add(materialId);
+  const unlockCards = context.visibility.availableMaterialIds.every((id) => openedMaterialIds.has(id));
+  await recordMaterialView(env.DB!, {
+    branchId,
+    roundNumber: context.branch.currentRoundNumber,
+    week: context.branch.currentWeek,
+    scenarioId,
+    materialId,
+    unlockCards,
+  });
+  const projection = projectScenarioForClient({
+    scenarioId,
+    currentWeek: context.branch.currentWeek,
+    visibleMaterialIds: [...openedMaterialIds],
+    cardsUnlocked: context.visibility.cardsUnlocked || unlockCards,
+  });
+  return withPrivateCache(jsonResponse({
+    branchId,
+    scenarioId,
+    material: found.material,
+    openedCount: openedMaterialIds.size,
+    totalCount: context.visibility.availableMaterialIds.length,
+    cardsUnlocked: context.visibility.cardsUnlocked || unlockCards,
+    cards: projection?.cards ?? [],
+  }));
+}
+
 export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Response | null> {
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/api/lab/")) return null;
@@ -290,6 +418,26 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
     }
     return createBranch(request, env, parts[3], parts[4]);
+  }
+  if (parts.length === 7 && parts[2] === "branches" && parts[4] === "scenarios" && parts[6] === "materials") {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });
+    }
+    const response = await listScenarioMaterials(request, env, parts[3], parts[5]);
+    if (request.method === "HEAD") return new Response(null, { status: response.status, headers: response.headers });
+    return response;
+  }
+  if (
+    parts.length === 9
+    && parts[2] === "branches"
+    && parts[4] === "scenarios"
+    && parts[6] === "materials"
+    && parts[8] === "view"
+  ) {
+    if (request.method !== "POST") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
+    }
+    return openScenarioMaterial(request, env, parts[3], parts[5], parts[7]);
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });
@@ -335,18 +483,9 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     const branchId = parts[3];
     const scenarioId = parts[5];
     if (parts[6] !== "projection") return errorResponse(404, "LAB_ROUTE_NOT_FOUND", "Lab API route not found.");
-    const identity = await getPlatformIdentity(request);
-    if (!identity) {
-      return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
-    }
-    if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
-    const branch = await findOwnedBranch(env.DB, branchId, identity.identityKey);
-    if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
-    if (!caseMatches(branch.caseId, branch.caseVersion) || branch.contentHash !== publicLabCaseBaseline.contentHash) {
-      return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
-    }
-    const events = await readBranchEvents(env.DB, branch.id, branch.currentWeek);
-    const visibility = parseEventVisibility(events, scenarioId);
+    const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
+    if (context instanceof Response) return context;
+    const { branch, visibility } = context;
     const projection = projectScenarioForClient({
       scenarioId,
       currentWeek: branch.currentWeek,

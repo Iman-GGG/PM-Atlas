@@ -164,3 +164,42 @@ export async function createBranchRecords(db: LabD1, records: CreateBranchRecord
     ),
   ]);
 }
+
+export type RecordMaterialView = {
+  branchId: string;
+  roundNumber: number;
+  week: number;
+  scenarioId: string;
+  materialId: string;
+  unlockCards: boolean;
+};
+
+export async function recordMaterialView(db: LabD1, record: RecordMaterialView): Promise<void> {
+  const statements = [
+    db.prepare(`
+      INSERT OR IGNORE INTO lab_events (
+        id, branch_id, round_number, week, event_type, payload_json, visibility
+      ) VALUES (?, ?, ?, ?, 'scenario_material_viewed', ?, 'user')
+    `).bind(
+      `${record.branchId}:material-viewed:${record.materialId}`,
+      record.branchId,
+      record.roundNumber,
+      record.week,
+      JSON.stringify({ scenarioId: record.scenarioId, materialId: record.materialId }),
+    ),
+  ];
+  if (record.unlockCards) {
+    statements.push(db.prepare(`
+      INSERT OR IGNORE INTO lab_events (
+        id, branch_id, round_number, week, event_type, payload_json, visibility
+      ) VALUES (?, ?, ?, ?, 'scenario_cards_unlocked', ?, 'user')
+    `).bind(
+      `${record.branchId}:scenario-cards-unlocked:${record.scenarioId}`,
+      record.branchId,
+      record.roundNumber,
+      record.week,
+      JSON.stringify({ scenarioId: record.scenarioId, cardsUnlocked: true }),
+    ));
+  }
+  await db.batch(statements);
+}

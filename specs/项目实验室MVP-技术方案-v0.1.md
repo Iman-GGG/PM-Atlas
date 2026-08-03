@@ -40,9 +40,9 @@
 
 ### 2.2 当前缺口
 
-1. 现有“实验室”页面是知识展示型原型，尚没有接入新的时间轴状态、分支、回合结算或行动链逻辑。
+1. “时间轴与接手”页面已接入新案例清单、个人分支和事件材料流程；其余管理领域页面仍是知识展示型原型，回合结算和行动链提交尚未接入。
 2. D1 schema、首个迁移和 `DB` 逻辑绑定已建立，但正式环境仍需在首次发布时应用迁移并验证表结构。
-3. Worker 已提供案例清单、主线分段读取、登录会话、创建分支和受保护情景投影接口；回合结算、材料查看、文件物化和路径比较接口尚未实现。
+3. Worker 已提供案例清单、主线分段读取、登录会话、创建分支、事件材料逐项查看和受保护情景投影接口；回合结算、文件物化和路径比较接口尚未实现。
 4. 现有项目文件模板以展示和编辑为主，尚没有“主线版本 + 分支增量 + 差异比较”的版本模型。
 5. 未配置 AI 服务密钥、调用限流、结构化输出校验和费用控制。
 
@@ -427,6 +427,8 @@ API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避�
 | 已实现 | `GET` | `/api/lab/cases/:caseId/:caseVersion/mainline?week=N&sections=A,B` | 按周和模块获取公开主线数据 |
 | 已实现 | `GET` | `/api/lab/branches/:branchId/scenarios/:scenarioId/projection` | 校验分支归属后获取当前可见材料和候选卡 |
 | 已实现 | `POST` | `/api/lab/cases/:caseId/:caseVersion/branches` | 从配置的接手点创建个人分支 |
+| 已实现 | `GET` | `/api/lab/branches/:branchId/scenarios/:scenarioId/materials` | 获取当前情景的材料摘要、已查看状态和解锁进度 |
+| 已实现 | `POST` | `/api/lab/branches/:branchId/scenarios/:scenarioId/materials/:materialId/view` | 逐项打开材料、记录查看事件并在观察完成后解锁候选卡 |
 | 待实现 | `GET` | `/api/lab/branches/:branchId` | 获取当前分支状态和回合上下文 |
 | 待实现 | `POST` | `/api/lab/branches/:branchId/rounds` | 提交行动链并结算一周 |
 | 待实现 | `GET` | `/api/lab/branches/:branchId/documents/:documentId?week=N` | 获取分支文件物化版本 |

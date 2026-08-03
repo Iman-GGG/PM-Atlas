@@ -73,6 +73,49 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal(firstBody.branch.currentWeek, 17);
   assert.equal(firstBody.initialState.scenario.id, "scenario-2");
 
+  const authHeaders = {
+    "oai-authenticated-user-id": "database-user",
+    "oai-authenticated-user-email": "database@example.com",
+  };
+  const materialsPath = `/api/lab/branches/${firstBody.branch.id}/scenarios/scenario-2/materials`;
+  const materials = await worker.fetch(
+    new Request(`http://localhost${materialsPath}`, { headers: authHeaders }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(materials.status, 200);
+  const materialsBody = await materials.json();
+  assert.equal(materialsBody.totalCount, 5);
+  assert.equal(materialsBody.openedCount, 0);
+  assert.equal(JSON.stringify(materialsBody).includes("完整接口预计延期3周"), false);
+
+  let finalMaterialBody;
+  for (const materialId of ["S2-M01", "S2-M02", "S2-M03", "S2-M04", "S2-M05"]) {
+    const opened = await worker.fetch(
+      new Request(`http://localhost${materialsPath}/${materialId}/view`, {
+        method: "POST",
+        headers: authHeaders,
+      }),
+      env,
+      { waitUntil() {}, passThroughOnException() {} },
+    );
+    assert.equal(opened.status, 200);
+    finalMaterialBody = await opened.json();
+  }
+  assert.equal(finalMaterialBody.cardsUnlocked, true);
+  assert.ok(finalMaterialBody.cards.length >= 18);
+  assert.doesNotMatch(JSON.stringify(finalMaterialBody.cards), /satisfiesActionIds|evaluationRole|consequenceId/);
+
+  const reopened = await worker.fetch(
+    new Request(`http://localhost${materialsPath}/S2-M05/view`, {
+      method: "POST",
+      headers: authHeaders,
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(reopened.status, 200);
+
   const replay = await worker.fetch(
     new Request("http://localhost/api/lab/cases/car-control/v1/branches", requestInit),
     env,
@@ -90,7 +133,8 @@ test("persists an idempotent takeover branch against the real migration", async 
     "lab_events",
   ]) {
     const count = database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
-    assert.equal(count, 1, `${table} should contain exactly one idempotent record`);
+    const expected = table === "lab_events" ? 7 : 1;
+    assert.equal(count, expected, `${table} should contain the expected idempotent records`);
   }
   database.close();
 });
