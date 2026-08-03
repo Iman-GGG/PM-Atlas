@@ -151,6 +151,60 @@ export type ScenarioPlan = {
   scenarios: ScenarioDefinition[];
 };
 
+export type LabCasePackageIdentity = {
+  schemaVersion: number;
+  caseId: string;
+  caseVersion: string;
+  contentHash: string;
+};
+
+export type PrivateLabCasePackage = LabCasePackageIdentity & {
+  sourceFiles: {
+    workloadPlan: StateEffect;
+    schedulePlan: StateEffect;
+    stakeholderPlan: StateEffect;
+    documentPlan: StateEffect;
+    riskPlan: StateEffect;
+    qualityPlan: StateEffect;
+    scenarioPlan: ScenarioPlan;
+    baselineWorkload: StateEffect;
+  };
+};
+
+export type PublicTakeoverPoint = {
+  scenarioId: string;
+  week: number;
+  label: "从这里接手";
+};
+
+export type PublicLabCaseBaseline = LabCasePackageIdentity & {
+  totalWeeks: number;
+  plans: {
+    workload: StateEffect;
+    schedule: StateEffect;
+    stakeholders: StateEffect;
+    documents: StateEffect;
+    risks: StateEffect;
+    quality: StateEffect;
+    baselineWorkload: StateEffect;
+  };
+  learningPolicies: {
+    eventDiscovery: StateEffect;
+    decisionReasoning: StateEffect;
+  };
+  takeoverPoints: PublicTakeoverPoint[];
+};
+
+export type PublicScenarioCard = Pick<ScenarioCard, "id" | "column" | "referenceId" | "title">;
+
+export type VisibleScenarioProjection = {
+  id: string;
+  week: number;
+  title: string;
+  eventMaterials: EventMaterials;
+  cards: PublicScenarioCard[];
+};
+
 export type DecisionReference = {
   type: "event_material" | "project_document" | "action_card";
   id: string;

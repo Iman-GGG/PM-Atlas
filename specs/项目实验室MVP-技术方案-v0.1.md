@@ -40,13 +40,11 @@
 
 ### 2.2 当前缺口
 
-1. `prototype/db/schema.ts` 为空，尚无 D1 表和迁移。
-2. `.openai/hosting.json` 中 D1、R2 均为 `null`，运行环境没有持久化绑定。
-3. Worker 只代理 Next/Vinext 和图片优化，没有实验室 API 或鉴权中间件。
-4. 现有“实验室”页面是知识展示型原型，尚没有时间轴状态、分支、回合结算或行动链逻辑。
-5. 现有 ChatGPT 登录辅助没有在页面或 Worker API 中实际使用。
-6. 现有项目文件模板以展示和编辑为主，尚没有“主线版本 + 分支增量 + 差异比较”的版本模型。
-7. 未配置 AI 服务、密钥管理、调用限流、结构化输出校验和费用控制。
+1. 现有“实验室”页面是知识展示型原型，尚没有接入新的时间轴状态、分支、回合结算或行动链逻辑。
+2. D1 schema、首个迁移和 `DB` 逻辑绑定已建立，但正式环境仍需在首次发布时应用迁移并验证表结构。
+3. Worker 已提供案例清单、主线分段读取、登录会话和受保护情景投影接口；创建分支、回合结算、文件物化和路径比较接口尚未实现。
+4. 现有项目文件模板以展示和编辑为主，尚没有“主线版本 + 分支增量 + 差异比较”的版本模型。
+5. 未配置 AI 服务密钥、调用限流、结构化输出校验和费用控制。
 
 ## 3. 架构原则
 
@@ -150,9 +148,18 @@ content/lab-cases/
 
 案例在数据中以 `caseId + caseVersion` 标识，例如 `car-control:v1`。已保存分支永久引用该版本；升级内容时创建 `car-control:v2`，不得就地覆盖 `v1`。
 
-JSON 保存周次、数值、卡片、关联、行动代价、状态影响和声明式规则；Markdown 保存邮件、消息和报告说明等叙事材料；结构化项目文件仍使用 JSON。TypeScript 只承载领域类型、规则引擎和读取接口。构建脚本在发布前校验源文件，并生成前端可读取的只读数据包。MVP 不开发可视化案例编辑器。
+JSON 保存周次、数值、卡片、关联、行动代价、状态影响和声明式规则；Markdown 保存邮件、消息和报告说明等叙事材料；结构化项目文件仍使用 JSON。TypeScript 只承载领域类型、规则引擎和读取接口。构建脚本在发布前校验源文件，并分别生成服务端私有案例包和前端公开投影。MVP 不开发可视化案例编辑器。
 
-### 5.2 核心类型
+### 5.2 案例包安全边界
+
+`content/lab-cases/<caseId>/<version>/` 是唯一事实源。构建前必须先通过完整性和跨文件引用校验，再对规范化后的全部源文件计算 SHA-256 内容哈希，并生成两个同版本产物：
+
+1. 服务端私有案例包位于 Worker 目录，包含必要动作、最小正确卡片与连接、行动效果、有害后果、持续恶化、终局规则、未来事件材料和 AI 复盘依据，只允许规则引擎和服务端投影层导入。
+2. 前端公开投影只包含主线计划、主线仪表盘和文件数据、学习交互策略，以及匿名的“从这里接手”周次；不包含情景标题、未来材料、判分标签、答案集合或情景覆盖规则。
+3. 情景进入后，服务端根据案例版本、当前周、已发现材料和卡片解锁状态生成一次性可见投影。候选卡只返回展示字段，不返回 `satisfiesActionIds`、`evaluationRole`、`consequenceId` 或管理负载。
+4. 内容哈希随分支和回合保存，用于确认用户推演所依据的不可变案例版本；案例内容调整必须发布新版本，不覆盖已有分支引用。
+
+### 5.3 核心类型
 
 ```ts
 type LabCase = {
@@ -204,7 +211,7 @@ type ActionDefinition = {
 
 具体字段以实现期 TypeScript schema 为准，但案例配置必须通过运行时校验后才可部署。
 
-### 5.3 主线基线与分支关系
+### 5.4 主线基线与分支关系
 
 主线基线保存“没有个人干预时，理想路径每周应是什么状态”。用户从第 N 周接手时：
 
@@ -413,18 +420,20 @@ MVP 默认保存用户分支和 AI 评价。产品需提供“删除我的实验
 
 API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避免把规则引擎放入客户端。具体路径可在实施时调整，推荐资源语义如下：
 
-| 方法 | 路径 | 用途 |
-|---|---|---|
-| `GET` | `/api/lab/cases/:caseId` | 获取案例元数据与用户解锁状态 |
-| `GET` | `/api/lab/cases/:caseId/timeline?week=N` | 获取主线某周公开状态 |
-| `POST` | `/api/lab/cases/:caseId/branches` | 从已解锁周次创建个人分支 |
-| `GET` | `/api/lab/branches/:branchId` | 获取当前分支状态和回合上下文 |
-| `POST` | `/api/lab/branches/:branchId/rounds` | 提交行动链并结算一周 |
-| `GET` | `/api/lab/branches/:branchId/documents/:documentId?week=N` | 获取分支文件物化版本 |
-| `GET` | `/api/lab/branches/:branchId/documents/:documentId/diff?from=A&to=B` | 获取文件差异 |
-| `GET` | `/api/lab/branches/:branchId/compare?against=baseline` | 获取主线/分支比较数据 |
-| `POST` | `/api/lab/branches/:branchId/reviews` | 请求情景或最终 AI 复盘 |
-| `DELETE` | `/api/lab/me/data` | 删除当前用户实验室数据 |
+| 状态 | 方法 | 路径 | 用途 |
+|---|---|---|---|
+| 已实现 | `GET` | `/api/lab/session` | 获取平台登录状态和展示身份，不返回内部身份键 |
+| 已实现 | `GET` | `/api/lab/cases/:caseId/:caseVersion` | 获取公开案例清单、学习策略和匿名接手点 |
+| 已实现 | `GET` | `/api/lab/cases/:caseId/:caseVersion/mainline?week=N&sections=A,B` | 按周和模块获取公开主线数据 |
+| 已实现 | `GET` | `/api/lab/branches/:branchId/scenarios/:scenarioId/projection` | 校验分支归属后获取当前可见材料和候选卡 |
+| 待实现 | `POST` | `/api/lab/cases/:caseId/:caseVersion/branches` | 从已解锁周次创建个人分支 |
+| 待实现 | `GET` | `/api/lab/branches/:branchId` | 获取当前分支状态和回合上下文 |
+| 待实现 | `POST` | `/api/lab/branches/:branchId/rounds` | 提交行动链并结算一周 |
+| 待实现 | `GET` | `/api/lab/branches/:branchId/documents/:documentId?week=N` | 获取分支文件物化版本 |
+| 待实现 | `GET` | `/api/lab/branches/:branchId/documents/:documentId/diff?from=A&to=B` | 获取文件差异 |
+| 待实现 | `GET` | `/api/lab/branches/:branchId/compare?against=baseline` | 获取主线/分支比较数据 |
+| 待实现 | `POST` | `/api/lab/branches/:branchId/reviews` | 请求情景或最终 AI 复盘 |
+| 待实现 | `DELETE` | `/api/lab/me/data` | 删除当前用户实验室数据 |
 
 ### 9.1 返回数据原则
 
@@ -437,7 +446,7 @@ API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避�
 
 ### 10.1 登录方案
 
-现有 `chatgpt-auth.ts` 从受信任请求头读取用户邮箱和姓名。技术上可复用其显示信息逻辑，但 Worker API 需要独立、明确地验证该身份来源。
+页面层 `chatgpt-auth.ts` 与 Worker API 均从 Sites 认证分发层提供的请求头读取身份。Worker 优先使用站点范围内稳定的 `oai-authenticated-user-id` 形成内部身份键；仅在该头缺失但邮箱存在时，使用规范化邮箱的 SHA-256 作为兼容键。原始稳定 ID、邮箱哈希和内部身份键均不返回前端。
 
 推荐原则：
 
@@ -445,6 +454,8 @@ API 可由 Worker 在 `handler.fetch` 前拦截 `/api/lab/*` 路径实现，避�
 2. 本地开发通过明确的开发身份开关或测试令牌模拟，不允许生产环境接受客户端自定义邮箱头。
 3. 数据库不直接以可变展示名作为主键；使用稳定的身份键的哈希或平台提供的不可变 subject。
 4. 未登录用户只读浏览主线；创建分支、保存、查看 AI 复盘要求登录。
+5. 受保护读取先使用内部身份键连接 `lab_users`，再通过同一 SQL 查询校验 `lab_branches` 所有权；不存在和无权访问统一返回 404，避免枚举他人分支。
+6. 情景当前周、可见材料和卡片解锁状态只从分支与用户可见事件读取，API 不接受客户端提交这些可见性参数。
 
 ### 10.2 AI 安全
 
@@ -984,6 +995,10 @@ PM 表示项目经理，BA 表示产品/业务分析师，TL 表示技术负责�
 **已实现案例内容校验器**：`scripts/validate-lab-case.mjs` 统一校验案例元数据、32 份文件、干系人、活动、风险状态、情景材料包、四栏卡片、最小连接、必要动作覆盖、缺失/有害后果、量化合计、持续恶化和终局规则，并检查跨文件 ID。`generate-lab-workload-baseline.mjs` 在生成前强制调用该校验器，任何内容冲突都会阻止基线生成；同一命令可直接用于本地检查和 CI。
 
 **已建立共享数据契约**：`prototype/lib/lab/contracts.ts` 定义情景配置、三层风险状态、卡片与连接、回合提交/结算以及 AI 复盘的共享 TypeScript 类型，供前端、Worker 和规则引擎共同使用；`schemas/lab-scenario-plan.schema.json` 提供 Draft 2020-12 结构 Schema，约束情景配置的必填结构和核心枚举。语义及跨文件引用继续由案例内容校验器负责，避免仅靠 JSON Schema 无法检查的 ID 和量化一致性问题。
+
+**已实现案例包分层**：`scripts/build-lab-case-packages.mjs` 在校验通过后生成带同一内容哈希的服务端私有案例包与前端公开投影；公开包只保留主线数据和匿名接手点。`prototype/worker/lab/project-case-for-client.ts` 按当前周、已发现材料和卡片解锁状态投影情景，并主动删除所有判分字段。`scripts/verify-lab-public-projection.mjs` 在自动化检查中阻止答案、后果规则和未来情景标题进入前端包。
+
+**已实现案例读取与身份边界**：Worker 在 Next/Vinext 处理前拦截 `/api/lab/*`。公开接口提供案例清单及按周、按模块裁剪的主线数据；受保护情景接口使用平台身份、D1 分支归属、案例内容哈希和用户可见事件共同决定响应。接口统一使用 JSON 错误结构、公开/私有缓存策略和 `nosniff`，越权访问不暴露分支是否存在。`prototype/.openai/hosting.json` 已启用 `DB` 逻辑绑定。
 
 ## 17. 建议的下一步
 
