@@ -12,6 +12,8 @@ test("wires the project lab schedule page to takeover and material APIs", async 
   ]);
 
   assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage \/>/);
+  assert.match(app, /if \(nextSection === "lab"\)[\s\S]*switchPage\("schedule"\)/);
+  assert.match(app, /section === "lab" && page !== "schedule"/);
   assert.match(timeline, /\/api\/lab\/cases\/\$\{caseId\}\/\$\{caseVersion\}\/branches/);
   assert.match(timeline, /JSON\.stringify\(\{ scenarioId: point\.scenarioId, idempotencyKey \}\)/);
   assert.match(timeline, /\/materials\/\$\{encodeURIComponent\(material\.id\)\}\/view/);

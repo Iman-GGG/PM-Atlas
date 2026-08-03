@@ -257,7 +257,7 @@ export function LabTimelinePage() {
     <main className="lab-timeline-page">
       <section className="lab-timeline-hero">
         <div>
-          <span className="section-index">项目实验室 · 学习模式 · car-control:v1</span>
+          <span className="section-index">项目实验室 MVP v0.2 · 学习模式 · car-control:v1</span>
           <h1>先看最优解，再从关键节点接手。</h1>
           <p>拖看 32 周主线，在三个高价值情景点建立个人分支。事件不会直接告诉你答案，需要逐项打开工作材料、识别信号，再进入行动链。</p>
         </div>

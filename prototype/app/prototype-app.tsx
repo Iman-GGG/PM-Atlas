@@ -772,20 +772,30 @@ export function PrototypeApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const switchSection = (nextSection: PrimarySection) => {
+    if (nextSection === "lab") {
+      switchPage("schedule");
+      return;
+    }
+    setSection("knowledge");
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="app-shell">
       <AppHeader
         section={section}
-        setSection={setSection}
+        setSection={switchSection}
         onExport={showExportToast}
         canExport={section === "lab" && page !== "overview" && page !== "schedule"}
         page={page}
       />
-      {section === "lab" && (
+      {section === "lab" && page !== "schedule" && (
         <>
           <LabSubnav page={page} setPage={switchPage} />
           <ProjectContext page={page} />
-          {page !== "overview" && page !== "schedule" && <ManagementProcessStrip page={page} />}
+          {page !== "overview" && <ManagementProcessStrip page={page} />}
         </>
       )}
       {section === "knowledge" ? (
