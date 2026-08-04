@@ -1,5 +1,5 @@
 import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated";
-import type { StateEffect } from "../../lib/lab/contracts";
+import type { CardConnection, DecisionReasoning, DecisionReference, StateEffect } from "../../lib/lab/contracts";
 import { getPlatformIdentity } from "../auth/platform-identity";
 import { privateLabCasePackage } from "../generated/lab-case-private.generated";
 import { projectScenarioForClient } from "./project-case-for-client";
@@ -9,7 +9,9 @@ import {
   findOwnedBranch,
   findStoredCaseVersion,
   readBranchEvents,
+  readRoundDraft,
   recordMaterialView,
+  saveRoundDraft,
   type BranchEvent,
   type LabD1,
 } from "./repository";
@@ -162,6 +164,10 @@ function findScenarioMaterial(scenarioId: string, materialId: string) {
   return null;
 }
 
+function findScenario(scenarioId: string) {
+  return privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === scenarioId) ?? null;
+}
+
 function materialSummary(group: string, material: Record<string, unknown>, opened: boolean) {
   return {
     id: material.id,
@@ -171,6 +177,76 @@ function materialSummary(group: string, material: Record<string, unknown>, opene
     title: material.subject ?? material.displayLabel ?? "项目状态出现新信号",
     opened,
   };
+}
+
+const cardColumnOrder = ["evidence_document", "tool_technique", "execution_action", "stakeholder"] as const;
+const referenceTypes = new Set<DecisionReference["type"]>(["event_material", "project_document", "action_card"]);
+
+type RoundDraftBody = {
+  expectedRoundNumber: number;
+  selectedCardIds: string[];
+  connections: CardConnection[];
+  reasoning: DecisionReasoning;
+};
+
+function emptyReasoning(): DecisionReasoning {
+  return { observedSignals: "", riskOrRootCause: "", actionRationale: "", references: [] };
+}
+
+function parseStoredJson<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+async function parseRoundDraftBody(request: Request): Promise<RoundDraftBody | null> {
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+  if (contentType !== "application/json") return null;
+  try {
+    const rawBody = await request.text();
+    if (rawBody.length > 64_000) return null;
+    const body = JSON.parse(rawBody) as Record<string, unknown>;
+    if (!Number.isInteger(body.expectedRoundNumber) || Number(body.expectedRoundNumber) < 1) return null;
+    if (!Array.isArray(body.selectedCardIds) || body.selectedCardIds.length > 64) return null;
+    if (!Array.isArray(body.connections) || body.connections.length > 128) return null;
+    if (!body.reasoning || typeof body.reasoning !== "object" || Array.isArray(body.reasoning)) return null;
+    const reasoning = body.reasoning as Record<string, unknown>;
+    const reasoningFields = [reasoning.observedSignals, reasoning.riskOrRootCause, reasoning.actionRationale];
+    if (reasoningFields.some((value) => typeof value !== "string" || value.length > 500)) return null;
+    if (!Array.isArray(reasoning.references) || reasoning.references.length > 100) return null;
+    const selectedCardIds = body.selectedCardIds;
+    if (selectedCardIds.some((cardId) => typeof cardId !== "string" || !/^[A-Za-z0-9._:-]{1,64}$/.test(cardId))) return null;
+    const connections = body.connections;
+    if (connections.some((connection) => (
+      !connection
+      || typeof connection !== "object"
+      || typeof connection.fromCardId !== "string"
+      || typeof connection.toCardId !== "string"
+    ))) return null;
+    const references = reasoning.references;
+    if (references.some((reference) => (
+      !reference
+      || typeof reference !== "object"
+      || !referenceTypes.has(reference.type as DecisionReference["type"])
+      || typeof reference.id !== "string"
+      || !/^[A-Za-z0-9._:-]{1,64}$/.test(reference.id)
+    ))) return null;
+    return {
+      expectedRoundNumber: Number(body.expectedRoundNumber),
+      selectedCardIds: selectedCardIds as string[],
+      connections: connections as CardConnection[],
+      reasoning: {
+        observedSignals: reasoning.observedSignals as string,
+        riskOrRootCause: reasoning.riskOrRootCause as string,
+        actionRationale: reasoning.actionRationale as string,
+        references: references as DecisionReference[],
+      },
+    };
+  } catch {
+    return null;
+  }
 }
 
 function caseMatches(caseId: string, caseVersion: string): boolean {
@@ -415,6 +491,120 @@ async function openScenarioMaterial(
   }));
 }
 
+async function readScenarioDraft(
+  request: Request,
+  env: LabApiEnv,
+  branchId: string,
+  scenarioId: string,
+): Promise<Response> {
+  const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
+  if (context instanceof Response) return context;
+  const scenario = findScenario(scenarioId);
+  if (!scenario || context.branch.currentWeek < scenario.week) {
+    return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
+  }
+  const roundNumber = context.branch.currentRoundNumber + 1;
+  const storedDraft = await readRoundDraft(env.DB!, branchId, roundNumber);
+  if (storedDraft && storedDraft.scenarioId !== scenarioId) {
+    return withPrivateCache(errorResponse(409, "DRAFT_SCENARIO_MISMATCH", "The current round already has a draft for another scenario."));
+  }
+  return withPrivateCache(jsonResponse({
+    branchId,
+    scenarioId,
+    roundNumber,
+    selectedCardIds: storedDraft ? parseStoredJson<string[]>(storedDraft.selectedCardIdsJson, []) : [],
+    connections: storedDraft ? parseStoredJson<CardConnection[]>(storedDraft.connectionsJson, []) : [],
+    reasoning: storedDraft ? parseStoredJson<DecisionReasoning>(storedDraft.reasoningJson, emptyReasoning()) : emptyReasoning(),
+    updatedAt: storedDraft?.updatedAt ?? null,
+  }));
+}
+
+async function saveScenarioDraft(
+  request: Request,
+  env: LabApiEnv,
+  branchId: string,
+  scenarioId: string,
+): Promise<Response> {
+  const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
+  if (context instanceof Response) return context;
+  const scenario = findScenario(scenarioId);
+  if (!scenario || context.branch.currentWeek < scenario.week) {
+    return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
+  }
+  if (!context.visibility.cardsUnlocked) {
+    return withPrivateCache(errorResponse(409, "ACTION_CARDS_LOCKED", "Open every event material before editing the action chain."));
+  }
+  const body = await parseRoundDraftBody(request);
+  if (!body) {
+    return withPrivateCache(errorResponse(400, "INVALID_DRAFT", "The action-chain draft is not valid."));
+  }
+  const roundNumber = context.branch.currentRoundNumber + 1;
+  if (body.expectedRoundNumber !== roundNumber) {
+    return withPrivateCache(errorResponse(409, "ROUND_CONFLICT", "The branch has advanced. Reload the latest round before saving."));
+  }
+
+  const cardById = new Map(scenario.cards.map((card) => [card.id, card]));
+  if (new Set(body.selectedCardIds).size !== body.selectedCardIds.length || body.selectedCardIds.some((id) => !cardById.has(id))) {
+    return withPrivateCache(errorResponse(400, "INVALID_CARD_SELECTION", "The selected action cards are not valid for this scenario."));
+  }
+  const selectedCardIds = new Set(body.selectedCardIds);
+  const connectionKeys = new Set<string>();
+  for (const connection of body.connections) {
+    const fromCard = cardById.get(connection.fromCardId);
+    const toCard = cardById.get(connection.toCardId);
+    const key = `${connection.fromCardId}\u0000${connection.toCardId}`;
+    if (
+      !fromCard
+      || !toCard
+      || !selectedCardIds.has(fromCard.id)
+      || !selectedCardIds.has(toCard.id)
+      || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1
+      || connectionKeys.has(key)
+    ) {
+      return withPrivateCache(errorResponse(400, "INVALID_CARD_CONNECTION", "Connections must link selected cards in adjacent columns."));
+    }
+    connectionKeys.add(key);
+  }
+
+  const availableDocuments = new Set((publicLabCaseBaseline.plans.documents.documents as StateEffect[])
+    .filter((document) => Number(document.createdWeek) <= context.branch.currentWeek)
+    .map((document) => String(document.id)));
+  const visibleMaterialIds = new Set(context.visibility.visibleMaterialIds);
+  const referenceKeys = new Set<string>();
+  for (const reference of body.reasoning.references) {
+    const key = `${reference.type}\u0000${reference.id}`;
+    const isValid = reference.type === "event_material"
+      ? visibleMaterialIds.has(reference.id)
+      : reference.type === "project_document"
+        ? availableDocuments.has(reference.id)
+        : selectedCardIds.has(reference.id) && cardById.has(reference.id);
+    if (!isValid || referenceKeys.has(key)) {
+      return withPrivateCache(errorResponse(400, "INVALID_DECISION_REFERENCE", "Decision references must point to visible materials, available documents, or selected cards."));
+    }
+    referenceKeys.add(key);
+  }
+
+  const draftId = await stableId("draft", `${branchId}\u0000${roundNumber}`);
+  await saveRoundDraft(env.DB!, {
+    id: draftId,
+    branchId,
+    roundNumber,
+    scenarioId,
+    selectedCardIdsJson: JSON.stringify(body.selectedCardIds),
+    connectionsJson: JSON.stringify(body.connections),
+    reasoningJson: JSON.stringify(body.reasoning),
+  });
+  return withPrivateCache(jsonResponse({
+    branchId,
+    scenarioId,
+    roundNumber,
+    selectedCardIds: body.selectedCardIds,
+    connections: body.connections,
+    reasoning: body.reasoning,
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
 export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Response | null> {
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/api/lab/")) return null;
@@ -450,6 +640,16 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
     }
     return openScenarioMaterial(request, env, parts[3], parts[5], parts[7]);
+  }
+  if (parts.length === 7 && parts[2] === "branches" && parts[4] === "scenarios" && parts[6] === "draft") {
+    if (request.method !== "GET" && request.method !== "HEAD" && request.method !== "PUT") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET, HEAD, and PUT are supported.", { allow: "GET, HEAD, PUT" });
+    }
+    const response = request.method === "PUT"
+      ? await saveScenarioDraft(request, env, parts[3], parts[5])
+      : await readScenarioDraft(request, env, parts[3], parts[5]);
+    if (request.method === "HEAD") return new Response(null, { status: response.status, headers: response.headers });
+    return response;
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });

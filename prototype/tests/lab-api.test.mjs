@@ -38,6 +38,7 @@ function createEnv({
     events: includeExistingBranch ? [...events] : [],
     snapshots: [],
     progress: [],
+    drafts: new Map(),
   };
 
   function prepare(query) {
@@ -64,6 +65,9 @@ function createEnv({
           const storedBranch = state.branches.get(bindings[0]);
           return storedBranch?.identityKey === bindings[1] ? storedBranch : null;
         }
+        if (query.includes("FROM lab_round_drafts")) {
+          return state.drafts.get(`${bindings[0]}:${bindings[1]}`) ?? null;
+        }
         return null;
       },
       async all() {
@@ -75,6 +79,7 @@ function createEnv({
         };
       },
       async run() {
+        applyStatement(this);
         return { results: [] };
       },
     };
@@ -127,6 +132,17 @@ function createEnv({
             ? "scenario_material_viewed"
             : "scenario_cards_unlocked",
         payloadJson: bindings[isScenarioStarted ? 3 : 4],
+      });
+    } else if (query.includes("INSERT INTO lab_round_drafts")) {
+      state.drafts.set(`${bindings[1]}:${bindings[2]}`, {
+        id: bindings[0],
+        branchId: bindings[1],
+        roundNumber: bindings[2],
+        scenarioId: bindings[3],
+        selectedCardIdsJson: bindings[4],
+        connectionsJson: bindings[5],
+        reasoningJson: bindings[6],
+        updatedAt: "2026-08-04 12:00:00",
       });
     }
   }
@@ -340,4 +356,66 @@ test("does not reveal whether another user's branch exists", async () => {
   }, env);
   assert.equal(response.status, 404);
   assert.equal((await response.json()).error.code, "BRANCH_NOT_FOUND");
+});
+
+test("reads and autosaves an owned action-chain draft", async () => {
+  const manifestResponse = await request("/api/lab/cases/car-control/v1");
+  const manifest = await manifestResponse.json();
+  const env = createEnv({ contentHash: manifest.contentHash });
+  const path = "/api/lab/branches/branch-1/scenarios/scenario-1/draft";
+  const headers = {
+    "content-type": "application/json",
+    "oai-authenticated-user-id": "user-123",
+    "oai-authenticated-user-email": "iman@example.com",
+  };
+
+  const emptyResponse = await request(path, { headers }, env);
+  assert.equal(emptyResponse.status, 200);
+  const emptyDraft = await emptyResponse.json();
+  assert.equal(emptyDraft.roundNumber, 2);
+  assert.deepEqual(emptyDraft.selectedCardIds, []);
+
+  const selectedCardIds = ["S1-C02", "S1-C05", "S1-C06", "S1-C10"];
+  const connections = [
+    { fromCardId: "S1-C02", toCardId: "S1-C05" },
+    { fromCardId: "S1-C05", toCardId: "S1-C06" },
+    { fromCardId: "S1-C06", toCardId: "S1-C10" },
+  ];
+  const reasoning = {
+    observedSignals: "试点车主反馈家庭成员无法查看车辆状态。",
+    riskOrRootCause: "新需求尚未纳入范围基线，直接开发会形成范围蔓延。",
+    actionRationale: "先分析影响并提交CCB，批准后纳入后续版本。",
+    references: [
+      { type: "event_material", id: "S1-M01" },
+      { type: "project_document", id: "D21" },
+      { type: "action_card", id: "S1-C06" },
+    ],
+  };
+  const savedResponse = await request(path, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ expectedRoundNumber: 2, selectedCardIds, connections, reasoning }),
+  }, env);
+  assert.equal(savedResponse.status, 200);
+  assert.equal(env.__state.drafts.size, 1);
+
+  const restoredResponse = await request(path, { headers }, env);
+  assert.equal(restoredResponse.status, 200);
+  const restoredDraft = await restoredResponse.json();
+  assert.deepEqual(restoredDraft.selectedCardIds, selectedCardIds);
+  assert.deepEqual(restoredDraft.connections, connections);
+  assert.deepEqual(restoredDraft.reasoning, reasoning);
+
+  const invalidResponse = await request(path, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      expectedRoundNumber: 2,
+      selectedCardIds: ["S1-C02", "S1-C06"],
+      connections: [{ fromCardId: "S1-C02", toCardId: "S1-C06" }],
+      reasoning: { ...reasoning, references: [] },
+    }),
+  }, env);
+  assert.equal(invalidResponse.status, 400);
+  assert.equal((await invalidResponse.json()).error.code, "INVALID_CARD_CONNECTION");
 });

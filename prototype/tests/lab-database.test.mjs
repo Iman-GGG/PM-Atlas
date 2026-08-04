@@ -116,6 +116,44 @@ test("persists an idempotent takeover branch against the real migration", async 
   );
   assert.equal(reopened.status, 200);
 
+  const draftPath = `/api/lab/branches/${firstBody.branch.id}/scenarios/scenario-2/draft`;
+  const draft = {
+    expectedRoundNumber: 1,
+    selectedCardIds: ["S2-C02", "S2-C05", "S2-C06", "S2-C10"],
+    connections: [
+      { fromCardId: "S2-C02", toCardId: "S2-C05" },
+      { fromCardId: "S2-C05", toCardId: "S2-C06" },
+      { fromCardId: "S2-C06", toCardId: "S2-C10" },
+    ],
+    reasoning: {
+      observedSignals: "供应商接口交付与工程师可用性同时发生偏差。",
+      riskOrRootCause: "外部依赖和关键资源冲突可能共同影响关键路径。",
+      actionRationale: "通过联合排障和分阶段交付维持并行开发。",
+      references: [
+        { type: "event_material", id: "S2-M01" },
+        { type: "project_document", id: "D14" },
+        { type: "action_card", id: "S2-C06" },
+      ],
+    },
+  };
+  const savedDraft = await worker.fetch(
+    new Request(`http://localhost${draftPath}`, {
+      method: "PUT",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify(draft),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(savedDraft.status, 200);
+  const restoredDraft = await worker.fetch(
+    new Request(`http://localhost${draftPath}`, { headers: authHeaders }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(restoredDraft.status, 200);
+  assert.deepEqual((await restoredDraft.json()).selectedCardIds, draft.selectedCardIds);
+
   const replay = await worker.fetch(
     new Request("http://localhost/api/lab/cases/car-control/v1/branches", requestInit),
     env,
@@ -131,6 +169,7 @@ test("persists an idempotent takeover branch against the real migration", async 
     "lab_branches",
     "lab_state_snapshots",
     "lab_events",
+    "lab_round_drafts",
   ]) {
     const count = database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
     const expected = table === "lab_events" ? 7 : 1;

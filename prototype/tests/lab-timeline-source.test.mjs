@@ -22,6 +22,14 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /materials\?\.materials\.map/);
   assert.match(timeline, /selectedMaterial\.facts/);
   assert.match(timeline, /materials\?\.cardsUnlocked/);
+  assert.match(timeline, /\/scenarios\/\$\{encodeURIComponent\(scenarioId\)\}\/draft/);
+  assert.match(timeline, /method: "PUT"/);
+  assert.match(timeline, /selectedCardIds/);
+  assert.match(timeline, /cardConnections/);
+  assert.match(timeline, /观察到的信号/);
+  assert.match(timeline, /风险或根因判断/);
+  assert.match(timeline, /行动理由/);
+  assert.match(timeline, /云端保存中/);
 });
 
 test("renders the complete monochrome project control center", async () => {
@@ -69,6 +77,10 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(styles, /\.lab-v2-compact-timeline[^{]*\{[^}]*position: fixed/);
   assert.doesNotMatch(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
+  assert.match(styles, /\.lab-v2-card-candidates/);
+  assert.match(styles, /\.lab-v2-selected-chain/);
+  assert.match(styles, /\.lab-v2-reasoning-fields/);
+  assert.match(styles, /\.lab-v2-draft-readiness/);
   assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
   assert.doesNotMatch(styles, /\.lab-v2-time-network[^}]*min-width: 1380px/);

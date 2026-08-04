@@ -289,6 +289,33 @@ type PublicCard = {
   title: string;
 };
 
+type CardConnection = {
+  fromCardId: string;
+  toCardId: string;
+};
+
+type DecisionReference = {
+  type: "event_material" | "project_document" | "action_card";
+  id: string;
+};
+
+type DecisionReasoning = {
+  observedSignals: string;
+  riskOrRootCause: string;
+  actionRationale: string;
+  references: DecisionReference[];
+};
+
+type RoundDraft = {
+  branchId: string;
+  scenarioId: string;
+  roundNumber: number;
+  selectedCardIds: string[];
+  connections: CardConnection[];
+  reasoning: DecisionReasoning;
+  updatedAt: string | null;
+};
+
 type OpenedMaterial = {
   id: string;
   subject?: string;
@@ -370,6 +397,16 @@ const cardColumnLabels: Record<PublicCard["column"], string> = {
   execution_action: "执行行动",
   stakeholder: "干系人",
 };
+const cardColumnOrder = Object.keys(cardColumnLabels) as PublicCard["column"][];
+const reasoningFields = [
+  { id: "observedSignals", label: "观察到的信号", placeholder: "写下你从邮件、报告、消息和仪表盘异常中观察到的客观信号。" },
+  { id: "riskOrRootCause", label: "风险或根因判断", placeholder: "说明这些信号指向的风险、问题或根本原因。" },
+  { id: "actionRationale", label: "行动理由", placeholder: "说明为什么选择这组文件、工具、行动和干系人，以及预期如何闭环。" },
+] as const;
+
+function emptyDecisionReasoning(): DecisionReasoning {
+  return { observedSignals: "", riskOrRootCause: "", actionRationale: "", references: [] };
+}
 const engagementScores: Record<string, number> = {
   unaware: 1,
   resistant: 2,
@@ -434,6 +471,13 @@ async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise
 
 function formatMoney(value: number): string {
   return `${(value / 10000).toFixed(value >= 1000000 ? 0 : 1)} 万`;
+}
+
+function formatDraftTime(value: string): string {
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const timestamp = new Date(normalized);
+  if (Number.isNaN(timestamp.getTime())) return "刚刚";
+  return timestamp.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
 function projectStage(week: number): string {
@@ -849,11 +893,20 @@ export function LabTimelinePage() {
   const [materials, setMaterials] = useState<MaterialList | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<OpenedMaterial | null>(null);
   const [cards, setCards] = useState<PublicCard[]>([]);
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [cardConnections, setCardConnections] = useState<CardConnection[]>([]);
+  const [decisionReasoning, setDecisionReasoning] = useState<DecisionReasoning>(emptyDecisionReasoning);
+  const [pendingConnectionFromId, setPendingConnectionFromId] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
+  const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(null);
+  const [draftLoadedKey, setDraftLoadedKey] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compactTimelineVisible, setCompactTimelineVisible] = useState(false);
   const idempotencyKeys = useRef(new Map<string, string>());
+  const draftLoadingKeyRef = useRef<string | null>(null);
   const timelinePanelRef = useRef<HTMLElement | null>(null);
 
   const loadMaterials = async (branchId: string, nextScenarioId: string) => {
@@ -956,6 +1009,15 @@ export function LabTimelinePage() {
       setScenarioTitle(created.scenario.title);
       setSelectedMaterial(null);
       setCards([]);
+      setSelectedCardIds([]);
+      setCardConnections([]);
+      setDecisionReasoning(emptyDecisionReasoning());
+      setPendingConnectionFromId(null);
+      setDraftLoadedKey(null);
+      draftLoadingKeyRef.current = null;
+      setDraftStatus("idle");
+      setDraftUpdatedAt(null);
+      setActionMessage(null);
       window.history.replaceState(
         null,
         "",
@@ -1075,6 +1137,138 @@ export function LabTimelinePage() {
   const cardsByColumn = useMemo(() => Object.fromEntries(
     Object.keys(cardColumnLabels).map((column) => [column, cards.filter((card) => card.column === column)]),
   ) as Record<PublicCard["column"], PublicCard[]>, [cards]);
+  const cardById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
+  const selectedCards = selectedCardIds.flatMap((cardId) => {
+    const card = cardById.get(cardId);
+    return card ? [card] : [];
+  });
+  const openedMaterialReferences = materials?.materials.filter((material) => material.opened) ?? [];
+  const availableDocumentReferences = documentState.filter((document) => document.createdWeek <= (branch?.currentWeek ?? selectedWeek));
+  const draftKey = branch && scenarioId ? `${branch.id}:${branch.currentRoundNumber + 1}:${scenarioId}` : null;
+
+  useEffect(() => {
+    if (!branch || !scenarioId || !materials?.cardsUnlocked || cards.length === 0 || !draftKey) return;
+    if (draftLoadedKey === draftKey || draftLoadingKeyRef.current === draftKey) return;
+    draftLoadingKeyRef.current = draftKey;
+    setDraftStatus("loading");
+    const loadDraft = async () => {
+      try {
+        const draft = await apiJson<RoundDraft>(
+          `/api/lab/branches/${encodeURIComponent(branch.id)}/scenarios/${encodeURIComponent(scenarioId)}/draft`,
+        );
+        setSelectedCardIds(draft.selectedCardIds.filter((cardId) => cards.some((card) => card.id === cardId)));
+        setCardConnections(draft.connections);
+        setDecisionReasoning({ ...emptyDecisionReasoning(), ...draft.reasoning, references: draft.reasoning.references ?? [] });
+        setDraftUpdatedAt(draft.updatedAt);
+        setDraftLoadedKey(draftKey);
+        setDraftStatus("saved");
+      } catch (caught) {
+        setDraftStatus("error");
+        setActionMessage(caught instanceof Error ? caught.message : "无法读取行动链草稿");
+      } finally {
+        draftLoadingKeyRef.current = null;
+      }
+    };
+    void loadDraft();
+  }, [branch, cards, draftKey, draftLoadedKey, materials?.cardsUnlocked, scenarioId]);
+
+  useEffect(() => {
+    if (!branch || !scenarioId || !draftKey || draftLoadedKey !== draftKey || !materials?.cardsUnlocked) return;
+    setDraftStatus("saving");
+    const saveTimer = window.setTimeout(() => {
+      void apiJson<RoundDraft>(
+        `/api/lab/branches/${encodeURIComponent(branch.id)}/scenarios/${encodeURIComponent(scenarioId)}/draft`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            expectedRoundNumber: branch.currentRoundNumber + 1,
+            selectedCardIds,
+            connections: cardConnections,
+            reasoning: decisionReasoning,
+          }),
+        },
+      ).then((saved) => {
+        setDraftUpdatedAt(saved.updatedAt);
+        setDraftStatus("saved");
+      }).catch((caught) => {
+        setDraftStatus("error");
+        setActionMessage(caught instanceof Error ? caught.message : "行动链草稿保存失败");
+      });
+    }, 700);
+    return () => window.clearTimeout(saveTimer);
+  }, [branch, cardConnections, decisionReasoning, draftKey, draftLoadedKey, materials?.cardsUnlocked, scenarioId, selectedCardIds]);
+
+  const toggleCardSelection = (cardId: string) => {
+    setActionMessage(null);
+    setSelectedCardIds((current) => {
+      if (!current.includes(cardId)) return [...current, cardId];
+      return current.filter((selectedId) => selectedId !== cardId);
+    });
+    if (selectedCardIds.includes(cardId)) {
+      setCardConnections((current) => current.filter((connection) => connection.fromCardId !== cardId && connection.toCardId !== cardId));
+      setDecisionReasoning((current) => ({
+        ...current,
+        references: current.references.filter((reference) => reference.type !== "action_card" || reference.id !== cardId),
+      }));
+      if (pendingConnectionFromId === cardId) setPendingConnectionFromId(null);
+    }
+  };
+
+  const moveSelectedCard = (cardId: string, direction: -1 | 1) => {
+    setSelectedCardIds((current) => {
+      const index = current.indexOf(cardId);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+      const reordered = [...current];
+      [reordered[index], reordered[nextIndex]] = [reordered[nextIndex], reordered[index]];
+      return reordered;
+    });
+  };
+
+  const connectSelectedCard = (cardId: string) => {
+    setActionMessage(null);
+    if (!pendingConnectionFromId) {
+      setPendingConnectionFromId(cardId);
+      return;
+    }
+    if (pendingConnectionFromId === cardId) {
+      setPendingConnectionFromId(null);
+      return;
+    }
+    const fromCard = cardById.get(pendingConnectionFromId);
+    const toCard = cardById.get(cardId);
+    if (!fromCard || !toCard || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1) {
+      setActionMessage("只能按“项目文件 → 工具与技术 → 执行行动 → 干系人”连接相邻列卡片。");
+      return;
+    }
+    setCardConnections((current) => current.some((connection) => connection.fromCardId === fromCard.id && connection.toCardId === toCard.id)
+      ? current
+      : [...current, { fromCardId: fromCard.id, toCardId: toCard.id }]);
+    setPendingConnectionFromId(null);
+  };
+
+  const toggleDecisionReference = (reference: DecisionReference) => {
+    setDecisionReasoning((current) => {
+      const exists = current.references.some((item) => item.type === reference.type && item.id === reference.id);
+      return {
+        ...current,
+        references: exists
+          ? current.references.filter((item) => item.type !== reference.type || item.id !== reference.id)
+          : [...current.references, reference],
+      };
+    });
+  };
+
+  const connectedCardIds = new Set(cardConnections.flatMap((connection) => [connection.fromCardId, connection.toCardId]));
+  const reasoningComplete = reasoningFields.every((field) => {
+    const length = decisionReasoning[field.id].trim().length;
+    return length >= 20 && length <= 500;
+  });
+  const actionChainComplete = selectedCardIds.length > 1
+    && cardConnections.length > 0
+    && selectedCardIds.every((cardId) => connectedCardIds.has(cardId));
+  const draftReady = reasoningComplete && actionChainComplete && decisionReasoning.references.length > 0;
 
   if (!mainline || !manifest || !weekState) {
     return <main className="lab-v2-page"><div className="lab-v2-loading"><i /><strong>正在装载 32 周项目主线</strong><span>读取绩效、风险、干系人与项目文件状态…</span></div></main>;
@@ -1375,8 +1569,87 @@ export function LabTimelinePage() {
             </article>
           </div>
           <div className={`lab-v2-action-cards ${materials?.cardsUnlocked ? "unlocked" : ""}`}>
-            <header><div><span>ACTION CHAIN</span><h3>{materials?.cardsUnlocked ? "候选行动卡" : "查看全部材料后解锁行动链"}</h3></div><strong>{materials?.cardsUnlocked ? `${cards.length} 张` : "LOCKED"}</strong></header>
-            {materials?.cardsUnlocked ? <div>{(Object.keys(cardColumnLabels) as PublicCard["column"][]).map((column) => <section key={column}><span>{cardColumnLabels[column]}</span>{cardsByColumn[column].map((card) => <article key={card.id}><small>{card.id}</small><strong>{card.title}</strong></article>)}</section>)}</div> : <p>仍有 {(materials?.totalCount ?? 0) - (materials?.openedCount ?? 0)} 条材料未查看。</p>}
+            <header>
+              <div><span>ACTION CHAIN</span><h3>{materials?.cardsUnlocked ? "组装你的管理行动链" : "查看全部材料后解锁行动链"}</h3></div>
+              <strong>{materials?.cardsUnlocked ? draftStatus === "loading" ? "读取草稿" : draftStatus === "saving" ? "云端保存中" : draftStatus === "error" ? "保存失败" : draftUpdatedAt ? `已保存 ${formatDraftTime(draftUpdatedAt)}` : "云端草稿" : "LOCKED"}</strong>
+            </header>
+            {materials?.cardsUnlocked ? (
+              <>
+                <div className="lab-v2-card-candidates">
+                  {cardColumnOrder.map((column) => (
+                    <section key={column}>
+                      <span>{cardColumnLabels[column]} · {cardsByColumn[column].length}</span>
+                      {cardsByColumn[column].map((card) => (
+                        <button key={card.id} type="button" className={selectedCardIds.includes(card.id) ? "selected" : ""} onClick={() => toggleCardSelection(card.id)}>
+                          <small>{card.id}</small><strong>{card.title}</strong><i>{selectedCardIds.includes(card.id) ? "已选择" : "+ 选择"}</i>
+                        </button>
+                      ))}
+                    </section>
+                  ))}
+                </div>
+
+                <section className="lab-v2-chain-editor">
+                  <header><div><span>01 / SELECT · CONNECT · ORDER</span><h4>行动链工作台</h4></div><p>先选卡，再从左到右连接相邻列；可调整卡片顺序或删除。</p></header>
+                  {selectedCards.length ? (
+                    <div className="lab-v2-selected-chain">
+                      {selectedCards.map((card, index) => (
+                        <article key={card.id} className={pendingConnectionFromId === card.id ? "linking" : ""}>
+                          <b>{String(index + 1).padStart(2, "0")}</b>
+                          <span><small>{cardColumnLabels[card.column]} · {card.id}</small><strong>{card.title}</strong></span>
+                          <div>
+                            <button type="button" title="上移" disabled={index === 0} onClick={() => moveSelectedCard(card.id, -1)}>↑</button>
+                            <button type="button" title="下移" disabled={index === selectedCards.length - 1} onClick={() => moveSelectedCard(card.id, 1)}>↓</button>
+                            <button type="button" className="link" onClick={() => connectSelectedCard(card.id)}>{pendingConnectionFromId ? pendingConnectionFromId === card.id ? "取消" : "连到此卡" : "开始连接"}</button>
+                            <button type="button" title="删除" onClick={() => toggleCardSelection(card.id)}>×</button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : <p className="lab-v2-chain-empty">从上方四列中选择卡片，建立你的最小管理行动集合。</p>}
+                  <div className="lab-v2-connections">
+                    <span>已建立 {cardConnections.length} 条连接</span>
+                    <div>{cardConnections.map((connection) => (
+                      <button key={`${connection.fromCardId}-${connection.toCardId}`} type="button" onClick={() => setCardConnections((current) => current.filter((item) => item.fromCardId !== connection.fromCardId || item.toCardId !== connection.toCardId))}>
+                        <b>{cardById.get(connection.fromCardId)?.title}</b><i>→</i><b>{cardById.get(connection.toCardId)?.title}</b><em>删除</em>
+                      </button>
+                    ))}</div>
+                  </div>
+                  {actionMessage && <p className="lab-v2-action-message">{actionMessage}</p>}
+                </section>
+
+                <section className="lab-v2-reasoning-editor">
+                  <header><div><span>02 / DECISION REASONING</span><h4>决策依据</h4></div><p>三项均需填写 20–500 字，系统不会根据措辞给分。</p></header>
+                  <div className="lab-v2-reasoning-fields">
+                    {reasoningFields.map((field) => {
+                      const value = decisionReasoning[field.id];
+                      const valid = value.trim().length >= 20;
+                      return (
+                        <label key={field.id}>
+                          <span>{field.label}<b className={valid ? "valid" : ""}>{value.length}/500</b></span>
+                          <textarea value={value} maxLength={500} placeholder={field.placeholder} onChange={(event) => setDecisionReasoning((current) => ({ ...current, [field.id]: event.target.value }))} />
+                          <small>{valid ? "已满足最低字数" : `还需 ${Math.max(0, 20 - value.trim().length)} 字`}</small>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="lab-v2-reference-editor">
+                  <header><div><span>03 / REFERENCES</span><h4>引用你的判断依据</h4></div><p>可引用已打开材料、当前可用项目文件和已选行动卡。</p></header>
+                  <div>
+                    <section><span>事件材料</span>{openedMaterialReferences.map((material) => <button key={material.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "event_material" && reference.id === material.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "event_material", id: material.id })}><b>{material.id}</b>{material.title}</button>)}</section>
+                    <section><span>项目文件</span>{availableDocumentReferences.map((document) => <button key={document.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "project_document" && reference.id === document.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "project_document", id: document.id })}><b>{document.id}</b>{document.title}</button>)}</section>
+                    <section><span>行动卡片</span>{selectedCards.map((card) => <button key={card.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "action_card" && reference.id === card.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "action_card", id: card.id })}><b>{card.id}</b>{card.title}</button>)}</section>
+                  </div>
+                </section>
+
+                <footer className={`lab-v2-draft-readiness ${draftReady ? "ready" : ""}`}>
+                  <div><span>{draftReady ? "草稿已完整" : "提交前检查"}</span><strong>{draftReady ? "行动链、决策依据与引用均已满足提交条件" : "完成所有必填内容后才能提交行动链"}</strong></div>
+                  <ul><li className={actionChainComplete ? "done" : ""}>行动卡均已连接</li><li className={reasoningComplete ? "done" : ""}>三段依据均满 20 字</li><li className={decisionReasoning.references.length ? "done" : ""}>至少引用 1 项依据</li></ul>
+                  <button type="button" disabled>提交行动链 · 下一阶段接入</button>
+                </footer>
+              </>
+            ) : <p>仍有 {(materials?.totalCount ?? 0) - (materials?.openedCount ?? 0)} 条材料未查看。</p>}
           </div>
         </section>
       )}

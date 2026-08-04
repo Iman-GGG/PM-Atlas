@@ -37,6 +37,17 @@ export type BranchEvent = {
   payloadJson: string;
 };
 
+export type StoredRoundDraft = {
+  id: string;
+  branchId: string;
+  roundNumber: number;
+  scenarioId: string;
+  selectedCardIdsJson: string;
+  connectionsJson: string;
+  reasoningJson: string;
+  updatedAt: string | null;
+};
+
 export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: string): Promise<OwnedBranch | null> {
   return db.prepare(`
     SELECT
@@ -202,4 +213,58 @@ export async function recordMaterialView(db: LabD1, record: RecordMaterialView):
     ));
   }
   await db.batch(statements);
+}
+
+export async function readRoundDraft(
+  db: LabD1,
+  branchId: string,
+  roundNumber: number,
+): Promise<StoredRoundDraft | null> {
+  return db.prepare(`
+    SELECT
+      id,
+      branch_id AS branchId,
+      round_number AS roundNumber,
+      scenario_id AS scenarioId,
+      selected_card_ids_json AS selectedCardIdsJson,
+      connections_json AS connectionsJson,
+      reasoning_json AS reasoningJson,
+      updated_at AS updatedAt
+    FROM lab_round_drafts
+    WHERE branch_id = ? AND round_number = ?
+    LIMIT 1
+  `).bind(branchId, roundNumber).first<StoredRoundDraft>();
+}
+
+export type SaveRoundDraft = {
+  id: string;
+  branchId: string;
+  roundNumber: number;
+  scenarioId: string;
+  selectedCardIdsJson: string;
+  connectionsJson: string;
+  reasoningJson: string;
+};
+
+export async function saveRoundDraft(db: LabD1, draft: SaveRoundDraft): Promise<void> {
+  await db.prepare(`
+    INSERT INTO lab_round_drafts (
+      id, branch_id, round_number, scenario_id,
+      selected_card_ids_json, connections_json, reasoning_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(branch_id, round_number) DO UPDATE SET
+      scenario_id = excluded.scenario_id,
+      selected_card_ids_json = excluded.selected_card_ids_json,
+      connections_json = excluded.connections_json,
+      reasoning_json = excluded.reasoning_json,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(
+    draft.id,
+    draft.branchId,
+    draft.roundNumber,
+    draft.scenarioId,
+    draft.selectedCardIdsJson,
+    draft.connectionsJson,
+    draft.reasoningJson,
+  ).run();
 }
