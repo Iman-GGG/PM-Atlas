@@ -403,31 +403,25 @@ type NetworkLayoutActivity = ScheduleActivity & NetworkActivity & {
   rowY: number;
 };
 
-function WbsCards({ workPackages, activities, selectedWeek }: {
+function WbsCards({ workPackages, activities }: {
   workPackages: WorkPackage[];
   activities: ScheduleActivity[];
-  selectedWeek: number;
 }) {
   return (
     <div className="lab-v2-wbs-cards">
         {workPackages.map((workPackage) => {
           const packageActivities = activities.filter((activity) => activity.parentId === workPackage.id);
-          const packageCompleted = workPackage.endWeek < selectedWeek;
-          const packageActive = workPackage.startWeek <= selectedWeek && workPackage.endWeek >= selectedWeek;
-          const packageState = packageCompleted ? "done" : packageActive ? "active" : "planned";
           return (
-            <details key={workPackage.id} className={packageState}>
+            <details key={workPackage.id}>
               <summary>
                 <span><strong>{workPackage.id}</strong><small>{workPackage.title}</small></span>
-                <i>{packageCompleted ? "✓ 已完成" : packageActive ? "● 进行中" : "○ 未开始"} · W{workPackage.startWeek}–W{workPackage.endWeek}</i>
+                <i>W{workPackage.startWeek}–W{workPackage.endWeek}</i>
                 <b>展开</b>
               </summary>
               <ol>
                 {packageActivities.map((activity, activityIndex) => {
-                  const completed = activity.endWeek < selectedWeek;
-                  const active = activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek;
                   return (
-                    <li key={activity.id} className={completed ? "done" : active ? "active" : "planned"}>
+                    <li key={activity.id}>
                       <b>{String(activityIndex + 1).padStart(2, "0")}</b>
                       <span>{activity.title}</span>
                       <i>W{activity.startWeek}–W{activity.endWeek}</i>
@@ -971,7 +965,7 @@ export function LabTimelinePage() {
           <TimeScaledNetwork activities={mainline.schedule.activities} network={mainline.baselineWorkload.scheduleNetwork} workPackages={mainline.workload.workPackages} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" interactiveChildren note={`11 个一级工作包 · 点击卡片展开 ${mainline.schedule.activities.length} 项二级子任务`} onOpen={setSelectedWidget}>
-          <WbsCards workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} selectedWeek={selectedWeek} />
+          <WbsCards workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} />
         </DashboardCard>
         <DashboardCard id="risk-status" eyebrow="RISK REGISTER" title="风险状态统计" value={`${openRiskCount} 开放`} note={`${completedRiskCount}/${riskState.length} 已关闭`} onOpen={setSelectedWidget}>
           <div className="lab-v2-risk-status"><i style={{ width: `${completedRiskCount / riskState.length * 100}%` }} /></div>
