@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "caseId": "car-control",
+  "caseVersion": "v2",
+  "preMeasurementState": "not_measured",
+  "scopeExclusionState": "not_applicable_by_approved_scope_change",
+  "hardGates": [
+    { "id": "open_high_or_critical_security_findings", "operator": "equals", "target": 0 },
+    { "id": "blocker_defects", "operator": "equals", "target": 0 },
+    { "id": "remote_control_audit_revocation_expiry_complete", "operator": "equals", "target": true, "scope": "remote_control_enabled" }
+  ],
+  "performanceMetrics": [
+    { "id": "pilot_users_completed", "operator": "greater_than_or_equal", "target": 300, "unit": "people" },
+    { "id": "vehicle_status_success_rate", "operator": "greater_than_or_equal", "target": 0.99, "unit": "ratio" },
+    { "id": "vehicle_status_p95_seconds", "operator": "less_than_or_equal", "target": 3, "unit": "seconds" },
+    { "id": "remote_control_success_rate", "operator": "greater_than_or_equal", "target": 0.98, "unit": "ratio", "scope": "remote_control_enabled" },
+    { "id": "core_test_pass_rate", "operator": "greater_than_or_equal", "target": 0.95, "unit": "ratio" },
+    { "id": "pilot_satisfaction", "operator": "greater_than_or_equal", "target": 4.2, "unit": "score_out_of_5" },
+    { "id": "service_availability", "operator": "greater_than_or_equal", "target": 0.995, "unit": "ratio" }
+  ],
+  "mainlineSeries": [
+    { "metricId": "core_test_pass_rate", "interpolation": "linear", "anchors": [{ "week": 14, "value": 0.88 }, { "week": 20, "value": 0.94 }, { "week": 24, "value": 0.96 }, { "week": 28, "value": 0.972 }, { "week": 32, "value": 0.98 }] },
+    { "metricId": "vehicle_status_success_rate", "interpolation": "linear", "anchors": [{ "week": 18, "value": 0.978 }, { "week": 22, "value": 0.988 }, { "week": 28, "value": 0.992 }, { "week": 32, "value": 0.994 }] },
+    { "metricId": "vehicle_status_p95_seconds", "interpolation": "linear", "anchors": [{ "week": 18, "value": 4.2 }, { "week": 22, "value": 3.3 }, { "week": 28, "value": 2.8 }, { "week": 32, "value": 2.6 }] },
+    { "metricId": "remote_control_success_rate", "interpolation": "linear", "anchors": [{ "week": 20, "value": 0.945 }, { "week": 24, "value": 0.972 }, { "week": 28, "value": 0.983 }, { "week": 32, "value": 0.986 }] },
+    { "metricId": "blocker_defects", "interpolation": "step", "anchors": [{ "week": 17, "value": 3 }, { "week": 20, "value": 1 }, { "week": 24, "value": 0 }, { "week": 32, "value": 0 }] },
+    { "metricId": "open_high_or_critical_security_findings", "interpolation": "step", "anchors": [{ "week": 23, "value": 0 }, { "week": 32, "value": 0 }] },
+    { "metricId": "remote_control_audit_revocation_expiry_complete", "interpolation": "step", "anchors": [{ "week": 20, "value": false }, { "week": 24, "value": true }, { "week": 32, "value": true }] },
+    { "metricId": "pilot_users_completed", "interpolation": "step", "anchors": [{ "week": 26, "value": 80 }, { "week": 27, "value": 210 }, { "week": 28, "value": 300 }, { "week": 32, "value": 300 }] },
+    { "metricId": "pilot_satisfaction", "interpolation": "linear", "anchors": [{ "week": 26, "value": 4.0 }, { "week": 27, "value": 4.15 }, { "week": 28, "value": 4.3 }, { "week": 32, "value": 4.4 }] },
+    { "metricId": "service_availability", "interpolation": "linear", "anchors": [{ "week": 25, "value": 0.991 }, { "week": 28, "value": 0.996 }, { "week": 32, "value": 0.997 }] }
+  ],
+  "scenarioOverrides": [
+    { "scenarioId": "scenario-3", "week": 25, "metricId": "open_high_or_critical_security_findings", "value": 1 }
+  ],
+  "successRule": "all_applicable_hard_gates_pass"
+}

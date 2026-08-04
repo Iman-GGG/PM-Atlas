@@ -14,7 +14,7 @@ function createEnv({
   const branch = {
     id: "branch-1",
     caseId: "car-control",
-    caseVersion: "v1",
+    caseVersion: "v2",
     contentHash,
     currentWeek,
     currentRoundNumber: 1,
@@ -33,7 +33,7 @@ function createEnv({
 
   const state = {
     branches: new Map(includeExistingBranch ? [[branch.id, { ...branch, identityKey }]] : []),
-    caseVersions: new Map(contentHash ? [["car-control:v1", contentHash]] : []),
+    caseVersions: new Map(contentHash ? [["car-control:v2", contentHash]] : []),
     users: new Map(),
     events: includeExistingBranch ? [...events] : [],
     snapshots: [],
@@ -170,7 +170,7 @@ async function request(path, options = {}, env = createEnv()) {
 }
 
 test("serves a public case manifest without private scenario content", async () => {
-  const response = await request("/api/lab/cases/car-control/v1");
+  const response = await request("/api/lab/cases/car-control/v2");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("cache-control") ?? "", /^public,/);
   const body = await response.json();
@@ -182,7 +182,7 @@ test("serves a public case manifest without private scenario content", async () 
 });
 
 test("filters public mainline data by section and week", async () => {
-  const response = await request("/api/lab/cases/car-control/v1/mainline?week=9&sections=baselineWorkload,documents");
+  const response = await request("/api/lab/cases/car-control/v2/mainline?week=9&sections=baselineWorkload,documents");
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.deepEqual(body.sections.baselineWorkload.weeks.map((item) => item.week), [9]);
@@ -238,7 +238,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
     },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-001" }),
   };
-  const response = await request("/api/lab/cases/car-control/v1/branches", options, env);
+  const response = await request("/api/lab/cases/car-control/v2/branches", options, env);
   assert.equal(response.status, 201);
   assert.match(response.headers.get("location") ?? "", /^\/api\/lab\/branches\/branch-/);
   const body = await response.json();
@@ -252,7 +252,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(env.__state.events.length, 1);
   assert.equal(env.__state.progress[0].highestUnlockedWeek, 9);
 
-  const replay = await request("/api/lab/cases/car-control/v1/branches", options, env);
+  const replay = await request("/api/lab/cases/car-control/v2/branches", options, env);
   assert.equal(replay.status, 200);
   const replayBody = await replay.json();
   assert.equal(replayBody.branch.id, body.branch.id);
@@ -306,15 +306,34 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(openedBody.cardsUnlocked, false);
 });
 
+test("creates a v2 branch when an immutable v1 case record already exists", async () => {
+  const env = createEnv({ includeExistingBranch: false });
+  env.__state.caseVersions.set("car-control:v1", "legacy-v1-content-hash");
+
+  const response = await request("/api/lab/cases/car-control/v2/branches", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "oai-authenticated-user-id": "user-123",
+      "oai-authenticated-user-email": "iman@example.com",
+    },
+    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-version-002" }),
+  }, env);
+
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).branch.caseVersion, "v2");
+  assert.equal(env.__state.caseVersions.get("car-control:v1"), "legacy-v1-content-hash");
+});
+
 test("requires login and a valid takeover request when creating a branch", async () => {
-  const anonymous = await request("/api/lab/cases/car-control/v1/branches", {
+  const anonymous = await request("/api/lab/cases/car-control/v2/branches", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-002" }),
   }, createEnv({ includeExistingBranch: false }));
   assert.equal(anonymous.status, 401);
 
-  const invalid = await request("/api/lab/cases/car-control/v1/branches", {
+  const invalid = await request("/api/lab/cases/car-control/v2/branches", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -327,7 +346,7 @@ test("requires login and a valid takeover request when creating a branch", async
 });
 
 test("validates branch ownership and strips scenario scoring fields", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v1");
+  const manifestResponse = await request("/api/lab/cases/car-control/v2");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -345,7 +364,7 @@ test("validates branch ownership and strips scenario scoring fields", async () =
 });
 
 test("does not reveal whether another user's branch exists", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v1");
+  const manifestResponse = await request("/api/lab/cases/car-control/v2");
   const manifest = await manifestResponse.json();
   const env = createEnv({ identityKey: "oai-user:owner", contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -359,7 +378,7 @@ test("does not reveal whether another user's branch exists", async () => {
 });
 
 test("reads and autosaves an owned action-chain draft", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v1");
+  const manifestResponse = await request("/api/lab/cases/car-control/v2");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const path = "/api/lab/branches/branch-1/scenarios/scenario-1/draft";

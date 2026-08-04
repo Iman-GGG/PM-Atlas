@@ -12,7 +12,7 @@ const budgetAtCompletionCny = publicLabCaseBaseline.plans.workload.budgetAtCompl
 function initialState() {
   return {
     caseId: "car-control",
-    caseVersion: "v1",
+    caseVersion: "v2",
     contentHash: publicLabCaseBaseline.contentHash,
     mode: "learning",
     week: 9,

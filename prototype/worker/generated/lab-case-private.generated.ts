@@ -5,13 +5,13 @@ import type { PrivateLabCasePackage } from "../../lib/lab/contracts";
 export const privateLabCasePackage: PrivateLabCasePackage = {
   "schemaVersion": 1,
   "caseId": "car-control",
-  "caseVersion": "v1",
-  "contentHash": "6f42d8ffe51be6539347263b24fc4ff5e779de8d46e7139be537aef0e4616fcb",
+  "caseVersion": "v2",
+  "contentHash": "f2b85b61f1a727785c5e1043be4f2eba77bdc6059920ace1996d1cba50d0eccd",
   "sourceFiles": {
     "workloadPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "totalWeeks": 32,
       "personDaysPerPersonWeek": 5,
       "budgetAtCompletionCny": 2600000,
@@ -429,7 +429,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "schedulePlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "resourceSchedulingPolicy": {
         "defaultBufferWeeks": 3,
         "outsideWindowCostPerWeek": 5,
@@ -1695,7 +1695,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "stakeholderPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "raciPolicy": {
         "overviewRows": "level_1_work_packages",
         "exactlyOneAccountablePerRow": true,
@@ -2632,7 +2632,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "documentPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "statusPolicy": {
         "lifecycleStates": [
           "not_created",
@@ -4495,7 +4495,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "requirementPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "documentIds": {
         "requirements": "D21",
         "traceabilityMatrix": "D22"
@@ -5257,7 +5257,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "riskPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "probabilityScale": [
         {
           "level": 1,
@@ -6266,7 +6266,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "qualityPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "preMeasurementState": "not_measured",
       "scopeExclusionState": "not_applicable_by_approved_scope_change",
       "hardGates": [
@@ -6555,7 +6555,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "scenarioPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "eventDiscoveryPolicy": {
         "showDirectEventAnswerOnTakeover": false,
         "entrySignals": [
@@ -9217,13 +9217,13 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "baselineWorkload": {
       "schemaVersion": 1,
       "generatedFrom": [
-        "content/lab-cases/car-control/v1/workload-plan.json",
-        "content/lab-cases/car-control/v1/schedule-plan.json",
-        "content/lab-cases/car-control/v1/stakeholder-plan.json",
-        "content/lab-cases/car-control/v1/document-plan.json"
+        "content/lab-cases/car-control/v2/workload-plan.json",
+        "content/lab-cases/car-control/v2/schedule-plan.json",
+        "content/lab-cases/car-control/v2/stakeholder-plan.json",
+        "content/lab-cases/car-control/v2/document-plan.json"
       ],
       "caseId": "car-control",
-      "caseVersion": "v1",
+      "caseVersion": "v2",
       "totalPlannedPersonDays": 1024,
       "totalActivities": 35,
       "budgetAtCompletionCny": 2600000,

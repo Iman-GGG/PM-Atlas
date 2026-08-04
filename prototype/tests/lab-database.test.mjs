@@ -64,7 +64,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   };
 
   const first = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v1/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v2/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -193,7 +193,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal((await roundReplay.json()).idempotentReplay, true);
 
   const replay = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v1/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v2/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );

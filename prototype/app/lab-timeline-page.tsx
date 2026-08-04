@@ -420,7 +420,7 @@ type ManagementArea = {
 };
 
 const caseId = "car-control";
-const caseVersion = "v1";
+const caseVersion = "v2";
 const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
