@@ -60,6 +60,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const requirementById = uniqueMap(requirements.requirements, "requirement");
   const riskById = uniqueMap(risks.initialRisks, "risk");
   const scenarioById = uniqueMap(scenarios.scenarios, "scenario");
+  const changeById = uniqueMap(documents.changeItems, "change item");
+  const issueById = uniqueMap(documents.issues, "issue");
+  const testRoundById = uniqueMap(documents.testRounds, "test round");
   const lifecycleStates = new Set(risks.lifecycle.states);
   const controlStates = new Set(risks.controlStatusModel.states);
   const allowedColumns = ["evidence_document", "tool_technique", "execution_action", "stakeholder"];
@@ -70,6 +73,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "baselined").length === 24, "Expected 24 baselined requirements");
   assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "candidate_unplanned").length === 6, "Expected 6 candidate requirements");
   assert(scenarioById.size === 3, `Expected 3 scenarios; found ${scenarioById.size}`);
+  assert(changeById.size === 8, `Expected 8 change items; found ${changeById.size}`);
+  assert(issueById.size === 8, `Expected 8 issues; found ${issueById.size}`);
+  assert(testRoundById.size === 6, `Expected 6 test rounds; found ${testRoundById.size}`);
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.primaryClues === 3, "Primary clue policy must require 3 items");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.corroboratingClues === 1, "Corroborating clue policy must require 1 item");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.dashboardAnomalies === 1, "Dashboard anomaly policy must require 1 item");
@@ -98,6 +104,47 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
     assert(Number.isInteger(event.week) && event.week >= 1 && event.week <= workload.totalWeeks, `${event.id} has invalid week`);
     for (const requirementId of event.requirementIds) assert(requirementById.has(requirementId), `${event.id} references unknown requirement ${requirementId}`);
     for (const documentId of event.documentRevisionIds) assert(documentById.has(documentId), `${event.id} references unknown document ${documentId}`);
+  }
+
+  for (const stakeholderId of documents.changeControlBoard.memberStakeholderIds) {
+    assert(stakeholderById.has(stakeholderId), `CCB references unknown stakeholder ${stakeholderId}`);
+  }
+  assert(stakeholderById.has(documents.changeControlBoard.chairStakeholderId), "CCB chair is unknown");
+  assert(stakeholderById.has(documents.changeControlBoard.secretaryStakeholderId), "CCB secretary is unknown");
+  assert(documents.changeControlBoard.quorum >= 3, "CCB quorum must be at least 3");
+
+  for (const change of changeById.values()) {
+    assert(change.submittedWeek <= change.reviewWeek, `${change.id} is reviewed before submission`);
+    assert(change.reviewWeek <= change.decisionWeek, `${change.id} is decided before review`);
+    assert(change.decisionWeek <= change.implementationCompletedWeek, `${change.id} completes before decision`);
+    assert(change.implementationCompletedWeek <= change.closedWeek, `${change.id} closes before implementation`);
+    assert(change.closedWeek <= workload.totalWeeks, `${change.id} closes after the project`);
+    assert(stakeholderById.has(change.requesterStakeholderId), `${change.id} has unknown requester ${change.requesterStakeholderId}`);
+    assert(stakeholderById.has(change.ownerStakeholderId), `${change.id} has unknown owner ${change.ownerStakeholderId}`);
+    for (const wbsId of change.affectedWbsIds) assert(deliverableById.has(wbsId), `${change.id} references unknown WBS ${wbsId}`);
+    for (const requirementId of change.affectedRequirementIds) assert(requirementById.has(requirementId), `${change.id} references unknown requirement ${requirementId}`);
+  }
+
+  for (const issue of issueById.values()) {
+    assert(issue.discoveredWeek <= issue.targetResolutionWeek, `${issue.id} target precedes discovery`);
+    assert(issue.targetResolutionWeek <= issue.resolvedWeek, `${issue.id} resolves before target week`);
+    assert(issue.resolvedWeek <= workload.totalWeeks, `${issue.id} resolves after the project`);
+    assert(stakeholderById.has(issue.ownerStakeholderId), `${issue.id} has unknown owner ${issue.ownerStakeholderId}`);
+    for (const requirementId of issue.linkedRequirementIds) assert(requirementById.has(requirementId), `${issue.id} references unknown requirement ${requirementId}`);
+    for (const riskId of issue.linkedRiskIds) assert(riskById.has(riskId), `${issue.id} references unknown risk ${riskId}`);
+    for (const changeId of issue.linkedChangeIds) assert(changeById.has(changeId), `${issue.id} references unknown change ${changeId}`);
+  }
+
+  for (const testRound of testRoundById.values()) {
+    assert(testRound.executionWeek >= 12 && testRound.executionWeek <= workload.totalWeeks, `${testRound.id} has invalid execution week`);
+    assert([testRound.passed, testRound.failed, testRound.blocked, testRound.criticalDefects].every((value) => Number.isInteger(value) && value >= 0), `${testRound.id} has invalid result counts`);
+    for (const requirementId of testRound.coveredRequirementIds) assert(requirementById.has(requirementId), `${testRound.id} references unknown requirement ${requirementId}`);
+  }
+
+  for (const revision of documents.contentRevisions) {
+    assert(revision.week >= 1 && revision.week <= workload.totalWeeks, `${revision.id} has invalid week`);
+    const referencedDocumentIds = Object.values(revision).filter(Array.isArray).flat();
+    for (const documentId of referencedDocumentIds) assert(documentById.has(documentId), `${revision.id} references unknown document ${documentId}`);
   }
 
   for (const event of risks.mainlineLifecycleEvents) {

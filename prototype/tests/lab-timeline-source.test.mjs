@@ -58,7 +58,12 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /const windowSize = 21/);
   assert.match(timeline, /<SprintBurndown/);
   assert.match(timeline, /<CcbMemberIndicator/);
-  assert.match(timeline, /项目发起人[\s\S]*项目经理[\s\S]*产品负责人\/业务分析师[\s\S]*技术负责人[\s\S]*DevOps\/安全工程师/);
+  assert.match(timeline, /changeControlBoard\.memberStakeholderIds/);
+  assert.match(timeline, /stakeholderNames\(currentRaci\[role\]\)/);
+  assert.match(timeline, /visibleChangeItems[\s\S]*changeStatusLabels/);
+  assert.match(timeline, /D05 变更日志/);
+  assert.match(timeline, /D21 需求文件/);
+  assert.match(timeline, /D26 风险登记册/);
   assert.match(timeline, /H \$\{x\(point\.day\)\} V \$\{y\(point\.remaining\)\}/);
   assert.match(timeline, /workPackageId !== "WBS-1\.0" && personDays > 0/);
   assert.match(styles, /\.lab-v2-compact-timeline[^{]*\{[^}]*position: fixed/);

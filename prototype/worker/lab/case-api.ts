@@ -79,6 +79,10 @@ function projectSection(section: SectionName, week: number | null): StateEffect 
       ...source,
       documents: (source.documents as StateEffect[]).filter((item) => Number(item.createdWeek) <= week),
       mainlineEvents: (source.mainlineEvents as StateEffect[]).filter((item) => Number(item.week) <= week),
+      contentRevisions: (source.contentRevisions as StateEffect[]).filter((item) => Number(item.week) <= week),
+      changeItems: (source.changeItems as StateEffect[]).filter((item) => Number(item.submittedWeek) <= week),
+      issues: (source.issues as StateEffect[]).filter((item) => Number(item.discoveredWeek) <= week),
+      testRounds: (source.testRounds as StateEffect[]).filter((item) => Number(item.executionWeek) <= week),
       relations: (source.relations as StateEffect[]).filter((item) => Number(item.effectiveWeek) <= week),
     };
   }

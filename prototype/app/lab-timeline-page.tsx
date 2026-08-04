@@ -94,6 +94,64 @@ type DocumentRelation = {
   effectiveWeek: number;
 };
 
+type ChangeControlBoard = {
+  memberStakeholderIds: string[];
+  quorum: number;
+  chairStakeholderId: string;
+  secretaryStakeholderId: string;
+  decisionRules: string[];
+};
+
+type ChangeItem = {
+  id: string;
+  title: string;
+  category: string;
+  priority: string;
+  requesterStakeholderId: string;
+  ownerStakeholderId: string;
+  submittedWeek: number;
+  reviewWeek: number;
+  decisionWeek: number;
+  implementationCompletedWeek: number;
+  closedWeek: number;
+  decision: string;
+  decisionSummary: string;
+  impact: { scope: string; scheduleWeeks: number; costCny: number; quality: string; risk: string };
+  affectedWbsIds: string[];
+  affectedRequirementIds: string[];
+  implementationResult: string;
+};
+
+type IssueItem = {
+  id: string;
+  title: string;
+  category: string;
+  severity: string;
+  discoveredWeek: number;
+  targetResolutionWeek: number;
+  resolvedWeek: number;
+  ownerStakeholderId: string;
+  statusAfterResolution: string;
+  resolution: string;
+  linkedRequirementIds: string[];
+  linkedRiskIds: string[];
+  linkedChangeIds: string[];
+};
+
+type TestRound = {
+  id: string;
+  title: string;
+  executionWeek: number;
+  scope: string;
+  coveredRequirementIds: string[];
+  passed: number;
+  failed: number;
+  blocked: number;
+  criticalDefects: number;
+  result: string;
+  releaseRecommendation: string;
+};
+
 type RiskItem = {
   id: string;
   title: string;
@@ -116,6 +174,7 @@ type RequirementItem = {
   title: string;
   category: string;
   priority: "P0" | "P1" | "P2" | "P3";
+  sourceStakeholderId: string;
   discoveredWeek: number;
   baselinedWeek?: number;
   implementationCompletedWeek?: number;
@@ -168,7 +227,12 @@ type MainlineData = {
   documents: {
     documents: ProjectDocument[];
     mainlineEvents: DocumentEvent[];
+    contentRevisions: DocumentEvent[];
     relations: DocumentRelation[];
+    changeControlBoard: ChangeControlBoard;
+    changeItems: ChangeItem[];
+    issues: IssueItem[];
+    testRounds: TestRound[];
   };
   requirements: {
     requirements: RequirementItem[];
@@ -283,13 +347,13 @@ const milestones = [
   { week: 28, label: "上线门" },
   { week: 32, label: "收尾" },
 ];
-const ccbMembers = [
-  { title: "项目发起人", duty: "主席 / 最终审批" },
-  { title: "项目经理", duty: "组织评审 / 记录决议" },
-  { title: "产品负责人/业务分析师", duty: "业务价值 / 范围影响" },
-  { title: "技术负责人", duty: "技术方案 / 进度影响" },
-  { title: "DevOps/安全工程师", duty: "安全 / 发布影响" },
-];
+const ccbDutyByStakeholderId: Record<string, string> = {
+  sponsor: "主席 / 最终审批",
+  pm: "组织评审 / 记录决议",
+  product_ba: "业务价值 / 范围影响",
+  tech_lead: "技术方案 / 进度影响",
+  devsecops: "安全 / 发布影响",
+};
 const scenarioLabels: Record<string, string> = {
   "scenario-1": "需求变更",
   "scenario-2": "供应与资源",
@@ -426,6 +490,28 @@ function requirementStatus(requirement: RequirementItem, week: number): string {
   return "分析中";
 }
 
+function changeStatus(change: ChangeItem, week: number): "pending" | "review" | "execution" | "verification" | "closed" {
+  if (week < change.reviewWeek) return "pending";
+  if (week < change.decisionWeek) return "review";
+  if (week < change.implementationCompletedWeek) return "execution";
+  if (week < change.closedWeek) return "verification";
+  return "closed";
+}
+
+const changeStatusLabels = {
+  pending: "待评审",
+  review: "审查中",
+  execution: "已批准待执行",
+  verification: "待验证关闭",
+  closed: "已关闭",
+};
+
+const changeDecisionLabels: Record<string, string> = {
+  approved: "批准",
+  approved_for_later_version: "纳入后续版本",
+  approved_phased_delivery: "批准分阶段交付",
+};
+
 function Sparkline({ values, target = 1 }: { values: number[]; target?: number }) {
   const width = 220;
   const height = 62;
@@ -509,15 +595,15 @@ function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek:
   );
 }
 
-function CcbMemberIndicator() {
+function CcbMemberIndicator({ members }: { members: Stakeholder[] }) {
   return (
-    <span className="lab-v2-ccb-members" role="img" aria-label={`CCB 核心成员：${ccbMembers.map((member) => member.title).join("、")}`}>
+    <span className="lab-v2-ccb-members" role="img" aria-label={`CCB 核心成员：${members.map((member) => member.title).join("、")}`}>
       <span className="lab-v2-ccb-people" aria-hidden="true">
         {Array.from({ length: 3 }, (_, index) => <i key={index} />)}
       </span>
       <span className="lab-v2-ccb-tooltip" role="tooltip">
         <b>CCB 核心成员</b>
-        {ccbMembers.map((member) => <span key={member.title}><strong>{member.title}</strong><small>{member.duty}</small></span>)}
+        {members.map((member) => <span key={member.id}><strong>{member.title}</strong><small>{ccbDutyByStakeholderId[member.id]}</small></span>)}
         <em>测试、法务与隐私负责人按变更议题列席</em>
       </span>
     </span>
@@ -752,6 +838,8 @@ export function LabTimelinePage() {
   const [mainline, setMainline] = useState<MainlineData | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedWidget, setSelectedWidget] = useState<DashboardId | null>(null);
+  const [requirementPriorityFilter, setRequirementPriorityFilter] = useState<"ALL" | RequirementItem["priority"]>("ALL");
+  const [riskDetailFilter, setRiskDetailFilter] = useState<"ALL" | "OPEN" | "HIGH" | "CLOSED">("ALL");
   const [documentDrawerOpen, setDocumentDrawerOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState("D14");
   const [managementFilter, setManagementFilter] = useState<string | null>(null);
@@ -955,18 +1043,23 @@ export function LabTimelinePage() {
     return mainline.requirements.requirements.filter((requirement) => requirement.discoveredWeek <= selectedWeek);
   }, [mainline, selectedWeek]);
 
+  const allDocumentEvents = useMemo(() => {
+    if (!mainline) return [];
+    return [...mainline.documents.mainlineEvents, ...mainline.documents.contentRevisions].sort((left, right) => left.week - right.week);
+  }, [mainline]);
+
   const documentState = useMemo(() => {
     if (!mainline) return [];
     return mainline.documents.documents.map((document) => {
-      const history = mainline.documents.mainlineEvents.filter((event) => event.week <= selectedWeek && documentActions(event, document.id).length > 0);
+      const history = allDocumentEvents.filter((event) => event.week <= selectedWeek && documentActions(event, document.id).length > 0);
       return {
         ...document,
-        status: documentStatus(document, mainline.documents.mainlineEvents, selectedWeek),
+        status: documentStatus(document, allDocumentEvents, selectedWeek),
         history,
         version: document.createdWeek <= selectedWeek ? 1 + history.length : 0,
       };
     });
-  }, [mainline, selectedWeek]);
+  }, [allDocumentEvents, mainline, selectedWeek]);
 
   const selectedDocument = documentState.find((document) => document.id === selectedDocumentId) ?? documentState[0];
   const relatedDocumentIds = useMemo(() => {
@@ -996,8 +1089,25 @@ export function LabTimelinePage() {
   const requirementCompleted = requirementState.filter((requirement) => requirement.implementationCompletedWeek !== undefined && requirement.implementationCompletedWeek <= selectedWeek).length;
   const requirementVerified = requirementState.filter((requirement) => requirement.verifiedWeek !== undefined && requirement.verifiedWeek <= selectedWeek).length;
   const requirementCandidates = requirementState.filter((requirement) => requirement.traceabilityStatus === "candidate_unplanned").length;
-  const completedGates = milestones.filter((milestone) => milestone.week <= selectedWeek).length;
   const nextGate = milestones.find((milestone) => milestone.week > selectedWeek);
+  const stakeholderById = new Map(mainline.stakeholders.stakeholders.map((stakeholder) => [stakeholder.id, stakeholder]));
+  const stakeholderNames = (stakeholderIds: string[]) => stakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)?.title ?? stakeholderId);
+  const ccbMembers = mainline.documents.changeControlBoard.memberStakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)).filter((stakeholder): stakeholder is Stakeholder => Boolean(stakeholder));
+  const visibleChangeItems = mainline.documents.changeItems
+    .filter((change) => change.submittedWeek <= selectedWeek)
+    .map((change) => ({ ...change, currentStatus: changeStatus(change, selectedWeek) }));
+  const openChangeItems = visibleChangeItems.filter((change) => change.currentStatus !== "closed");
+  const closedChangeItems = visibleChangeItems.filter((change) => change.currentStatus === "closed");
+  const latestChangeItem = visibleChangeItems.at(-1);
+  const visibleIssues = mainline.documents.issues.filter((issue) => issue.discoveredWeek <= selectedWeek);
+  const visibleTestRounds = mainline.documents.testRounds.filter((testRound) => testRound.executionWeek <= selectedWeek);
+  const requirementDetailItems = requirementState.filter((requirement) => requirementPriorityFilter === "ALL" || requirement.priority === requirementPriorityFilter);
+  const riskDetailItems = riskState.filter((risk) => {
+    if (riskDetailFilter === "OPEN") return risk.lifecycle !== "closed";
+    if (riskDetailFilter === "CLOSED") return risk.lifecycle === "closed";
+    if (riskDetailFilter === "HIGH") return risk.lifecycle !== "closed" && risk.currentAssessment.probability * risk.currentAssessment.impact >= 10;
+    return true;
+  });
   const currentSprintNumber = selectedWeek < 9 ? 0 : Math.min(10, Math.floor((selectedWeek - 9) / 2) + 1);
   const sprintProgress = selectedWeek < 9 ? 0 : ((selectedWeek - 9) % 2 + 1) / 2;
   const sprintRemaining = Math.round(34 * (1 - sprintProgress));
@@ -1017,11 +1127,11 @@ export function LabTimelinePage() {
     gantt: [`当前活跃工作包 ${activeWorkPackages.length} 个`, `当前活跃活动 ${activeActivities.length} 项`, `下一阶段门 ${nextGate ? `W${nextGate.week} ${nextGate.label}` : "项目已收尾"}`],
     workload: [`全项目计划工作量 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`, `本周计划 ${weekState.plannedTeamPersonDays} 人日`, `当前投入峰值 ${Math.max(...visibleWeeks.map((item) => item.plannedTeamPersonDays))} 人日/周`],
     engagement: [`总体参与度 ${engagementPercent}%`, `领先参与 ${stakeholderState.filter((item) => item.current === "leading").length} 人`, `支持参与 ${stakeholderState.filter((item) => item.current === "supportive").length} 人`],
-    raci: [`当前工作包 ${currentRaci.workPackageId}`, `A：${currentRaci.A.join("、")}`, `R：${currentRaci.R.join("、")}`],
+    raci: [`当前工作包 ${currentRaci.workPackageId}`, `A：${stakeholderNames(currentRaci.A).join("、")}`, `R：${stakeholderNames(currentRaci.R).join("、")}`],
     "risk-matrix": [`本周累计发现 ${riskState.length} 项`, `开放风险 ${openRiskCount} 项，已关闭 ${completedRiskCount} 项`, `高影响开放风险 ${riskState.filter((risk) => risk.lifecycle !== "closed" && risk.currentAssessment.impact >= 4).length} 项`],
     requirements: [`当前已发现需求 ${requirementTotal} 项`, `已基线 ${requirementBaselined}，候选 ${requirementCandidates}`, `开发完成 ${requirementCompleted}，已验证 ${requirementVerified}`, `阻断缺陷 ${typeof blockerDefects === "number" ? Math.round(blockerDefects) : 0} 个`],
     burndown: [currentSprintNumber ? `当前 S${currentSprintNumber}` : "尚未进入迭代", `迭代剩余 ${sprintRemaining} 点`, `当前周 W${selectedWeek}`],
-    ccb: [`已完成阶段门 ${completedGates} 个`, `下一阶段门 ${nextGate ? `W${nextGate.week}` : "无"}`, `当前待办 ${nextGate && nextGate.week - selectedWeek <= 1 ? 1 : 0} 项`],
+    ccb: [`累计变更 ${visibleChangeItems.length} 项`, `当前待办 ${openChangeItems.length} 项`, `已关闭 ${closedChangeItems.length} 项`, latestChangeItem ? `最近决议：${changeDecisionLabels[latestChangeItem.decision]}` : "尚无变更请求"],
     network: [`当前关键活动 ${criticalNow.length} 项`, `关键活动总数 ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length}`, `主线预测完工 W${mainline.baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek}`],
     wbs: [`工作包总数 ${mainline.workload.workPackages.length}`, `进行中 ${activeWorkPackages.length}`, `已完成 ${mainline.workload.workPackages.filter((item) => item.endWeek < selectedWeek).length}`],
     "risk-status": [`累计发现风险 ${riskState.length} 项`, `监控中 ${riskState.filter((risk) => risk.lifecycle === "monitoring").length} 项`, `已关闭 ${completedRiskCount} 项`, `本周新增 ${riskState.filter((risk) => risk.discoveredWeek === selectedWeek).length} 项`],
@@ -1179,7 +1289,7 @@ export function LabTimelinePage() {
 
         <DashboardCard id="raci" eyebrow="RESPONSIBILITY" title="RACI 矩阵" className="wide" note={`当周主要工作包 ${currentRaci.workPackageId} · ${currentRaciWorkPackage?.title ?? "项目治理"}`} onOpen={setSelectedWidget}>
           <div className="lab-v2-raci">
-            {(["A", "R", "C", "I"] as const).map((role) => <div key={role}><b>{role}</b><span>{currentRaci[role].slice(0, role === "C" || role === "I" ? 3 : 2).join(" / ") || "—"}</span></div>)}
+            {(["A", "R", "C", "I"] as const).map((role) => <div key={role}><b>{role}</b><span>{stakeholderNames(currentRaci[role]).slice(0, role === "C" || role === "I" ? 3 : 2).join(" / ") || "—"}</span></div>)}
           </div>
         </DashboardCard>
         <DashboardCard id="risk-matrix" eyebrow="RISK EXPOSURE" title="风险影响概率矩阵" note={`${openRiskCount} 项风险仍在监控`} onOpen={setSelectedWidget}>
@@ -1200,8 +1310,11 @@ export function LabTimelinePage() {
         <DashboardCard id="burndown" eyebrow="ITERATION" title="当前迭代燃尽图" value={currentSprintNumber ? `S${currentSprintNumber}` : "未开始"} note={currentSprintNumber ? `剩余 ${sprintRemaining} 点` : "W9 进入首个开发迭代"} onOpen={setSelectedWidget}>
           <SprintBurndown started={currentSprintNumber > 0} secondWeek={sprintProgress === 1} />
         </DashboardCard>
-        <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" className="ccb-widget" titleAccessory={<CcbMemberIndicator />} value={nextGate && nextGate.week - selectedWeek <= 1 ? "1" : "0"} note={nextGate ? `下一阶段门 W${nextGate.week}` : "所有阶段门已完成"} onOpen={setSelectedWidget}>
-          <div className="lab-v2-gates">{milestones.slice(1).map((item) => <i key={item.week} className={item.week <= selectedWeek ? "done" : item.week - selectedWeek <= 1 ? "pending" : ""}><b>W{item.week}</b><span>{item.label}</span></i>)}</div>
+        <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" className="ccb-widget" titleAccessory={<CcbMemberIndicator members={ccbMembers} />} value={String(openChangeItems.length)} note={`${visibleChangeItems.length} 项累计变更 · ${closedChangeItems.length} 项已关闭`} onOpen={setSelectedWidget}>
+          <div className="lab-v2-ccb-list">
+            {visibleChangeItems.slice(-4).map((change) => <i key={change.id} className={change.currentStatus}><b>{change.id}</b><span>{change.title}</span><em>{changeStatusLabels[change.currentStatus]}</em></i>)}
+            {!visibleChangeItems.length && <p>当前尚无正式变更请求</p>}
+          </div>
         </DashboardCard>
         <DashboardCard id="network" eyebrow="SCHEDULE NETWORK" title="时标网络图" className="full network-widget" note={`完整 35 项活动 · ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
           <TimeScaledNetwork activities={mainline.schedule.activities} network={mainline.baselineWorkload.scheduleNetwork} workPackages={mainline.workload.workPackages} selectedWeek={selectedWeek} />
@@ -1300,6 +1413,42 @@ export function LabTimelinePage() {
                     <div className="lab-v2-document-title"><span>{selectedDocument.id} / W{selectedWeek} 主线版本</span><h3>{selectedDocument.title}</h3><div><b>{selectedDocument.status}</b><i>v{selectedDocument.version}</i><small>创建于 W{selectedDocument.createdWeek}</small></div></div>
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
+                      {selectedDocument.id === "D05" && (
+                        <section className="lab-v2-document-data">
+                          <span>变更日志 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table className="lab-v2-change-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号</th><th>变更事项</th><th>提出</th><th>状态</th><th>决议</th><th>进度/成本影响</th><th>负责人</th><th>关闭</th></tr></thead>
+                              <tbody>{visibleChangeItems.map((change) => <tr key={change.id}><td>{change.id}</td><td><strong>{change.title}</strong><small>{change.decisionSummary}</small></td><td>W{change.submittedWeek}</td><td>{changeStatusLabels[change.currentStatus]}</td><td>{changeDecisionLabels[change.decision]}</td><td>{change.impact.scheduleWeeks ? `+${change.impact.scheduleWeeks}周` : "不延期"} / {formatMoney(change.impact.costCny)}</td><td>{stakeholderById.get(change.ownerStakeholderId)?.title}</td><td>{change.currentStatus === "closed" ? `W${change.closedWeek}` : "—"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D08" && (
+                        <section className="lab-v2-document-data">
+                          <span>问题日志 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table className="lab-v2-issue-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号</th><th>问题</th><th>严重度</th><th>发现</th><th>负责人</th><th>处理结果</th><th>关闭</th></tr></thead>
+                              <tbody>{visibleIssues.map((issue) => <tr key={issue.id}><td>{issue.id}</td><td>{issue.title}</td><td>{issue.severity}</td><td>W{issue.discoveredWeek}</td><td>{stakeholderById.get(issue.ownerStakeholderId)?.title}</td><td>{selectedWeek >= issue.resolvedWeek ? issue.resolution : "处理中"}</td><td>{selectedWeek >= issue.resolvedWeek ? `W${issue.resolvedWeek}` : "—"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D21" && (
+                        <section className="lab-v2-document-data">
+                          <span>需求文件 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table className="lab-v2-requirements-file-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号</th><th>需求陈述</th><th>来源</th><th>优先级</th><th>验收标准</th><th>发现</th><th>基线</th></tr></thead>
+                              <tbody>{requirementState.map((requirement) => <tr key={requirement.id}><td>{requirement.id}</td><td>{requirement.title}</td><td>{stakeholderById.get(requirement.sourceStakeholderId)?.title}</td><td>{requirement.priority}</td><td>{requirement.acceptanceCriteria.join("；")}</td><td>W{requirement.discoveredWeek}</td><td>{requirement.baselinedWeek && requirement.baselinedWeek <= selectedWeek ? `W${requirement.baselinedWeek}` : requirement.traceabilityStatus === "candidate_unplanned" ? "后续版本" : "—"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
                       {selectedDocument.id === "D22" && (
                         <section className="lab-v2-document-data">
                           <span>需求跟踪矩阵 · W{selectedWeek}</span>
@@ -1324,6 +1473,18 @@ export function LabTimelinePage() {
                           </div>
                         </section>
                       )}
+                      {selectedDocument.id === "D32" && (
+                        <section className="lab-v2-document-data">
+                          <span>测试与评估文件 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table className="lab-v2-test-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>轮次</th><th>测试范围</th><th>通过</th><th>失败</th><th>阻塞</th><th>严重缺陷</th><th>评估与发布建议</th></tr></thead>
+                              <tbody>{visibleTestRounds.map((testRound) => <tr key={testRound.id}><td>{testRound.id}<small>W{testRound.executionWeek}</small></td><td><strong>{testRound.title}</strong><small>{testRound.scope}</small></td><td>{testRound.passed}</td><td>{testRound.failed}</td><td>{testRound.blocked}</td><td>{testRound.criticalDefects}</td><td>{testRound.releaseRecommendation}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
                       <section className="lab-v2-document-relations"><span>关联文件</span><div>{mainline.documents.relations.filter((relation) => relation.effectiveWeek <= selectedWeek && (relation.fromDocumentId === selectedDocument.id || relation.toDocumentId === selectedDocument.id)).map((relation) => { const relatedId = relation.fromDocumentId === selectedDocument.id ? relation.toDocumentId : relation.fromDocumentId; const related = documentState.find((document) => document.id === relatedId); return <button key={relation.id} onClick={() => setSelectedDocumentId(relatedId)}><b>{relatedId}</b><span>{related?.title}</span><small>{relation.reason}</small></button>; })}</div></section>
                       <section className="lab-v2-document-history"><span>版本历史</span><ol><li><b>v1</b><div><strong>W{selectedDocument.createdWeek} · 创建</strong><p>形成首个可引用版本。</p></div></li>{selectedDocument.history.map((historyEvent, historyIndex) => <li key={historyEvent.id}><b>v{historyIndex + 2}</b><div><strong>W{historyEvent.week} · {documentActions(historyEvent, selectedDocument.id).join(" / ")}</strong><p>{historyEvent.reason}</p></div></li>)}</ol></section>
                     </>}
@@ -1337,9 +1498,34 @@ export function LabTimelinePage() {
 
       {selectedWidget && (
         <div className="lab-v2-modal-backdrop" onClick={() => setSelectedWidget(null)}>
-          <section className="lab-v2-widget-modal" onClick={(event) => event.stopPropagation()}>
+          <section className={`lab-v2-widget-modal ${["ccb", "raci", "requirements", "risk-matrix", "risk-status"].includes(selectedWidget) ? "detailed" : ""}`} onClick={(event) => event.stopPropagation()}>
             <header><div><span>W{selectedWeek} / DASHBOARD DETAIL</span><h2>{dashboardTitles[selectedWidget]}</h2></div><button onClick={() => setSelectedWidget(null)}>关闭</button></header>
-            <div>{dashboardDetailFacts[selectedWidget].map((fact, index) => <article key={fact}><span>{String(index + 1).padStart(2, "0")}</span><strong>{fact}</strong></article>)}</div>
+            {selectedWidget === "ccb" ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-metrics"><span><b>{openChangeItems.length}</b>当前待办</span><span><b>{closedChangeItems.length}</b>已关闭</span><span><b>{visibleChangeItems.length}</b>累计变更</span><span><b>{mainline.documents.changeControlBoard.quorum}</b>法定人数</span></div>
+                <div className="lab-v2-detail-table"><table><thead><tr><th>编号</th><th>变更事项</th><th>提交</th><th>状态</th><th>决议</th><th>负责人</th></tr></thead><tbody>{visibleChangeItems.map((change) => <tr key={change.id}><td>{change.id}</td><td><strong>{change.title}</strong><small>{change.decisionSummary}</small></td><td>W{change.submittedWeek}</td><td>{changeStatusLabels[change.currentStatus]}</td><td>{changeDecisionLabels[change.decision]}</td><td>{stakeholderById.get(change.ownerStakeholderId)?.title}</td></tr>)}</tbody></table></div>
+                <button className="lab-v2-detail-document-link" onClick={() => { setSelectedWidget(null); setSelectedDocumentId("D05"); setManagementFilter(null); setDocumentDrawerOpen(true); }}>打开 D05 变更日志 →</button>
+              </div>
+            ) : selectedWidget === "raci" ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-focus"><span>当周主要工作包</span><strong>{currentRaci.workPackageId} · {currentRaciWorkPackage?.title}</strong><small>依据W{selectedWeek}各活跃工作包计划投入，选择投入最高的非治理工作包。</small></div>
+                <div className="lab-v2-raci-detail">{(["A", "R", "C", "I"] as const).map((role) => <section key={role}><b>{role}</b><span>{role === "A" ? "最终负责" : role === "R" ? "负责执行" : role === "C" ? "提供咨询" : "需要知会"}</span><div>{stakeholderNames(currentRaci[role]).map((name) => <i key={name}>{name}</i>)}</div></section>)}</div>
+              </div>
+            ) : selectedWidget === "requirements" ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-metrics"><span><b>{requirementTotal}</b>已发现</span><span><b>{requirementBaselined}</b>已基线</span><span><b>{requirementCompleted}</b>开发完成</span><span><b>{requirementVerified}</b>已验证</span></div>
+                <div className="lab-v2-detail-toolbar"><span>优先级筛选</span>{(["ALL", "P0", "P1", "P2", "P3"] as const).map((priority) => <button key={priority} className={requirementPriorityFilter === priority ? "active" : ""} onClick={() => setRequirementPriorityFilter(priority)}>{priority === "ALL" ? "全部" : priority}</button>)}</div>
+                <div className="lab-v2-detail-table"><table><thead><tr><th>需求</th><th>状态</th><th>优先级</th><th>来源</th><th>主要WBS</th></tr></thead><tbody>{requirementDetailItems.map((requirement) => <tr key={requirement.id}><td><strong>{requirement.id}</strong><small>{requirement.title}</small></td><td>{requirementStatus(requirement, selectedWeek)}</td><td>{requirement.priority}</td><td>{stakeholderById.get(requirement.sourceStakeholderId)?.title}</td><td>{requirement.primaryWbsId ?? requirement.proposedPrimaryWbsId}</td></tr>)}</tbody></table></div>
+                <div className="lab-v2-detail-links"><button onClick={() => { setSelectedWidget(null); setSelectedDocumentId("D21"); setDocumentDrawerOpen(true); }}>D21 需求文件</button><button onClick={() => { setSelectedWidget(null); setSelectedDocumentId("D22"); setDocumentDrawerOpen(true); }}>D22 跟踪矩阵</button></div>
+              </div>
+            ) : selectedWidget === "risk-matrix" || selectedWidget === "risk-status" ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-metrics"><span><b>{riskState.length}</b>累计发现</span><span><b>{openRiskCount}</b>开放</span><span><b>{completedRiskCount}</b>已关闭</span><span><b>{riskState.filter((risk) => risk.lifecycle !== "closed" && risk.currentAssessment.probability * risk.currentAssessment.impact >= 10).length}</b>高风险</span></div>
+                <div className="lab-v2-detail-toolbar"><span>风险筛选</span>{(["ALL", "OPEN", "HIGH", "CLOSED"] as const).map((filter) => <button key={filter} className={riskDetailFilter === filter ? "active" : ""} onClick={() => setRiskDetailFilter(filter)}>{{ ALL: "全部", OPEN: "开放", HIGH: "高风险", CLOSED: "已关闭" }[filter]}</button>)}</div>
+                <div className="lab-v2-detail-table"><table><thead><tr><th>风险</th><th>等级</th><th>状态</th><th>发现</th><th>负责人</th><th>应对与结果</th></tr></thead><tbody>{riskDetailItems.map((risk) => <tr key={risk.id}><td><strong>{risk.id}</strong><small>{risk.title}</small></td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.lifecycle === "closed" ? "已关闭" : risk.lifecycle === "monitoring" ? "监控中" : "处理中"}</td><td>W{risk.discoveredWeek}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : risk.responseActions.join("；")}</td></tr>)}</tbody></table></div>
+                <button className="lab-v2-detail-document-link" onClick={() => { setSelectedWidget(null); setSelectedDocumentId("D26"); setManagementFilter(null); setDocumentDrawerOpen(true); }}>打开 D26 风险登记册 →</button>
+              </div>
+            ) : <div>{dashboardDetailFacts[selectedWidget].map((fact, index) => <article key={fact}><span>{String(index + 1).padStart(2, "0")}</span><strong>{fact}</strong></article>)}</div>}
             <footer>数据来自当前主线状态。拖动项目进度条后，该仪表详情会同步更新。</footer>
           </section>
         </div>
