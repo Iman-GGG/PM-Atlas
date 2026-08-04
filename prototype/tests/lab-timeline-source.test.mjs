@@ -44,6 +44,8 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /完整 11 个一级工作包/);
   assert.match(timeline, /完整 35 项活动/);
   assert.match(timeline, /<TimeScaledNetwork/);
+  assert.match(timeline, /onPointerMove=\{handlePointerMove\}/);
+  assert.match(timeline, /network-hover-guides/);
   assert.match(timeline, /<WbsCards/);
   assert.match(timeline, /项二级子任务/);
   assert.match(timeline, /window\.addEventListener\("keydown", onKeyDown\)/);
@@ -61,6 +63,8 @@ test("renders the complete monochrome project control center", async () => {
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
   assert.doesNotMatch(styles, /\.lab-v2-time-network[^}]*min-width: 1380px/);
   assert.doesNotMatch(styles, /\.network-activities[^}]*stroke:/);
+  assert.doesNotMatch(timeline, /className="network-group-line"/);
+  assert.doesNotMatch(timeline, /className=\{`network-week-line/);
   assert.doesNotMatch(timeline, /workPackages\.slice\(0, (5|6)\)/);
   assert.doesNotMatch(timeline, /filter\(\(item\) => item\.isCritical\)\.slice/);
 });

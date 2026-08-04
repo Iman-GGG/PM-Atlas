@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 type TakeoverPoint = {
   scenarioId: string;
@@ -464,6 +464,7 @@ function TimeScaledNetwork({
   const laneHeight = 34;
   const groupGap = 12;
   const topOffset = 42;
+  const [hoverCell, setHoverCell] = useState<{ week: number; groupId: string } | null>(null);
   const layout = useMemo(() => {
     const networkById = new Map(network.activities.map((activity) => [activity.activityId, activity]));
     const layoutActivities: NetworkLayoutActivity[] = [];
@@ -501,6 +502,23 @@ function TimeScaledNetwork({
   const layoutById = new Map(layout.activities.map((activity) => [activity.id, activity]));
   const totalWidth = labelWidth + weekWidth * 32 + 18;
   const weekX = (week: number) => labelWidth + (week - 1) * weekWidth;
+  const hoveredGroup = hoverCell ? layout.groups.find((group) => group.id === hoverCell.groupId) : null;
+  const handlePointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pointerX = (event.clientX - bounds.left) / bounds.width * totalWidth;
+    const pointerY = (event.clientY - bounds.top) / bounds.height * layout.height;
+    if (pointerX < labelWidth || pointerY < 28) {
+      setHoverCell(null);
+      return;
+    }
+    const week = Math.min(32, Math.max(1, Math.floor((pointerX - labelWidth) / weekWidth) + 1));
+    const group = layout.groups.find((item) => pointerY >= item.top && pointerY <= item.bottom);
+    if (!group) {
+      setHoverCell(null);
+      return;
+    }
+    setHoverCell((current) => current?.week === week && current.groupId === group.id ? current : { week, groupId: group.id });
+  };
 
   return (
     <div className="lab-v2-network-scroll">
@@ -509,6 +527,8 @@ function TimeScaledNetwork({
         viewBox={`0 0 ${totalWidth} ${layout.height}`}
         role="img"
         aria-label="完整项目时标网络图"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={() => setHoverCell(null)}
       >
         <defs>
           <marker id="lab-v2-network-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
@@ -516,18 +536,21 @@ function TimeScaledNetwork({
           </marker>
         </defs>
         <rect className="network-background" x="0" y="0" width={totalWidth} height={layout.height} />
+        {hoverCell && hoveredGroup ? (
+          <g className="network-hover-guides" aria-hidden="true">
+            <rect className="horizontal" x="0" y={hoveredGroup.top} width={totalWidth} height={hoveredGroup.bottom - hoveredGroup.top} />
+            <rect className="vertical" x={weekX(hoverCell.week)} y="28" width={weekWidth} height={layout.height - 28} />
+          </g>
+        ) : null}
         {Array.from({ length: 32 }, (_, index) => index + 1).map((week) => (
           <g key={week}>
-            <line className={`network-week-line ${week === selectedWeek ? "selected" : ""}`} x1={weekX(week)} x2={weekX(week)} y1="28" y2={layout.height} />
-            <text className={`network-week-label ${week === selectedWeek ? "selected" : ""}`} x={weekX(week) + weekWidth / 2} y="20">W{week}</text>
+            <text className={`network-week-label ${week === selectedWeek ? "selected" : ""} ${hoverCell?.week === week ? "hovered" : ""}`} x={weekX(week) + weekWidth / 2} y="20">W{week}</text>
           </g>
         ))}
-        <line className="network-week-line" x1={weekX(32) + weekWidth} x2={weekX(32) + weekWidth} y1="28" y2={layout.height} />
         {layout.groups.map((group) => (
           <g key={group.id}>
-            <line className="network-group-line" x1="0" x2={totalWidth} y1={group.bottom + groupGap / 2} y2={group.bottom + groupGap / 2} />
-            <text className="network-group-id" x="8" y={group.top + 13}>{group.id}</text>
-            <text className="network-group-title" x="8" y={group.top + 28}>{group.title}</text>
+            <text className={`network-group-id ${hoverCell?.groupId === group.id ? "hovered" : ""}`} x="8" y={group.top + 13}>{group.id}</text>
+            <text className={`network-group-title ${hoverCell?.groupId === group.id ? "hovered" : ""}`} x="8" y={group.top + 28}>{group.title}</text>
           </g>
         ))}
         <g className="network-connections">
