@@ -1316,7 +1316,8 @@ export function LabTimelinePage() {
                         <section className="lab-v2-document-data">
                           <span>风险登记册 · W{selectedWeek}</span>
                           <div className="lab-v2-data-table-wrap">
-                            <table>
+                            <table className="lab-v2-risk-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号</th><th>风险</th><th>等级</th><th>影响范围</th><th>发现</th><th>执行措施</th><th>负责人</th><th>关闭</th><th>处理后结果</th></tr></thead>
                               <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.impactDimensions.join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
                             </table>
