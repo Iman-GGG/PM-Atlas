@@ -7764,20 +7764,20 @@ select {
 .lab-v2-gantt > div { display: grid; grid-template-columns: var(--gantt-label-width) minmax(0, 1fr); gap: 8px; align-items: center; width: 100%; min-width: 0; }
 .lab-v2-gantt-axis { min-height: 24px; }
 .lab-v2-gantt-axis > span { padding-left: 25px; color: var(--muted); font-size: 9px; font-weight: 800; }
-.lab-v2-gantt-axis > i { position: relative; height: 24px; border-bottom: 1px solid var(--line); }
+.lab-v2-gantt-axis > i { position: relative; height: 24px; margin: 0 10px; border-bottom: 1px solid var(--line); }
 .lab-v2-gantt-axis > i b { position: absolute; bottom: 5px; color: var(--muted); font-size: 8px; transform: translateX(-50%); }
 .lab-v2-gantt > div:not(.lab-v2-gantt-axis) > span { display: grid; grid-template-columns: 18px 1fr; gap: 7px; align-items: center; min-width: 0; color: var(--body); font-family: var(--font-geist-mono), monospace; }
 .lab-v2-gantt > div:not(.lab-v2-gantt-axis) > span > b { font-size: 10px; }
 .lab-v2-gantt > div:not(.lab-v2-gantt-axis) > span > i { display: grid; min-width: 0; font-style: normal; }
 .lab-v2-gantt > div:not(.lab-v2-gantt-axis) > span strong { font-size: 9px; }
 .lab-v2-gantt > div:not(.lab-v2-gantt-axis) > span small { overflow: hidden; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.lab-v2-gantt > div > em { position: relative; height: 13px; background: var(--soft-strong); overflow: hidden; }
+.lab-v2-gantt > div > em { position: relative; height: 13px; margin: 0 10px; background: var(--soft-strong); overflow: hidden; }
 .lab-v2-gantt > div > em b { position: absolute; top: 0; height: 100%; background: #aaa; }
 .lab-v2-gantt > div.active > em b { background: var(--ink); }
 .lab-v2-gantt > div.done > em b { background: #666; }
 .lab-v2-gantt > div.active > span { color: var(--ink); font-weight: 800; }
 .lab-v2-gantt > div.done > span { color: #666; }
-.lab-v2-gantt > mark { position: absolute; z-index: 3; top: 30px; right: 0; bottom: 4px; left: calc(var(--gantt-label-width) + 8px); padding: 0; background: transparent; pointer-events: none; }
+.lab-v2-gantt > mark { position: absolute; z-index: 3; top: 30px; right: 10px; bottom: 4px; left: calc(var(--gantt-label-width) + 18px); padding: 0; background: transparent; pointer-events: none; }
 .lab-v2-gantt > mark i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); transform: translateX(-50%); }
 
 .lab-v2-mini-bars { display: flex; gap: 2px; align-items: end; height: 68px; margin: auto 0 12px; }

@@ -914,7 +914,7 @@ export function LabTimelinePage() {
 
         <DashboardCard id="gantt" eyebrow="SCHEDULE" title="里程碑甘特图" className="full gantt-widget" note={`完整 11 个一级工作包 · ${activeWorkPackages.length} 个进行中`} onOpen={setSelectedWidget}>
           <div className="lab-v2-gantt">
-            <div className="lab-v2-gantt-axis"><span>一级 WBS</span><i>{[1, 4, 8, 12, 16, 20, 24, 28, 32].map((week) => <b key={week} style={{ left: `${((week - 1) / 31) * 100}%` }}>W{week}</b>)}</i></div>
+            <div className="lab-v2-gantt-axis"><span>一级 WBS</span><i>{[1, 4, 8, 12, 16, 20, 24, 28, 32].map((week) => <b key={week} style={{ left: `${((week - 0.5) / 32) * 100}%` }}>W{week}</b>)}</i></div>
             {mainline.workload.workPackages.map((item) => {
               const completed = item.endWeek < selectedWeek;
               const active = item.startWeek <= selectedWeek && item.endWeek >= selectedWeek;
