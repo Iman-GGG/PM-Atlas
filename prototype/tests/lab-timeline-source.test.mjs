@@ -55,6 +55,9 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /getBoundingClientRect\(\)\.bottom <= stickyTop/);
   assert.match(timeline, /milestones\.slice\(1, -1\)\.map/);
   assert.match(timeline, /<WorkloadBars/);
+  assert.match(timeline, /const windowSize = 21/);
+  assert.match(timeline, /<SprintBurndown/);
+  assert.match(timeline, /H \$\{x\(point\.day\)\} V \$\{y\(point\.remaining\)\}/);
   assert.match(timeline, /workPackageId !== "WBS-1\.0" && personDays > 0/);
   assert.match(styles, /\.lab-v2-compact-timeline[^{]*\{[^}]*position: fixed/);
   assert.doesNotMatch(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);

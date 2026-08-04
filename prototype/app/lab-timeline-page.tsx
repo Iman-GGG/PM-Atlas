@@ -394,8 +394,8 @@ function Sparkline({ values, target = 1 }: { values: number[]; target?: number }
 }
 
 function WorkloadBars({ weeks, selectedWeek }: { weeks: BaselineWeek[]; selectedWeek: number }) {
-  const windowSize = 8;
-  const startWeek = Math.min(Math.max(1, selectedWeek - 3), Math.max(1, weeks.length - windowSize + 1));
+  const windowSize = 21;
+  const startWeek = Math.min(Math.max(1, selectedWeek - 10), Math.max(1, weeks.length - windowSize + 1));
   const visibleWeeks = weeks.slice(startWeek - 1, startWeek - 1 + windowSize);
   const maximum = Math.max(...visibleWeeks.map((item) => item.plannedTeamPersonDays), 1);
   return (
@@ -407,6 +407,52 @@ function WorkloadBars({ weeks, selectedWeek }: { weeks: BaselineWeek[]; selected
       ))}</div>
       <footer><span>W{visibleWeeks[0]?.week}</span><strong>当前 W{selectedWeek}</strong><span>W{visibleWeeks.at(-1)?.week}</span></footer>
     </div>
+  );
+}
+
+function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek: boolean }) {
+  const width = 260;
+  const height = 88;
+  const horizontalPadding = 8;
+  const topPadding = 8;
+  const bottomPadding = 18;
+  const chartWidth = width - horizontalPadding * 2;
+  const chartHeight = height - topPadding - bottomPadding;
+  const totalWork = 34;
+  const x = (day: number) => horizontalPadding + day / 12 * chartWidth;
+  const y = (remaining: number) => topPadding + (1 - remaining / totalWork) * chartHeight;
+  const idealPath = `M ${x(0)} ${y(34)} L ${x(5)} ${y(17)} L ${x(7)} ${y(17)} L ${x(12)} ${y(0)}`;
+  const checkpoints = [
+    { day: 0, remaining: 34 },
+    { day: 1, remaining: 31 },
+    { day: 2, remaining: 28 },
+    { day: 3, remaining: 24 },
+    { day: 4, remaining: 20 },
+    { day: 5, remaining: 17 },
+    { day: 7, remaining: 17 },
+    { day: 8, remaining: 13 },
+    { day: 9, remaining: 10 },
+    { day: 10, remaining: 7 },
+    { day: 11, remaining: 3 },
+    { day: 12, remaining: 0 },
+  ];
+  const elapsedDay = started ? secondWeek ? 12 : 5 : 0;
+  const visibleCheckpoints = checkpoints.filter((point) => point.day <= elapsedDay);
+  const actualPath = visibleCheckpoints.slice(1).reduce(
+    (path, point) => `${path} H ${x(point.day)} V ${y(point.remaining)}`,
+    `M ${x(visibleCheckpoints[0].day)} ${y(visibleCheckpoints[0].remaining)}`,
+  );
+  const currentPoint = visibleCheckpoints.at(-1) ?? checkpoints[0];
+
+  return (
+    <svg className="lab-v2-burndown" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="两周迭代燃尽图，虚线为理想燃尽，实线为实际阶梯燃尽">
+      <path className="ideal" d={idealPath} />
+      <path className="actual" d={actualPath} />
+      <circle cx={x(currentPoint.day)} cy={y(currentPoint.remaining)} r="3" />
+      <text x={x(0)} y={height - 3}>起点</text>
+      <text className="weekend" x={(x(5) + x(7)) / 2} y={height - 3}>周末</text>
+      <text className="end" x={x(12)} y={height - 3}>清零</text>
+    </svg>
   );
 }
 
@@ -1044,7 +1090,7 @@ export function LabTimelinePage() {
             <mark><i style={{ left: `${((selectedWeek - 0.5) / 32) * 100}%` }} /></mark>
           </div>
         </DashboardCard>
-        <DashboardCard id="workload" eyebrow="CAPACITY" title="项目工作量" value={`${weekState.plannedTeamPersonDays} 人日`} note={`当前周前后 8 周窗口 · 全项目 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`} onOpen={setSelectedWidget}>
+        <DashboardCard id="workload" eyebrow="CAPACITY" title="项目工作量" value={`${weekState.plannedTeamPersonDays} 人日`} note={`当前周前后各 10 周 · 共 21 周 · 全项目 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`} onOpen={setSelectedWidget}>
           <WorkloadBars weeks={mainline.baselineWorkload.weeks} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="engagement" eyebrow="STAKEHOLDERS" title="干系人参与度" value={`${engagementPercent}%`} note={`${stakeholderState.filter((item) => item.current === "leading").length} 人处于领导参与`} onOpen={setSelectedWidget}>
@@ -1072,7 +1118,7 @@ export function LabTimelinePage() {
         </DashboardCard>
 
         <DashboardCard id="burndown" eyebrow="ITERATION" title="当前迭代燃尽图" value={currentSprintNumber ? `S${currentSprintNumber}` : "未开始"} note={currentSprintNumber ? `剩余 ${sprintRemaining} 点` : "W9 进入首个开发迭代"} onOpen={setSelectedWidget}>
-          <Sparkline values={currentSprintNumber ? [34, 30, 26, 20, 16, 12, sprintRemaining] : [34, 34, 34, 34]} target={0} />
+          <SprintBurndown started={currentSprintNumber > 0} secondWeek={sprintProgress === 1} />
         </DashboardCard>
         <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" value={nextGate && nextGate.week - selectedWeek <= 1 ? "1" : "0"} note={nextGate ? `下一阶段门 W${nextGate.week}` : "所有阶段门已完成"} onOpen={setSelectedWidget}>
           <div className="lab-v2-gates">{milestones.slice(1).map((item) => <i key={item.week} className={item.week <= selectedWeek ? "done" : item.week - selectedWeek <= 1 ? "pending" : ""}><b>W{item.week}</b><span>{item.label}</span></i>)}</div>
