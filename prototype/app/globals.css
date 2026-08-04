@@ -8084,6 +8084,7 @@ select {
 .lab-v2-issue-table td,
 .lab-v2-requirements-file-table td,
 .lab-v2-test-table td { overflow-wrap: anywhere; }
+.lab-v2-requirements-file-table td:nth-child(5) { white-space: normal; word-break: break-word; }
 .lab-v2-document-data td small { display: block; margin-top: 4px; color: var(--muted); line-height: 1.45; }
 .lab-v2-document-data .lab-v2-risk-table { min-width: 0; table-layout: fixed; }
 .lab-v2-risk-table col:nth-child(1) { width: 7%; }
