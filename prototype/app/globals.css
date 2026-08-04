@@ -7988,7 +7988,7 @@ select {
 .lab-v2-document-drawer p { margin: 0; color: var(--body); }
 .lab-v2-document-drawer > header button,
 .lab-v2-widget-modal > header button { padding: 9px 14px; background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius-control); cursor: pointer; font-weight: 700; }
-.lab-v2-document-layout { display: grid; grid-template-columns: 390px minmax(0, 1fr); height: calc(100% - 102px); }
+.lab-v2-document-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); height: calc(100% - 102px); }
 .lab-v2-document-layout > nav { padding: 18px 18px 0 0; border-right: 1px solid var(--line); overflow: hidden; }
 .lab-v2-document-filter { display: flex; flex-wrap: wrap; gap: 5px; padding-bottom: 12px; }
 .lab-v2-document-filter button { padding: 6px 9px; background: var(--soft); border: 0; border-radius: var(--radius-control); cursor: pointer; font-size: 10px; }
@@ -8069,7 +8069,7 @@ select {
   .lab-v2-widget.wide { grid-column: span 2; }
   .lab-v2-material-layout { grid-template-columns: 1fr; }
   .lab-v2-material-layout > aside { border-right: 0; border-bottom: 1px solid var(--line); }
-  .lab-v2-document-layout { grid-template-columns: 310px 1fr; }
+  .lab-v2-document-layout { grid-template-columns: 200px 1fr; }
   .lab-v2-wbs-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
