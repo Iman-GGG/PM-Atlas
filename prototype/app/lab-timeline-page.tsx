@@ -316,6 +316,62 @@ type RoundDraft = {
   updatedAt: string | null;
 };
 
+type BranchState = {
+  week: number;
+  scenario: { id: string; status: "open" | "closed" | "failed" };
+  performance: {
+    spi: number;
+    cpi: number;
+    cumulativePlannedValueCny: number;
+    cumulativeEarnedValueCny: number;
+    cumulativeActualCostCny: number;
+    budgetAtCompletionCny?: number;
+    forecastCompletionWeek: number;
+  };
+  totals: {
+    incrementalActualCostCny: number;
+    incrementalWorkPersonDays: number;
+    overtimePersonDays: number;
+    blockedPersonDays: number;
+    coordinationAndWaitingPersonDays: number;
+    unauthorizedScopeWorkPersonDays: number;
+    overdueCommunicationItems: number;
+    requirementsTraceabilityCoveragePercent: number;
+  };
+  governance: { ccbOpenItems: number; scopeControlViolation: boolean };
+  riskTransitions: Array<Record<string, unknown>>;
+  stakeholderTransitions: Array<Record<string, unknown>>;
+  documentRevisions: string[];
+  outcomeClassification: string | null;
+};
+
+type RoundGap = {
+  categories: string[];
+  objectiveEffects: string[];
+};
+
+type RoundResult = {
+  branchId: string;
+  roundNumber: number;
+  advancedToWeek: number;
+  scenarioState: "open" | "closed" | "failed";
+  pathClassification?: string;
+  stateSnapshot: BranchState;
+  stateDiff: {
+    managementActionsCompletedThisRound?: number;
+    additionalActualCostCny?: number;
+    incrementalWorkPersonDays?: number;
+    harmfulEffectsApplied?: number;
+    forecastCompletionWeek?: number;
+    spi?: number;
+    cpi?: number;
+    requirementsTraceabilityCoveragePercent?: number;
+  };
+  documentDiffs: Array<{ documentId: string; operation: string; reason: string }>;
+  gaps: RoundGap[];
+  idempotentReplay: boolean;
+};
+
 type OpenedMaterial = {
   id: string;
   subject?: string;
@@ -398,6 +454,43 @@ const cardColumnLabels: Record<PublicCard["column"], string> = {
   stakeholder: "干系人",
 };
 const cardColumnOrder = Object.keys(cardColumnLabels) as PublicCard["column"][];
+const gapCategoryLabels: Record<string, string> = {
+  evidence: "证据识别",
+  communication: "沟通",
+  scope_governance: "范围治理",
+  analysis: "影响分析",
+  approval: "审批",
+  execution_decision: "执行决策",
+  documentation: "文件更新",
+  connection: "行动连接",
+  procurement: "采购管理",
+  resource: "资源安排",
+  quality: "质量控制",
+  safety: "安全控制",
+  governance: "治理",
+  monitoring: "监控",
+};
+const objectiveEffectLabels: Record<string, string> = {
+  requirement_ambiguity_open: "需求边界仍不明确",
+  R01_remains_triggered: "R01 仍处于已触发状态",
+  scope_classification_unclear: "范围内外分类仍不明确",
+  ccb_package_invalid: "CCB 审查材料暂不完整",
+  ccb_returned: "CCB 材料被退回补充",
+  one_rework_round_required: "至少需要增加一个返工回合",
+  change_decision_pending: "变更决策仍待审批",
+  ccb_item_open: "CCB 待办仍保持开放",
+  v1_0_v1_1_boundary_open: "V1.0 与 V1.1 边界尚未关闭",
+  scope_conflict_forecast: "范围冲突预测仍存在",
+  risk_reduced_not_closed: "风险有所降低但尚未关闭",
+  pilot_engagement_gap_open: "试点车主参与差距仍存在",
+  selected_management_actions_not_connected_into_a_complete_chain: "所选管理动作尚未连接为完整闭环",
+};
+const pathClassificationLabels: Record<string, string> = {
+  near_mainline_success: "近主线成功",
+  detour_success: "绕路成功",
+  delayed_success: "延期成功",
+  scenario_failure: "情景失败",
+};
 const reasoningFields = [
   { id: "observedSignals", label: "观察到的信号", placeholder: "写下你从邮件、报告、消息和仪表盘异常中观察到的客观信号。" },
   { id: "riskOrRootCause", label: "风险或根因判断", placeholder: "说明这些信号指向的风险、问题或根本原因。" },
@@ -888,6 +981,7 @@ export function LabTimelinePage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState("D14");
   const [managementFilter, setManagementFilter] = useState<string | null>(null);
   const [branch, setBranch] = useState<BranchContext | null>(null);
+  const [branchState, setBranchState] = useState<BranchState | null>(null);
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [scenarioTitle, setScenarioTitle] = useState<string | null>(null);
   const [materials, setMaterials] = useState<MaterialList | null>(null);
@@ -901,11 +995,14 @@ export function LabTimelinePage() {
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(null);
   const [draftLoadedKey, setDraftLoadedKey] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
+  const [submittingRound, setSubmittingRound] = useState(false);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compactTimelineVisible, setCompactTimelineVisible] = useState(false);
   const idempotencyKeys = useRef(new Map<string, string>());
+  const roundIdempotencyKeys = useRef(new Map<string, string>());
   const draftLoadingKeyRef = useRef<string | null>(null);
   const timelinePanelRef = useRef<HTMLElement | null>(null);
 
@@ -915,9 +1012,13 @@ export function LabTimelinePage() {
     );
     setMaterials(list);
     if (list.cardsUnlocked) {
-      const projection = await apiJson<{ scenario: { cards: PublicCard[]; title: string } }>(
+      const projection = await apiJson<{ branch: BranchContext; scenario: { cards: PublicCard[]; title: string }; state: BranchState | null; lastRoundResult: RoundResult | null }>(
         `/api/lab/branches/${encodeURIComponent(branchId)}/scenarios/${encodeURIComponent(nextScenarioId)}/projection`,
       );
+      setBranch(projection.branch);
+      setBranchState(projection.state);
+      setRoundResult(projection.lastRoundResult);
+      setSelectedWeek(projection.branch.currentWeek);
       setCards(projection.scenario.cards);
       setScenarioTitle(projection.scenario.title);
     }
@@ -936,11 +1037,13 @@ export function LabTimelinePage() {
         setMainline(mainlineResponse.sections);
         const restored = branchFromHash();
         if (!restored) return;
-        const projection = await apiJson<{ branch: BranchContext; scenario: { title: string; cards: PublicCard[] } }>(
+        const projection = await apiJson<{ branch: BranchContext; scenario: { title: string; cards: PublicCard[] }; state: BranchState | null; lastRoundResult: RoundResult | null }>(
           `/api/lab/branches/${encodeURIComponent(restored.branchId)}/scenarios/${encodeURIComponent(restored.scenarioId)}/projection`,
         );
         if (cancelled) return;
         setBranch(projection.branch);
+        setBranchState(projection.state);
+        setRoundResult(projection.lastRoundResult);
         setSelectedWeek(projection.branch.currentWeek);
         setScenarioId(restored.scenarioId);
         setScenarioTitle(projection.scenario.title);
@@ -1005,6 +1108,7 @@ export function LabTimelinePage() {
         body: JSON.stringify({ scenarioId: point.scenarioId, idempotencyKey }),
       });
       setBranch(created.branch);
+      setBranchState(null);
       setScenarioId(created.scenario.id);
       setScenarioTitle(created.scenario.title);
       setSelectedMaterial(null);
@@ -1018,6 +1122,7 @@ export function LabTimelinePage() {
       setDraftStatus("idle");
       setDraftUpdatedAt(null);
       setActionMessage(null);
+      setRoundResult(null);
       window.history.replaceState(
         null,
         "",
@@ -1062,7 +1167,18 @@ export function LabTimelinePage() {
     }
   };
 
-  const weekState = useMemo(() => mainline?.baselineWorkload.weeks.find((item) => item.week === selectedWeek) ?? null, [mainline, selectedWeek]);
+  const weekState = useMemo(() => {
+    const baselineWeek = mainline?.baselineWorkload.weeks.find((item) => item.week === selectedWeek) ?? null;
+    if (!baselineWeek || !branch || !branchState || selectedWeek !== branch.currentWeek) return baselineWeek;
+    return {
+      ...baselineWeek,
+      cumulativePlannedValueCny: branchState.performance.cumulativePlannedValueCny,
+      cumulativeEarnedValueCny: branchState.performance.cumulativeEarnedValueCny,
+      cumulativeActualCostCny: branchState.performance.cumulativeActualCostCny,
+      spi: branchState.performance.spi,
+      cpi: branchState.performance.cpi,
+    };
+  }, [branch, branchState, mainline, selectedWeek]);
   const visibleWeeks = useMemo(() => mainline?.baselineWorkload.weeks.filter((item) => item.week <= selectedWeek) ?? [], [mainline, selectedWeek]);
   const activeWorkPackages = useMemo(() => mainline?.workload.workPackages.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
   const activeActivities = useMemo(() => mainline?.schedule.activities.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
@@ -1076,8 +1192,15 @@ export function LabTimelinePage() {
     for (const event of mainline.stakeholders.mainlineEngagementEvents.filter((item) => item.week <= selectedWeek)) {
       currentById.set(event.stakeholderId, event.current);
     }
+    if (branch && branchState && selectedWeek === branch.currentWeek) {
+      for (const transition of branchState.stakeholderTransitions) {
+        if (typeof transition.stakeholderId === "string" && typeof transition.state === "string") {
+          currentById.set(transition.stakeholderId, transition.state);
+        }
+      }
+    }
     return mainline.stakeholders.stakeholders.map((item) => ({ ...item, current: currentById.get(item.id) ?? item.initialEngagement.current }));
-  }, [mainline, selectedWeek]);
+  }, [branch, branchState, mainline, selectedWeek]);
 
   const engagementPercent = useMemo(() => {
     if (!stakeholderState.length) return 0;
@@ -1091,6 +1214,13 @@ export function LabTimelinePage() {
     for (const event of mainline.risks.mainlineLifecycleEvents.filter((item) => item.week <= selectedWeek)) {
       for (const riskId of event.riskIds) lifecycleById.set(riskId, event.toLifecycleState);
     }
+    if (branch && branchState && selectedWeek === branch.currentWeek) {
+      for (const transition of branchState.riskTransitions) {
+        if (typeof transition.riskId === "string" && typeof transition.toLifecycleState === "string") {
+          lifecycleById.set(transition.riskId, transition.toLifecycleState);
+        }
+      }
+    }
     return mainline.risks.initialRisks
       .filter((risk) => risk.discoveredWeek <= selectedWeek)
       .map((risk) => ({
@@ -1098,7 +1228,7 @@ export function LabTimelinePage() {
         lifecycle: lifecycleById.get(risk.id) ?? "identified",
         currentAssessment: risk.responseCompletedWeek <= selectedWeek ? risk.residual : risk.inherent,
       }));
-  }, [mainline, selectedWeek]);
+  }, [branch, branchState, mainline, selectedWeek]);
 
   const requirementState = useMemo(() => {
     if (!mainline) return [];
@@ -1114,14 +1244,18 @@ export function LabTimelinePage() {
     if (!mainline) return [];
     return mainline.documents.documents.map((document) => {
       const history = allDocumentEvents.filter((event) => event.week <= selectedWeek && documentActions(event, document.id).length > 0);
+      const branchUpdated = Boolean(branch && branchState && selectedWeek === branch.currentWeek && branchState.documentRevisions.includes(document.id));
+      const visibleHistory = branchUpdated
+        ? [...history, { id: `branch-${branch.currentRoundNumber}-${document.id}`, week: branch.currentWeek, reason: "个人分支回合结算更新" }]
+        : history;
       return {
         ...document,
-        status: documentStatus(document, allDocumentEvents, selectedWeek),
-        history,
-        version: document.createdWeek <= selectedWeek ? 1 + history.length : 0,
+        status: branchUpdated ? "分支已更新" : documentStatus(document, allDocumentEvents, selectedWeek),
+        history: visibleHistory,
+        version: document.createdWeek <= selectedWeek ? 1 + visibleHistory.length : 0,
       };
     });
-  }, [allDocumentEvents, mainline, selectedWeek]);
+  }, [allDocumentEvents, branch, branchState, mainline, selectedWeek]);
 
   const selectedDocument = documentState.find((document) => document.id === selectedDocumentId) ?? documentState[0];
   const relatedDocumentIds = useMemo(() => {
@@ -1147,7 +1281,7 @@ export function LabTimelinePage() {
   const draftKey = branch && scenarioId ? `${branch.id}:${branch.currentRoundNumber + 1}:${scenarioId}` : null;
 
   useEffect(() => {
-    if (!branch || !scenarioId || !materials?.cardsUnlocked || cards.length === 0 || !draftKey) return;
+    if (!branch || branch.status !== "active" || !scenarioId || !materials?.cardsUnlocked || cards.length === 0 || !draftKey) return;
     if (draftLoadedKey === draftKey || draftLoadingKeyRef.current === draftKey) return;
     draftLoadingKeyRef.current = draftKey;
     setDraftStatus("loading");
@@ -1173,7 +1307,7 @@ export function LabTimelinePage() {
   }, [branch, cards, draftKey, draftLoadedKey, materials?.cardsUnlocked, scenarioId]);
 
   useEffect(() => {
-    if (!branch || !scenarioId || !draftKey || draftLoadedKey !== draftKey || !materials?.cardsUnlocked) return;
+    if (!branch || branch.status !== "active" || !scenarioId || !draftKey || draftLoadedKey !== draftKey || !materials?.cardsUnlocked) return;
     setDraftStatus("saving");
     const saveTimer = window.setTimeout(() => {
       void apiJson<RoundDraft>(
@@ -1269,6 +1403,57 @@ export function LabTimelinePage() {
     && cardConnections.length > 0
     && selectedCardIds.every((cardId) => connectedCardIds.has(cardId));
   const draftReady = reasoningComplete && actionChainComplete && decisionReasoning.references.length > 0;
+
+  const submitActionChain = async () => {
+    if (!branch || !scenarioId || !draftReady || submittingRound || branch.status !== "active") return;
+    const roundNumber = branch.currentRoundNumber + 1;
+    const keyScope = `${branch.id}:${roundNumber}`;
+    let idempotencyKey = roundIdempotencyKeys.current.get(keyScope);
+    if (!idempotencyKey) {
+      idempotencyKey = crypto.randomUUID();
+      roundIdempotencyKeys.current.set(keyScope, idempotencyKey);
+    }
+    setSubmittingRound(true);
+    setActionMessage(null);
+    try {
+      const result = await apiJson<RoundResult>(`/api/lab/branches/${encodeURIComponent(branch.id)}/rounds`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          scenarioId,
+          expectedRoundNumber: roundNumber,
+          idempotencyKey,
+          selectedCardIds,
+          connections: cardConnections,
+          reasoning: decisionReasoning,
+        }),
+      });
+      const nextStatus = result.scenarioState === "open" ? "active" : result.scenarioState === "closed" ? "completed" : "failed";
+      setRoundResult(result);
+      setBranch((current) => current ? {
+        ...current,
+        currentWeek: result.advancedToWeek,
+        currentRoundNumber: result.roundNumber,
+        status: nextStatus,
+      } : current);
+      setBranchState(result.stateSnapshot);
+      setSelectedWeek(result.advancedToWeek);
+      setDraftLoadedKey(null);
+      draftLoadingKeyRef.current = null;
+      setDraftStatus("idle");
+      setDraftUpdatedAt(null);
+      setPendingConnectionFromId(null);
+      if (result.scenarioState === "open") {
+        setSelectedCardIds([]);
+        setCardConnections([]);
+        setDecisionReasoning(emptyDecisionReasoning());
+      }
+    } catch (caught) {
+      setActionMessage(caught instanceof Error ? caught.message : "行动链提交失败，请重试");
+    } finally {
+      setSubmittingRound(false);
+    }
+  };
 
   if (!mainline || !manifest || !weekState) {
     return <main className="lab-v2-page"><div className="lab-v2-loading"><i /><strong>正在装载 32 周项目主线</strong><span>读取绩效、风险、干系人与项目文件状态…</span></div></main>;
@@ -1539,8 +1724,8 @@ export function LabTimelinePage() {
       {branch && (
         <section className="lab-v2-branch-workspace">
           <header>
-            <div><span>PERSONAL BRANCH / W{branch.currentWeek}</span><h2>{scenarioTitle}</h2><p>事件材料需要逐项打开；系统只呈现客观事实，不提示正确答案。</p></div>
-            <div><strong>{materials?.openedCount ?? 0}/{materials?.totalCount ?? 0}</strong><span>材料已查看</span><small>{materials?.cardsUnlocked ? "行动卡已解锁" : "继续观察线索"}</small></div>
+            <div><span>PERSONAL BRANCH / W{branch.currentWeek} / ROUND {branch.currentRoundNumber}</span><h2>{scenarioTitle}</h2><p>事件材料需要逐项打开；系统只呈现客观事实，不提示正确答案。</p></div>
+            <div><strong>{materials?.openedCount ?? 0}/{materials?.totalCount ?? 0}</strong><span>材料已查看</span><small>{branch.status !== "active" ? "情景结算完成" : materials?.cardsUnlocked ? "行动卡已解锁" : "继续观察线索"}</small></div>
           </header>
           <div className="lab-v2-material-layout">
             <aside>
@@ -1571,16 +1756,44 @@ export function LabTimelinePage() {
           <div className={`lab-v2-action-cards ${materials?.cardsUnlocked ? "unlocked" : ""}`}>
             <header>
               <div><span>ACTION CHAIN</span><h3>{materials?.cardsUnlocked ? "组装你的管理行动链" : "查看全部材料后解锁行动链"}</h3></div>
-              <strong>{materials?.cardsUnlocked ? draftStatus === "loading" ? "读取草稿" : draftStatus === "saving" ? "云端保存中" : draftStatus === "error" ? "保存失败" : draftUpdatedAt ? `已保存 ${formatDraftTime(draftUpdatedAt)}` : "云端草稿" : "LOCKED"}</strong>
+              <strong>{materials?.cardsUnlocked ? branch.status !== "active" ? "情景已结算" : draftStatus === "loading" ? "读取草稿" : draftStatus === "saving" ? "云端保存中" : draftStatus === "error" ? "保存失败" : draftUpdatedAt ? `已保存 ${formatDraftTime(draftUpdatedAt)}` : "云端草稿" : "LOCKED"}</strong>
             </header>
             {materials?.cardsUnlocked ? (
               <>
+                {roundResult && (
+                  <section className={`lab-v2-round-result ${roundResult.scenarioState}`}>
+                    <header>
+                      <div><span>ROUND {roundResult.roundNumber} / OBJECTIVE RESULT</span><h4>{roundResult.scenarioState === "open" ? "项目已推进一周，情景尚未闭环" : roundResult.scenarioState === "closed" ? "情景已经闭环" : "情景触发失败条件"}</h4></div>
+                      <strong>W{roundResult.advancedToWeek}</strong>
+                    </header>
+                    <div className="lab-v2-round-metrics">
+                      <span><small>SPI</small><b>{roundResult.stateSnapshot.performance.spi.toFixed(3)}</b></span>
+                      <span><small>CPI</small><b>{roundResult.stateSnapshot.performance.cpi.toFixed(3)}</b></span>
+                      <span><small>当回合成本</small><b>+{formatMoney(roundResult.stateDiff.additionalActualCostCny ?? 0)}</b></span>
+                      <span><small>预测完工</small><b>W{roundResult.stateSnapshot.performance.forecastCompletionWeek}</b></span>
+                      <span><small>需求追踪覆盖</small><b>{roundResult.stateSnapshot.totals.requirementsTraceabilityCoveragePercent}%</b></span>
+                    </div>
+                    {roundResult.pathClassification && <p className="lab-v2-path-result">路径结果：<b>{pathClassificationLabels[roundResult.pathClassification] ?? roundResult.pathClassification}</b></p>}
+                    {roundResult.gaps.length ? (
+                      <div className="lab-v2-round-gaps">
+                        <span>仍需处理的管理缺口</span>
+                        {roundResult.gaps.map((gap, gapIndex) => (
+                          <article key={`${gap.categories.join("-")}-${gapIndex}`}>
+                            <b>{gap.categories.map((category) => gapCategoryLabels[category] ?? category).join(" / ")}</b>
+                            <p>{gap.objectiveEffects.map((effect) => objectiveEffectLabels[effect] ?? effect.replaceAll("_", " ")).join("；")}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : <p className="lab-v2-no-gaps">本回合未留下管理缺口。</p>}
+                    {roundResult.documentDiffs.length > 0 && <footer>分支文件已更新：{roundResult.documentDiffs.map((diff) => diff.documentId).join("、")}</footer>}
+                  </section>
+                )}
                 <div className="lab-v2-card-candidates">
                   {cardColumnOrder.map((column) => (
                     <section key={column}>
                       <span>{cardColumnLabels[column]} · {cardsByColumn[column].length}</span>
                       {cardsByColumn[column].map((card) => (
-                        <button key={card.id} type="button" className={selectedCardIds.includes(card.id) ? "selected" : ""} onClick={() => toggleCardSelection(card.id)}>
+                        <button key={card.id} type="button" disabled={branch.status !== "active"} className={selectedCardIds.includes(card.id) ? "selected" : ""} onClick={() => toggleCardSelection(card.id)}>
                           <small>{card.id}</small><strong>{card.title}</strong><i>{selectedCardIds.includes(card.id) ? "已选择" : "+ 选择"}</i>
                         </button>
                       ))}
@@ -1597,10 +1810,10 @@ export function LabTimelinePage() {
                           <b>{String(index + 1).padStart(2, "0")}</b>
                           <span><small>{cardColumnLabels[card.column]} · {card.id}</small><strong>{card.title}</strong></span>
                           <div>
-                            <button type="button" title="上移" disabled={index === 0} onClick={() => moveSelectedCard(card.id, -1)}>↑</button>
-                            <button type="button" title="下移" disabled={index === selectedCards.length - 1} onClick={() => moveSelectedCard(card.id, 1)}>↓</button>
-                            <button type="button" className="link" onClick={() => connectSelectedCard(card.id)}>{pendingConnectionFromId ? pendingConnectionFromId === card.id ? "取消" : "连到此卡" : "开始连接"}</button>
-                            <button type="button" title="删除" onClick={() => toggleCardSelection(card.id)}>×</button>
+                            <button type="button" title="上移" disabled={branch.status !== "active" || index === 0} onClick={() => moveSelectedCard(card.id, -1)}>↑</button>
+                            <button type="button" title="下移" disabled={branch.status !== "active" || index === selectedCards.length - 1} onClick={() => moveSelectedCard(card.id, 1)}>↓</button>
+                            <button type="button" className="link" disabled={branch.status !== "active"} onClick={() => connectSelectedCard(card.id)}>{pendingConnectionFromId ? pendingConnectionFromId === card.id ? "取消" : "连到此卡" : "开始连接"}</button>
+                            <button type="button" title="删除" disabled={branch.status !== "active"} onClick={() => toggleCardSelection(card.id)}>×</button>
                           </div>
                         </article>
                       ))}
@@ -1609,7 +1822,7 @@ export function LabTimelinePage() {
                   <div className="lab-v2-connections">
                     <span>已建立 {cardConnections.length} 条连接</span>
                     <div>{cardConnections.map((connection) => (
-                      <button key={`${connection.fromCardId}-${connection.toCardId}`} type="button" onClick={() => setCardConnections((current) => current.filter((item) => item.fromCardId !== connection.fromCardId || item.toCardId !== connection.toCardId))}>
+                      <button key={`${connection.fromCardId}-${connection.toCardId}`} type="button" disabled={branch.status !== "active"} onClick={() => setCardConnections((current) => current.filter((item) => item.fromCardId !== connection.fromCardId || item.toCardId !== connection.toCardId))}>
                         <b>{cardById.get(connection.fromCardId)?.title}</b><i>→</i><b>{cardById.get(connection.toCardId)?.title}</b><em>删除</em>
                       </button>
                     ))}</div>
@@ -1626,7 +1839,7 @@ export function LabTimelinePage() {
                       return (
                         <label key={field.id}>
                           <span>{field.label}<b className={valid ? "valid" : ""}>{value.length}/500</b></span>
-                          <textarea value={value} maxLength={500} placeholder={field.placeholder} onChange={(event) => setDecisionReasoning((current) => ({ ...current, [field.id]: event.target.value }))} />
+                          <textarea value={value} disabled={branch.status !== "active"} maxLength={500} placeholder={field.placeholder} onChange={(event) => setDecisionReasoning((current) => ({ ...current, [field.id]: event.target.value }))} />
                           <small>{valid ? "已满足最低字数" : `还需 ${Math.max(0, 20 - value.trim().length)} 字`}</small>
                         </label>
                       );
@@ -1637,16 +1850,16 @@ export function LabTimelinePage() {
                 <section className="lab-v2-reference-editor">
                   <header><div><span>03 / REFERENCES</span><h4>引用你的判断依据</h4></div><p>可引用已打开材料、当前可用项目文件和已选行动卡。</p></header>
                   <div>
-                    <section><span>事件材料</span>{openedMaterialReferences.map((material) => <button key={material.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "event_material" && reference.id === material.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "event_material", id: material.id })}><b>{material.id}</b>{material.title}</button>)}</section>
-                    <section><span>项目文件</span>{availableDocumentReferences.map((document) => <button key={document.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "project_document" && reference.id === document.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "project_document", id: document.id })}><b>{document.id}</b>{document.title}</button>)}</section>
-                    <section><span>行动卡片</span>{selectedCards.map((card) => <button key={card.id} type="button" className={decisionReasoning.references.some((reference) => reference.type === "action_card" && reference.id === card.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "action_card", id: card.id })}><b>{card.id}</b>{card.title}</button>)}</section>
+                    <section><span>事件材料</span>{openedMaterialReferences.map((material) => <button key={material.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "event_material" && reference.id === material.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "event_material", id: material.id })}><b>{material.id}</b>{material.title}</button>)}</section>
+                    <section><span>项目文件</span>{availableDocumentReferences.map((document) => <button key={document.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "project_document" && reference.id === document.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "project_document", id: document.id })}><b>{document.id}</b>{document.title}</button>)}</section>
+                    <section><span>行动卡片</span>{selectedCards.map((card) => <button key={card.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "action_card" && reference.id === card.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "action_card", id: card.id })}><b>{card.id}</b>{card.title}</button>)}</section>
                   </div>
                 </section>
 
                 <footer className={`lab-v2-draft-readiness ${draftReady ? "ready" : ""}`}>
                   <div><span>{draftReady ? "草稿已完整" : "提交前检查"}</span><strong>{draftReady ? "行动链、决策依据与引用均已满足提交条件" : "完成所有必填内容后才能提交行动链"}</strong></div>
                   <ul><li className={actionChainComplete ? "done" : ""}>行动卡均已连接</li><li className={reasoningComplete ? "done" : ""}>三段依据均满 20 字</li><li className={decisionReasoning.references.length ? "done" : ""}>至少引用 1 项依据</li></ul>
-                  <button type="button" disabled>提交行动链 · 下一阶段接入</button>
+                  <button type="button" disabled={!draftReady || submittingRound || branch.status !== "active"} onClick={() => void submitActionChain()}>{submittingRound ? "正在结算项目状态…" : branch.status !== "active" ? "情景已结算" : "提交行动链并推进一周"}</button>
                 </footer>
               </>
             ) : <p>仍有 {(materials?.totalCount ?? 0) - (materials?.openedCount ?? 0)} 条材料未查看。</p>}

@@ -30,6 +30,11 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /风险或根因判断/);
   assert.match(timeline, /行动理由/);
   assert.match(timeline, /云端保存中/);
+  assert.match(timeline, /\/api\/lab\/branches\/\$\{encodeURIComponent\(branch\.id\)\}\/rounds/);
+  assert.match(timeline, /提交行动链并推进一周/);
+  assert.match(timeline, /lab-v2-round-result/);
+  assert.match(timeline, /仍需处理的管理缺口/);
+  assert.match(timeline, /setBranchState\(result\.stateSnapshot\)/);
 });
 
 test("renders the complete monochrome project control center", async () => {
@@ -81,6 +86,8 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(styles, /\.lab-v2-selected-chain/);
   assert.match(styles, /\.lab-v2-reasoning-fields/);
   assert.match(styles, /\.lab-v2-draft-readiness/);
+  assert.match(styles, /\.lab-v2-round-result/);
+  assert.match(styles, /\.lab-v2-round-metrics/);
   assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
   assert.doesNotMatch(styles, /\.lab-v2-time-network[^}]*min-width: 1380px/);

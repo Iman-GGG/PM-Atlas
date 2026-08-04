@@ -21,6 +21,7 @@ export type OwnedBranch = {
   contentHash: string;
   currentWeek: number;
   currentRoundNumber: number;
+  lockVersion: number;
   status: string;
 };
 
@@ -48,6 +49,20 @@ export type StoredRoundDraft = {
   updatedAt: string | null;
 };
 
+export type StoredStateSnapshot = {
+  roundNumber: number;
+  week: number;
+  scenarioId: string | null;
+  stateJson: string;
+  stateHash: string;
+};
+
+export type StoredRoundSubmission = {
+  roundNumber: number;
+  scenarioId: string;
+  ruleResultJson: string;
+};
+
 export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: string): Promise<OwnedBranch | null> {
   return db.prepare(`
     SELECT
@@ -57,6 +72,7 @@ export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: 
       cv.content_hash AS contentHash,
       b.current_week AS currentWeek,
       b.current_round_number AS currentRoundNumber,
+      b.lock_version AS lockVersion,
       b.status
     FROM lab_branches b
     INNER JOIN lab_users u ON u.id = b.user_id
@@ -267,4 +283,162 @@ export async function saveRoundDraft(db: LabD1, draft: SaveRoundDraft): Promise<
     draft.connectionsJson,
     draft.reasoningJson,
   ).run();
+}
+
+export async function readCurrentStateSnapshot(
+  db: LabD1,
+  branchId: string,
+  roundNumber: number,
+): Promise<StoredStateSnapshot | null> {
+  return db.prepare(`
+    SELECT
+      round_number AS roundNumber,
+      week,
+      scenario_id AS scenarioId,
+      state_json AS stateJson,
+      state_hash AS stateHash
+    FROM lab_state_snapshots
+    WHERE branch_id = ? AND round_number = ?
+    LIMIT 1
+  `).bind(branchId, roundNumber).first<StoredStateSnapshot>();
+}
+
+export async function findRoundSubmissionByIdempotency(
+  db: LabD1,
+  branchId: string,
+  idempotencyKey: string,
+): Promise<StoredRoundSubmission | null> {
+  return db.prepare(`
+    SELECT
+      round_number AS roundNumber,
+      scenario_id AS scenarioId,
+      rule_result_json AS ruleResultJson
+    FROM lab_round_submissions
+    WHERE branch_id = ? AND idempotency_key = ?
+    LIMIT 1
+  `).bind(branchId, idempotencyKey).first<StoredRoundSubmission>();
+}
+
+export async function readRoundSubmission(
+  db: LabD1,
+  branchId: string,
+  roundNumber: number,
+): Promise<StoredRoundSubmission | null> {
+  return db.prepare(`
+    SELECT
+      round_number AS roundNumber,
+      scenario_id AS scenarioId,
+      rule_result_json AS ruleResultJson
+    FROM lab_round_submissions
+    WHERE branch_id = ? AND round_number = ?
+    LIMIT 1
+  `).bind(branchId, roundNumber).first<StoredRoundSubmission>();
+}
+
+export type CommitRoundRecords = {
+  branchId: string;
+  expectedCurrentRoundNumber: number;
+  expectedLockVersion: number;
+  nextRoundNumber: number;
+  nextWeek: number;
+  branchStatus: "active" | "completed" | "failed";
+  outcomeClassification: string | null;
+  submissionId: string;
+  scenarioId: string;
+  submissionJson: string;
+  reasoningJson: string;
+  ruleResultJson: string;
+  idempotencyKey: string;
+  snapshotId: string;
+  stateJson: string;
+  stateHash: string;
+  eventId: string;
+  eventPayloadJson: string;
+  documentDeltas: Array<{
+    id: string;
+    documentId: string;
+    patchJson: string;
+    reason: string;
+  }>;
+};
+
+export async function commitRoundRecords(db: LabD1, records: CommitRoundRecords): Promise<void> {
+  const statements = [
+    db.prepare(`
+      UPDATE lab_branches
+      SET
+        current_week = ?,
+        current_round_number = ?,
+        lock_version = lock_version + 1,
+        status = ?,
+        outcome_classification = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND current_round_number = ? AND lock_version = ? AND status = 'active'
+    `).bind(
+      records.nextWeek,
+      records.nextRoundNumber,
+      records.branchStatus,
+      records.outcomeClassification,
+      records.branchId,
+      records.expectedCurrentRoundNumber,
+      records.expectedLockVersion,
+    ),
+    db.prepare(`
+      INSERT INTO lab_round_submissions (
+        id, branch_id, round_number, scenario_id, submission_json,
+        reasoning_json, rule_result_json, idempotency_key
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      records.submissionId,
+      records.branchId,
+      records.nextRoundNumber,
+      records.scenarioId,
+      records.submissionJson,
+      records.reasoningJson,
+      records.ruleResultJson,
+      records.idempotencyKey,
+    ),
+    db.prepare(`
+      INSERT INTO lab_state_snapshots (
+        id, branch_id, round_number, week, scenario_id, state_json, state_hash
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      records.snapshotId,
+      records.branchId,
+      records.nextRoundNumber,
+      records.nextWeek,
+      records.scenarioId,
+      records.stateJson,
+      records.stateHash,
+    ),
+    db.prepare(`
+      INSERT INTO lab_events (
+        id, branch_id, round_number, week, event_type, payload_json, visibility
+      ) VALUES (?, ?, ?, ?, 'round_settled', ?, 'user')
+    `).bind(
+      records.eventId,
+      records.branchId,
+      records.nextRoundNumber,
+      records.nextWeek,
+      records.eventPayloadJson,
+    ),
+    db.prepare(`
+      DELETE FROM lab_round_drafts
+      WHERE branch_id = ? AND round_number = ?
+    `).bind(records.branchId, records.nextRoundNumber),
+    ...records.documentDeltas.map((delta) => db.prepare(`
+      INSERT INTO lab_document_deltas (
+        id, branch_id, round_number, document_id, week, patch_json, reason
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      delta.id,
+      records.branchId,
+      records.nextRoundNumber,
+      delta.documentId,
+      records.nextWeek,
+      delta.patchJson,
+      delta.reason,
+    )),
+  ];
+  await db.batch(statements);
 }

@@ -1,20 +1,33 @@
 import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated";
-import type { CardConnection, DecisionReasoning, DecisionReference, StateEffect } from "../../lib/lab/contracts";
+import type {
+  CardConnection,
+  DecisionReasoning,
+  DecisionReference,
+  RoundResult,
+  RoundSubmissionRequest,
+  ScenarioDefinition,
+  StateEffect,
+} from "../../lib/lab/contracts";
 import { getPlatformIdentity } from "../auth/platform-identity";
 import { privateLabCasePackage } from "../generated/lab-case-private.generated";
 import { projectScenarioForClient } from "./project-case-for-client";
 import {
   createBranchRecords,
+  commitRoundRecords,
+  findRoundSubmissionByIdempotency,
   findLabUser,
   findOwnedBranch,
   findStoredCaseVersion,
   readBranchEvents,
+  readCurrentStateSnapshot,
+  readRoundSubmission,
   readRoundDraft,
   recordMaterialView,
   saveRoundDraft,
   type BranchEvent,
   type LabD1,
 } from "./repository";
+import { projectStoredBranchState, settleRound } from "./settle-round";
 
 export type LabApiEnv = {
   DB?: LabD1;
@@ -201,13 +214,8 @@ function parseStoredJson<T>(value: string, fallback: T): T {
   }
 }
 
-async function parseRoundDraftBody(request: Request): Promise<RoundDraftBody | null> {
-  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
-  if (contentType !== "application/json") return null;
+function parseRoundDraftValue(body: Record<string, unknown>): RoundDraftBody | null {
   try {
-    const rawBody = await request.text();
-    if (rawBody.length > 64_000) return null;
-    const body = JSON.parse(rawBody) as Record<string, unknown>;
     if (!Number.isInteger(body.expectedRoundNumber) || Number(body.expectedRoundNumber) < 1) return null;
     if (!Array.isArray(body.selectedCardIds) || body.selectedCardIds.length > 64) return null;
     if (!Array.isArray(body.connections) || body.connections.length > 128) return null;
@@ -247,6 +255,105 @@ async function parseRoundDraftBody(request: Request): Promise<RoundDraftBody | n
   } catch {
     return null;
   }
+}
+
+async function parseJsonRequest(request: Request): Promise<Record<string, unknown> | null> {
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+  if (contentType !== "application/json") return null;
+  try {
+    const rawBody = await request.text();
+    if (rawBody.length > 64_000) return null;
+    const body = JSON.parse(rawBody);
+    return body && typeof body === "object" && !Array.isArray(body) ? body as Record<string, unknown> : null;
+  } catch {
+    return null;
+  }
+}
+
+async function parseRoundDraftBody(request: Request): Promise<RoundDraftBody | null> {
+  const body = await parseJsonRequest(request);
+  return body ? parseRoundDraftValue(body) : null;
+}
+
+async function parseRoundSubmissionBody(request: Request): Promise<RoundSubmissionRequest | null> {
+  const body = await parseJsonRequest(request);
+  if (!body || typeof body.scenarioId !== "string" || typeof body.idempotencyKey !== "string") return null;
+  if (!/^scenario-[a-z0-9-]{1,48}$/.test(body.scenarioId)) return null;
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(body.idempotencyKey)) return null;
+  const draft = parseRoundDraftValue(body);
+  return draft ? { ...draft, scenarioId: body.scenarioId, idempotencyKey: body.idempotencyKey } : null;
+}
+
+type RoundValidationIssue = { status: number; code: string; message: string };
+
+function validateRoundContent(
+  scenario: ScenarioDefinition,
+  visibility: ReturnType<typeof parseEventVisibility>,
+  currentWeek: number,
+  body: RoundDraftBody,
+  requireCompleteInput: boolean,
+): RoundValidationIssue | null {
+  const cardById = new Map(scenario.cards.map((card) => [card.id, card]));
+  if (new Set(body.selectedCardIds).size !== body.selectedCardIds.length || body.selectedCardIds.some((id) => !cardById.has(id))) {
+    return { status: 400, code: "INVALID_CARD_SELECTION", message: "The selected action cards are not valid for this scenario." };
+  }
+  const selectedCardIds = new Set(body.selectedCardIds);
+  const connectionKeys = new Set<string>();
+  const connectedCardIds = new Set<string>();
+  for (const connection of body.connections) {
+    const fromCard = cardById.get(connection.fromCardId);
+    const toCard = cardById.get(connection.toCardId);
+    const key = `${connection.fromCardId}\u0000${connection.toCardId}`;
+    if (
+      !fromCard
+      || !toCard
+      || !selectedCardIds.has(fromCard.id)
+      || !selectedCardIds.has(toCard.id)
+      || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1
+      || connectionKeys.has(key)
+    ) {
+      return { status: 400, code: "INVALID_CARD_CONNECTION", message: "Connections must link selected cards in adjacent columns." };
+    }
+    connectionKeys.add(key);
+    connectedCardIds.add(connection.fromCardId);
+    connectedCardIds.add(connection.toCardId);
+  }
+
+  const availableDocuments = new Set((publicLabCaseBaseline.plans.documents.documents as StateEffect[])
+    .filter((document) => Number(document.createdWeek) <= currentWeek)
+    .map((document) => String(document.id)));
+  const visibleMaterialIds = new Set(visibility.visibleMaterialIds);
+  const referenceKeys = new Set<string>();
+  for (const reference of body.reasoning.references) {
+    const key = `${reference.type}\u0000${reference.id}`;
+    const isValid = reference.type === "event_material"
+      ? visibleMaterialIds.has(reference.id)
+      : reference.type === "project_document"
+        ? availableDocuments.has(reference.id)
+        : selectedCardIds.has(reference.id) && cardById.has(reference.id);
+    if (!isValid || referenceKeys.has(key)) {
+      return { status: 400, code: "INVALID_DECISION_REFERENCE", message: "Decision references must point to visible materials, available documents, or selected cards." };
+    }
+    referenceKeys.add(key);
+  }
+
+  if (requireCompleteInput) {
+    const reasoningLengths = [
+      body.reasoning.observedSignals.trim().length,
+      body.reasoning.riskOrRootCause.trim().length,
+      body.reasoning.actionRationale.trim().length,
+    ];
+    if (reasoningLengths.some((length) => length < 20 || length > 500)) {
+      return { status: 400, code: "INCOMPLETE_REASONING", message: "Each decision-reasoning field must contain 20-500 characters." };
+    }
+    if (body.selectedCardIds.length < 2 || body.connections.length === 0 || body.selectedCardIds.some((id) => !connectedCardIds.has(id))) {
+      return { status: 400, code: "INCOMPLETE_ACTION_CHAIN", message: "Every selected card must participate in the action chain." };
+    }
+    if (body.reasoning.references.length === 0) {
+      return { status: 400, code: "DECISION_REFERENCE_REQUIRED", message: "At least one decision reference is required." };
+    }
+  }
+  return null;
 }
 
 function caseMatches(caseId: string, caseVersion: string): boolean {
@@ -543,45 +650,9 @@ async function saveScenarioDraft(
     return withPrivateCache(errorResponse(409, "ROUND_CONFLICT", "The branch has advanced. Reload the latest round before saving."));
   }
 
-  const cardById = new Map(scenario.cards.map((card) => [card.id, card]));
-  if (new Set(body.selectedCardIds).size !== body.selectedCardIds.length || body.selectedCardIds.some((id) => !cardById.has(id))) {
-    return withPrivateCache(errorResponse(400, "INVALID_CARD_SELECTION", "The selected action cards are not valid for this scenario."));
-  }
-  const selectedCardIds = new Set(body.selectedCardIds);
-  const connectionKeys = new Set<string>();
-  for (const connection of body.connections) {
-    const fromCard = cardById.get(connection.fromCardId);
-    const toCard = cardById.get(connection.toCardId);
-    const key = `${connection.fromCardId}\u0000${connection.toCardId}`;
-    if (
-      !fromCard
-      || !toCard
-      || !selectedCardIds.has(fromCard.id)
-      || !selectedCardIds.has(toCard.id)
-      || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1
-      || connectionKeys.has(key)
-    ) {
-      return withPrivateCache(errorResponse(400, "INVALID_CARD_CONNECTION", "Connections must link selected cards in adjacent columns."));
-    }
-    connectionKeys.add(key);
-  }
-
-  const availableDocuments = new Set((publicLabCaseBaseline.plans.documents.documents as StateEffect[])
-    .filter((document) => Number(document.createdWeek) <= context.branch.currentWeek)
-    .map((document) => String(document.id)));
-  const visibleMaterialIds = new Set(context.visibility.visibleMaterialIds);
-  const referenceKeys = new Set<string>();
-  for (const reference of body.reasoning.references) {
-    const key = `${reference.type}\u0000${reference.id}`;
-    const isValid = reference.type === "event_material"
-      ? visibleMaterialIds.has(reference.id)
-      : reference.type === "project_document"
-        ? availableDocuments.has(reference.id)
-        : selectedCardIds.has(reference.id) && cardById.has(reference.id);
-    if (!isValid || referenceKeys.has(key)) {
-      return withPrivateCache(errorResponse(400, "INVALID_DECISION_REFERENCE", "Decision references must point to visible materials, available documents, or selected cards."));
-    }
-    referenceKeys.add(key);
+  const validationIssue = validateRoundContent(scenario, context.visibility, context.branch.currentWeek, body, false);
+  if (validationIssue) {
+    return withPrivateCache(errorResponse(validationIssue.status, validationIssue.code, validationIssue.message));
   }
 
   const draftId = await stableId("draft", `${branchId}\u0000${roundNumber}`);
@@ -603,6 +674,127 @@ async function saveScenarioDraft(
     reasoning: body.reasoning,
     updatedAt: new Date().toISOString(),
   }));
+}
+
+async function submitRound(request: Request, env: LabApiEnv, branchId: string): Promise<Response> {
+  const body = await parseRoundSubmissionBody(request);
+  if (!body) {
+    return withPrivateCache(errorResponse(400, "INVALID_ROUND_SUBMISSION", "A valid scenario, action chain, reasoning, and idempotency key are required."));
+  }
+  const context = await readOwnedScenarioContext(request, env, branchId, body.scenarioId);
+  if (context instanceof Response) return context;
+  const scenario = findScenario(body.scenarioId);
+  if (!scenario || context.branch.currentWeek < scenario.week) {
+    return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
+  }
+
+  const replay = await findRoundSubmissionByIdempotency(env.DB!, branchId, body.idempotencyKey);
+  if (replay) {
+    if (replay.scenarioId !== body.scenarioId) {
+      return withPrivateCache(errorResponse(409, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for another scenario."));
+    }
+    return withPrivateCache(jsonResponse({
+      ...parseStoredJson<RoundResult>(replay.ruleResultJson, {} as RoundResult),
+      idempotentReplay: true,
+    }));
+  }
+  if (context.branch.status !== "active") {
+    return withPrivateCache(errorResponse(409, "BRANCH_NOT_ACTIVE", "This project branch no longer accepts new rounds."));
+  }
+  const nextRoundNumber = context.branch.currentRoundNumber + 1;
+  if (body.expectedRoundNumber !== nextRoundNumber) {
+    return withPrivateCache(errorResponse(409, "ROUND_CONFLICT", "The branch has advanced. Reload the latest round before submitting."));
+  }
+  if (!context.visibility.cardsUnlocked) {
+    return withPrivateCache(errorResponse(409, "ACTION_CARDS_LOCKED", "Open every event material before submitting the action chain."));
+  }
+  const validationIssue = validateRoundContent(scenario, context.visibility, context.branch.currentWeek, body, true);
+  if (validationIssue) {
+    return withPrivateCache(errorResponse(validationIssue.status, validationIssue.code, validationIssue.message));
+  }
+
+  const snapshot = await readCurrentStateSnapshot(env.DB!, branchId, context.branch.currentRoundNumber);
+  if (!snapshot || snapshot.scenarioId !== body.scenarioId) {
+    return withPrivateCache(errorResponse(409, "BRANCH_STATE_MISSING", "The current branch state is unavailable for this scenario."));
+  }
+  const previousState = parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {});
+  const baselineWeeks = publicLabCaseBaseline.plans.baselineWorkload.weeks as StateEffect[];
+  const nextWeek = context.branch.currentWeek + 1;
+  const nextBaseline = baselineWeeks.find((week) => Number(week.week) === Math.min(nextWeek, publicLabCaseBaseline.totalWeeks));
+  if (!nextBaseline) {
+    return withPrivateCache(errorResponse(500, "BASELINE_STATE_MISSING", "The next weekly baseline is unavailable."));
+  }
+  const budgetAtCompletionCny = Number(publicLabCaseBaseline.plans.workload.budgetAtCompletionCny);
+  const settled = settleRound({
+    branchId,
+    roundNumber: nextRoundNumber,
+    scenario,
+    previousState,
+    selectedCardIds: body.selectedCardIds,
+    connections: body.connections,
+    nextBaseline,
+    budgetAtCompletionCny,
+  });
+  const stateJson = JSON.stringify(stableValue(settled.internalState));
+  const stateHash = await sha256(stateJson);
+  const publicResult = { ...settled.result, caseVersion: context.branch.caseVersion, stateHash };
+  const ruleResultJson = JSON.stringify(publicResult);
+  const branchStatus = settled.result.scenarioState === "open"
+    ? "active"
+    : settled.result.scenarioState === "closed" ? "completed" : "failed";
+  const recordScope = `${branchId}\u0000${nextRoundNumber}`;
+
+  try {
+    await commitRoundRecords(env.DB!, {
+      branchId,
+      expectedCurrentRoundNumber: context.branch.currentRoundNumber,
+      expectedLockVersion: context.branch.lockVersion,
+      nextRoundNumber,
+      nextWeek: settled.result.advancedToWeek,
+      branchStatus,
+      outcomeClassification: settled.result.pathClassification ?? null,
+      submissionId: await stableId("submission", `${recordScope}\u0000${body.idempotencyKey}`),
+      scenarioId: body.scenarioId,
+      submissionJson: JSON.stringify({
+        selectedCardIds: body.selectedCardIds,
+        connections: body.connections,
+      }),
+      reasoningJson: JSON.stringify(body.reasoning),
+      ruleResultJson,
+      idempotencyKey: body.idempotencyKey,
+      snapshotId: `${branchId}:snapshot:${nextRoundNumber}`,
+      stateJson,
+      stateHash,
+      eventId: `${branchId}:round-settled:${nextRoundNumber}`,
+      eventPayloadJson: JSON.stringify({
+        scenarioId: body.scenarioId,
+        scenarioState: settled.result.scenarioState,
+        pathClassification: settled.result.pathClassification ?? null,
+        stateDiff: settled.result.stateDiff,
+        gaps: settled.result.gaps,
+      }),
+      documentDeltas: settled.result.documentDiffs.map((documentDiff) => {
+        const documentId = String(documentDiff.documentId);
+        return {
+          id: `${branchId}:document-delta:${nextRoundNumber}:${documentId}`,
+          documentId,
+          patchJson: JSON.stringify([{ op: "add", path: "/branchRevisions/-", value: { week: settled.result.advancedToWeek, roundNumber: nextRoundNumber } }]),
+          reason: "round_settlement",
+        };
+      }),
+    });
+  } catch {
+    const concurrentReplay = await findRoundSubmissionByIdempotency(env.DB!, branchId, body.idempotencyKey);
+    if (concurrentReplay) {
+      return withPrivateCache(jsonResponse({
+        ...parseStoredJson<RoundResult>(concurrentReplay.ruleResultJson, {} as RoundResult),
+        idempotentReplay: true,
+      }));
+    }
+    return withPrivateCache(errorResponse(409, "ROUND_CONFLICT", "Another round was committed first. Reload the branch and try again."));
+  }
+
+  return withPrivateCache(jsonResponse({ ...publicResult, idempotentReplay: false }, { status: 201 }));
 }
 
 export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Response | null> {
@@ -650,6 +842,12 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       : await readScenarioDraft(request, env, parts[3], parts[5]);
     if (request.method === "HEAD") return new Response(null, { status: response.status, headers: response.headers });
     return response;
+  }
+  if (parts.length === 5 && parts[2] === "branches" && parts[4] === "rounds") {
+    if (request.method !== "POST") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
+    }
+    return submitRound(request, env, parts[3]);
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });
@@ -704,6 +902,10 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       ...visibility,
     });
     if (!projection) return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
+    const [snapshot, latestSubmission] = await Promise.all([
+      readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber),
+      branch.currentRoundNumber > 0 ? readRoundSubmission(env.DB!, branch.id, branch.currentRoundNumber) : Promise.resolve(null),
+    ]);
     response = withPrivateCache(jsonResponse({
       branch: {
         id: branch.id,
@@ -715,6 +917,9 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       caseVersion: branch.caseVersion,
       contentHash: branch.contentHash,
       scenario: projection,
+      state: snapshot ? projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})) : null,
+      stateHash: snapshot?.stateHash ?? null,
+      lastRoundResult: latestSubmission ? parseStoredJson<RoundResult>(latestSubmission.ruleResultJson, {} as RoundResult) : null,
     }));
   } else {
     return errorResponse(404, "LAB_ROUTE_NOT_FOUND", "Lab API route not found.");

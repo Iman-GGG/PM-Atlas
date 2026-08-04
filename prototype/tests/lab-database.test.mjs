@@ -128,7 +128,7 @@ test("persists an idempotent takeover branch against the real migration", async 
     reasoning: {
       observedSignals: "供应商接口交付与工程师可用性同时发生偏差。",
       riskOrRootCause: "外部依赖和关键资源冲突可能共同影响关键路径。",
-      actionRationale: "通过联合排障和分阶段交付维持并行开发。",
+      actionRationale: "通过联合排障、分阶段交付和责任人协作维持并行开发节奏。",
       references: [
         { type: "event_material", id: "S2-M01" },
         { type: "project_document", id: "D14" },
@@ -154,6 +154,44 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal(restoredDraft.status, 200);
   assert.deepEqual((await restoredDraft.json()).selectedCardIds, draft.selectedCardIds);
 
+  const roundPath = `/api/lab/branches/${firstBody.branch.id}/rounds`;
+  const submitted = await worker.fetch(
+    new Request(`http://localhost${roundPath}`, {
+      method: "POST",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify({
+        ...draft,
+        scenarioId: "scenario-2",
+        idempotencyKey: "database-round-001",
+      }),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(submitted.status, 201);
+  const submittedBody = await submitted.json();
+  assert.equal(submittedBody.roundNumber, 1);
+  assert.equal(submittedBody.advancedToWeek, 18);
+  assert.equal(submittedBody.scenarioState, "open");
+  assert.ok(submittedBody.gaps.length > 0);
+  assert.equal(JSON.stringify(submittedBody).includes("minimumCorrectCardIds"), false);
+
+  const roundReplay = await worker.fetch(
+    new Request(`http://localhost${roundPath}`, {
+      method: "POST",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify({
+        ...draft,
+        scenarioId: "scenario-2",
+        idempotencyKey: "database-round-001",
+      }),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(roundReplay.status, 200);
+  assert.equal((await roundReplay.json()).idempotentReplay, true);
+
   const replay = await worker.fetch(
     new Request("http://localhost/api/lab/cases/car-control/v1/branches", requestInit),
     env,
@@ -170,9 +208,12 @@ test("persists an idempotent takeover branch against the real migration", async 
     "lab_state_snapshots",
     "lab_events",
     "lab_round_drafts",
+    "lab_round_submissions",
   ]) {
     const count = database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
-    const expected = table === "lab_events" ? 7 : 1;
+    const expected = table === "lab_events"
+      ? 8
+      : table === "lab_state_snapshots" ? 2 : table === "lab_round_drafts" ? 0 : 1;
     assert.equal(count, expected, `${table} should contain the expected idempotent records`);
   }
   database.close();
