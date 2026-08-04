@@ -1118,7 +1118,7 @@ export function LabTimelinePage() {
           <WorkloadBars weeks={mainline.baselineWorkload.weeks} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="engagement" eyebrow="STAKEHOLDERS" title="干系人参与度" value={`${engagementPercent}%`} note={`${stakeholderState.filter((item) => item.current === "leading").length} 人处于领导参与`} onOpen={setSelectedWidget}>
-          <div className="lab-v2-engagement-dots">{stakeholderState.slice(0, 14).map((item) => <i key={item.id} className={item.current} title={`${item.title}：${item.current}`} />)}</div>
+          <div className="lab-v2-engagement-dots">{stakeholderState.map((item) => <i key={item.id} className={item.current} title={`${item.title}：${item.current}`} />)}</div>
         </DashboardCard>
 
         <DashboardCard id="raci" eyebrow="RESPONSIBILITY" title="RACI 矩阵" className="wide" note={`当周主要工作包 ${currentRaci.workPackageId} · ${currentRaciWorkPackage?.title ?? "项目治理"}`} onOpen={setSelectedWidget}>

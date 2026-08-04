@@ -7831,7 +7831,7 @@ select {
 .lab-v2-burndown text { fill: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 7px; }
 .lab-v2-burndown text.weekend { text-anchor: middle; }
 .lab-v2-burndown text.end { text-anchor: end; }
-.lab-v2-engagement-dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin: auto 0 20px; }
+.lab-v2-engagement-dots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 7px; margin: auto 0 20px; }
 .lab-v2-engagement-dots i { aspect-ratio: 1; background: var(--pressed); border: 1px solid var(--line); border-radius: 50%; }
 .lab-v2-engagement-dots i.supportive { background: #929292; }
 .lab-v2-engagement-dots i.leading { background: var(--ink); }

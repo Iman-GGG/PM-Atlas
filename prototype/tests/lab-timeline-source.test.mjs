@@ -71,6 +71,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.doesNotMatch(timeline, /className="network-group-line"/);
   assert.doesNotMatch(timeline, /className=\{`network-week-line/);
   assert.doesNotMatch(timeline, /workPackages\.slice\(0, (5|6)\)/);
+  assert.doesNotMatch(timeline, /stakeholderState\.slice\(0, 14\)/);
   assert.doesNotMatch(timeline, /filter\(\(item\) => item\.isCritical\)\.slice/);
 });
 
