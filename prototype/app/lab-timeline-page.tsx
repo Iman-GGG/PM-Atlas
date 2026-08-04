@@ -253,6 +253,13 @@ const milestones = [
   { week: 28, label: "上线门" },
   { week: 32, label: "收尾" },
 ];
+const ccbMembers = [
+  { title: "项目发起人", duty: "主席 / 最终审批" },
+  { title: "项目经理", duty: "组织评审 / 记录决议" },
+  { title: "产品负责人/业务分析师", duty: "业务价值 / 范围影响" },
+  { title: "技术负责人", duty: "技术方案 / 进度影响" },
+  { title: "DevOps/安全工程师", duty: "安全 / 发布影响" },
+];
 const scenarioLabels: Record<string, string> = {
   "scenario-1": "需求变更",
   "scenario-2": "供应与资源",
@@ -456,6 +463,21 @@ function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek:
   );
 }
 
+function CcbMemberIndicator() {
+  return (
+    <span className="lab-v2-ccb-members" role="img" aria-label={`CCB 核心成员：${ccbMembers.map((member) => member.title).join("、")}`}>
+      <span className="lab-v2-ccb-people" aria-hidden="true">
+        {Array.from({ length: 3 }, (_, index) => <i key={index} />)}
+      </span>
+      <span className="lab-v2-ccb-tooltip" role="tooltip">
+        <b>CCB 核心成员</b>
+        {ccbMembers.map((member) => <span key={member.title}><strong>{member.title}</strong><small>{member.duty}</small></span>)}
+        <em>测试、法务与隐私负责人按变更议题列席</em>
+      </span>
+    </span>
+  );
+}
+
 type NetworkLayoutActivity = ScheduleActivity & NetworkActivity & {
   lane: number;
   rowY: number;
@@ -642,6 +664,7 @@ function DashboardCard({
   note,
   className = "",
   interactiveChildren = false,
+  titleAccessory,
   onOpen,
   children,
 }: {
@@ -652,6 +675,7 @@ function DashboardCard({
   note?: string;
   className?: string;
   interactiveChildren?: boolean;
+  titleAccessory?: ReactNode;
   onOpen: (id: DashboardId) => void;
   children?: ReactNode;
 }) {
@@ -659,7 +683,7 @@ function DashboardCard({
     return (
       <article className={`lab-v2-widget ${className}`}>
         <header><span>{eyebrow}</span><button type="button" aria-label={`打开${title}详细数据`} onClick={() => onOpen(id)}>↗</button></header>
-        <h3>{title}</h3>
+        {titleAccessory ? <div className="lab-v2-widget-title"><h3>{title}</h3>{titleAccessory}</div> : <h3>{title}</h3>}
         {value && <strong className="lab-v2-widget-value">{value}</strong>}
         {children}
         {note && <footer>{note}</footer>}
@@ -669,7 +693,7 @@ function DashboardCard({
   return (
     <button className={`lab-v2-widget ${className}`} onClick={() => onOpen(id)}>
       <header><span>{eyebrow}</span><b>↗</b></header>
-      <h3>{title}</h3>
+      {titleAccessory ? <div className="lab-v2-widget-title"><h3>{title}</h3>{titleAccessory}</div> : <h3>{title}</h3>}
       {value && <strong className="lab-v2-widget-value">{value}</strong>}
       {children}
       {note && <footer>{note}</footer>}
@@ -1120,7 +1144,7 @@ export function LabTimelinePage() {
         <DashboardCard id="burndown" eyebrow="ITERATION" title="当前迭代燃尽图" value={currentSprintNumber ? `S${currentSprintNumber}` : "未开始"} note={currentSprintNumber ? `剩余 ${sprintRemaining} 点` : "W9 进入首个开发迭代"} onOpen={setSelectedWidget}>
           <SprintBurndown started={currentSprintNumber > 0} secondWeek={sprintProgress === 1} />
         </DashboardCard>
-        <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" value={nextGate && nextGate.week - selectedWeek <= 1 ? "1" : "0"} note={nextGate ? `下一阶段门 W${nextGate.week}` : "所有阶段门已完成"} onOpen={setSelectedWidget}>
+        <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" className="ccb-widget" titleAccessory={<CcbMemberIndicator />} value={nextGate && nextGate.week - selectedWeek <= 1 ? "1" : "0"} note={nextGate ? `下一阶段门 W${nextGate.week}` : "所有阶段门已完成"} onOpen={setSelectedWidget}>
           <div className="lab-v2-gates">{milestones.slice(1).map((item) => <i key={item.week} className={item.week <= selectedWeek ? "done" : item.week - selectedWeek <= 1 ? "pending" : ""}><b>W{item.week}</b><span>{item.label}</span></i>)}</div>
         </DashboardCard>
         <DashboardCard id="network" eyebrow="SCHEDULE NETWORK" title="时标网络图" className="full network-widget" note={`完整 35 项活动 · ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
