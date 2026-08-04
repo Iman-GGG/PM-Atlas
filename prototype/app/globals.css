@@ -7611,11 +7611,15 @@ select {
 .lab-v2-head-status small { margin-top: 9px; color: #ccc; }
 
 .lab-v2-timeline-panel {
+  position: sticky;
+  z-index: 40;
+  top: 68px;
   margin-top: 14px;
   padding: 26px 36px 24px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 .lab-v2-timeline-panel > header { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
@@ -7822,13 +7826,13 @@ select {
 .lab-v2-time-network .network-connections path { fill: none; stroke: #c0c0c0; stroke-width: 1.2; marker-end: url(#lab-v2-network-arrow); }
 .lab-v2-time-network .network-connections path.critical { stroke: #555; stroke-width: 2; }
 .lab-v2-time-network marker path { fill: #888; }
-.lab-v2-time-network .network-activities rect { fill: #e8e8e8; stroke: #bcbcbc; stroke-width: 1; }
+.lab-v2-time-network .network-activities rect { fill: #e8e8e8; }
 .lab-v2-time-network .network-activities text { fill: #555; font-family: var(--font-geist-mono), monospace; font-size: 8px; font-weight: 750; }
-.lab-v2-time-network .network-activities g.critical rect { fill: #666; stroke: #333; }
+.lab-v2-time-network .network-activities g.critical rect { fill: #666; }
 .lab-v2-time-network .network-activities g.critical text { fill: var(--paper); }
-.lab-v2-time-network .network-activities g.completed rect { fill: #a5a5a5; stroke: #777; }
+.lab-v2-time-network .network-activities g.completed rect { fill: #a5a5a5; }
 .lab-v2-time-network .network-activities g.completed text { fill: var(--paper); }
-.lab-v2-time-network .network-activities g.active rect { fill: var(--ink); stroke: var(--ink); stroke-width: 2; }
+.lab-v2-time-network .network-activities g.active rect { fill: var(--ink); }
 .lab-v2-time-network .network-activities g.active text { fill: var(--paper); }
 .lab-v2-time-network .network-activities .network-float { text-anchor: end; font-size: 7px; font-weight: 600; }
 .lab-v2-time-network .network-now-line { stroke: var(--ink); stroke-dasharray: 4 3; stroke-width: 2; pointer-events: none; }
@@ -8011,6 +8015,7 @@ select {
 }
 
 @media (max-width: 640px) {
+  .lab-v2-timeline-panel { top: 0; }
   .lab-v2-project-head > div:first-child,
   .lab-v2-head-status,
   .lab-v2-timeline-panel,

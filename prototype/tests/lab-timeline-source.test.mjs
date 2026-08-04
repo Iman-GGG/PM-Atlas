@@ -46,10 +46,14 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /<TimeScaledNetwork/);
   assert.match(timeline, /<WbsCards/);
   assert.match(timeline, /项二级子任务/);
+  assert.match(timeline, /window\.addEventListener\("keydown", onKeyDown\)/);
+  assert.match(timeline, /event\.key === "ArrowLeft" \? -1 : 1/);
+  assert.match(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
   assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
   assert.doesNotMatch(styles, /\.lab-v2-time-network[^}]*min-width: 1380px/);
+  assert.doesNotMatch(styles, /\.network-activities[^}]*stroke:/);
   assert.doesNotMatch(timeline, /workPackages\.slice\(0, (5|6)\)/);
   assert.doesNotMatch(timeline, /filter\(\(item\) => item\.isCritical\)\.slice/);
 });

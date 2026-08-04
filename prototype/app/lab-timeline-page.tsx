@@ -662,6 +662,20 @@ export function LabTimelinePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.isContentEditable || target?.matches("input, textarea, select")) return;
+      event.preventDefault();
+      const weekDelta = event.key === "ArrowLeft" ? -1 : 1;
+      setSelectedWeek((currentWeek) => Math.min(manifest?.totalWeeks ?? 32, Math.max(1, currentWeek + weekDelta)));
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [manifest?.totalWeeks]);
+
   const takeover = async (point: TakeoverPoint) => {
     setSelectedWeek(point.week);
     setLoadingScenarioId(point.scenarioId);
@@ -841,7 +855,7 @@ export function LabTimelinePage() {
       <section className="lab-v2-timeline-panel" aria-label="项目主线进度条">
         <header>
           <div><span>MAINLINE / 最短成功路径</span><strong>拖动进度条，观察项目状态与文件版本同步变化</strong></div>
-          <div className="lab-v2-playback-status"><i />主线回放</div>
+          <div className="lab-v2-playback-status"><i />主线回放 · ← → 切换周</div>
         </header>
         <div className="lab-v2-range-wrap">
           <div className="lab-v2-range-fill" style={{ width: `${((selectedWeek - 1) / 31) * 100}%` }} />
