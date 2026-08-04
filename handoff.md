@@ -1,8 +1,8 @@
 # PM Atlas 项目实验室 MVP Handoff
 
 - 日期：2026-08-04
-- 当前线上版本：Release 24
-- 线上地址：`https://pm-atlas-iman.ardent-pixie-5731.chatgpt.site/?release=24#lab-schedule`
+- 当前线上版本：Release 25
+- 线上地址：`https://pm-atlas-iman.ardent-pixie-5731.chatgpt.site/?release=25#lab-schedule`
 - 审查依据：`specs/项目实验室MVP-PRD-v0.1.md`、`specs/项目实验室MVP-技术方案-v0.1.md`、当前代码与线上页面
 - 本文目的：记录当前实现状态、与 MVP 目标的差距、已发现问题和建议推进顺序
 
