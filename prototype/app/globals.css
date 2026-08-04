@@ -8030,6 +8030,15 @@ select {
 .lab-v2-document-summary dd { margin: 0; font-weight: 600; }
 .lab-v2-data-table-wrap { overflow-x: auto; border: 1px solid var(--line); }
 .lab-v2-document-data table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 10px; }
+.lab-v2-document-data .lab-v2-requirement-table { min-width: 0; table-layout: fixed; }
+.lab-v2-requirement-table col:nth-child(1) { width: 9%; }
+.lab-v2-requirement-table col:nth-child(2) { width: 38%; }
+.lab-v2-requirement-table col:nth-child(3) { width: 7%; }
+.lab-v2-requirement-table col:nth-child(4) { width: 8%; }
+.lab-v2-requirement-table col:nth-child(5) { width: 11%; }
+.lab-v2-requirement-table col:nth-child(6) { width: 15%; }
+.lab-v2-requirement-table col:nth-child(7) { width: 12%; }
+.lab-v2-requirement-table td { overflow-wrap: anywhere; }
 .lab-v2-document-data th,
 .lab-v2-document-data td { padding: 9px 10px; text-align: left; vertical-align: top; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .lab-v2-document-data th { position: sticky; top: 0; color: var(--paper); background: var(--ink); font-weight: 700; white-space: nowrap; }

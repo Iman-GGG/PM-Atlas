@@ -1304,7 +1304,8 @@ export function LabTimelinePage() {
                         <section className="lab-v2-document-data">
                           <span>需求跟踪矩阵 · W{selectedWeek}</span>
                           <div className="lab-v2-data-table-wrap">
-                            <table>
+                            <table className="lab-v2-requirement-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号</th><th>需求</th><th>优先级</th><th>状态</th><th>主要WBS</th><th>支持WBS</th><th>目标版本</th></tr></thead>
                               <tbody>{requirementState.map((requirement) => <tr key={requirement.id}><td>{requirement.id}</td><td>{requirement.title}</td><td>{requirement.priority}</td><td>{requirementStatus(requirement, selectedWeek)}</td><td>{requirement.primaryWbsId ?? requirement.proposedPrimaryWbsId}</td><td>{(requirement.supportingWbsIds ?? requirement.proposedSupportingWbsIds ?? []).join("、")}</td><td>{requirement.targetRelease}</td></tr>)}</tbody>
                             </table>
