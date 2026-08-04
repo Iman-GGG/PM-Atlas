@@ -416,11 +416,12 @@ function WbsCards({ workPackages, activities, selectedWeek }: {
           const packageActive = workPackage.startWeek <= selectedWeek && workPackage.endWeek >= selectedWeek;
           const packageState = packageCompleted ? "done" : packageActive ? "active" : "planned";
           return (
-            <article key={workPackage.id} className={packageState}>
-              <header>
+            <details key={workPackage.id} className={packageState}>
+              <summary>
                 <span><strong>{workPackage.id}</strong><small>{workPackage.title}</small></span>
                 <i>{packageCompleted ? "✓ 已完成" : packageActive ? "● 进行中" : "○ 未开始"} · W{workPackage.startWeek}–W{workPackage.endWeek}</i>
-              </header>
+                <b>展开</b>
+              </summary>
               <ol>
                 {packageActivities.map((activity, activityIndex) => {
                   const completed = activity.endWeek < selectedWeek;
@@ -434,7 +435,7 @@ function WbsCards({ workPackages, activities, selectedWeek }: {
                   );
                 })}
               </ol>
-            </article>
+            </details>
           );
         })}
     </div>
@@ -565,6 +566,7 @@ function DashboardCard({
   value,
   note,
   className = "",
+  interactiveChildren = false,
   onOpen,
   children,
 }: {
@@ -574,9 +576,21 @@ function DashboardCard({
   value?: string;
   note?: string;
   className?: string;
+  interactiveChildren?: boolean;
   onOpen: (id: DashboardId) => void;
   children?: ReactNode;
 }) {
+  if (interactiveChildren) {
+    return (
+      <article className={`lab-v2-widget ${className}`}>
+        <header><span>{eyebrow}</span><button type="button" aria-label={`打开${title}详细数据`} onClick={() => onOpen(id)}>↗</button></header>
+        <h3>{title}</h3>
+        {value && <strong className="lab-v2-widget-value">{value}</strong>}
+        {children}
+        {note && <footer>{note}</footer>}
+      </article>
+    );
+  }
   return (
     <button className={`lab-v2-widget ${className}`} onClick={() => onOpen(id)}>
       <header><span>{eyebrow}</span><b>↗</b></header>
@@ -956,7 +970,7 @@ export function LabTimelinePage() {
         <DashboardCard id="network" eyebrow="SCHEDULE NETWORK" title="时标网络图" className="full network-widget" note={`完整 35 项活动 · ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
           <TimeScaledNetwork activities={mainline.schedule.activities} network={mainline.baselineWorkload.scheduleNetwork} workPackages={mainline.workload.workPackages} selectedWeek={selectedWeek} />
         </DashboardCard>
-        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" note={`11 个一级工作包 · 纵向展开 ${mainline.schedule.activities.length} 项二级子任务`} onOpen={setSelectedWidget}>
+        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" interactiveChildren note={`11 个一级工作包 · 点击卡片展开 ${mainline.schedule.activities.length} 项二级子任务`} onOpen={setSelectedWidget}>
           <WbsCards workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="risk-status" eyebrow="RISK REGISTER" title="风险状态统计" value={`${openRiskCount} 开放`} note={`${completedRiskCount}/${riskState.length} 已关闭`} onOpen={setSelectedWidget}>

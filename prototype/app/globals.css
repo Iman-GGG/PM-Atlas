@@ -7745,6 +7745,7 @@ select {
 .lab-v2-widget.full { grid-column: 1 / -1; min-height: auto; }
 .lab-v2-widget > header { display: flex; justify-content: space-between; color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; }
 .lab-v2-widget > header b { color: var(--ink); font-size: 13px; }
+.lab-v2-widget > header button { padding: 0; color: var(--ink); background: transparent; border: 0; cursor: pointer; font-size: 13px; }
 .lab-v2-widget h3 { margin: 9px 0 0; font-size: 15px; }
 .lab-v2-widget-value { margin-top: 12px; font-size: 38px; line-height: 1; letter-spacing: -0.055em; }
 .lab-v2-widget > footer { margin-top: auto; padding-top: 13px; color: var(--body); border-top: 1px solid var(--soft-strong); font-size: 11px; }
@@ -7832,15 +7833,20 @@ select {
 .lab-v2-time-network .network-activities .network-float { text-anchor: end; font-size: 7px; font-weight: 600; }
 .lab-v2-time-network .network-now-line { stroke: var(--ink); stroke-dasharray: 4 3; stroke-width: 2; pointer-events: none; }
 
-.lab-v2-wbs-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 20px 0 8px; }
-.lab-v2-wbs-cards > article { min-width: 0; color: var(--muted); background: var(--paper); border: 1px solid var(--line); }
-.lab-v2-wbs-cards article > header { display: grid; min-height: 76px; padding: 12px 13px 10px; background: var(--soft); border-bottom: 1px solid var(--line); }
-.lab-v2-wbs-cards article.active { color: var(--ink); border: 2px solid var(--ink); }
-.lab-v2-wbs-cards article.done > header { color: var(--paper); background: #686868; }
-.lab-v2-wbs-cards header > span { display: grid; gap: 3px; }
-.lab-v2-wbs-cards header strong { font-family: var(--font-geist-mono), monospace; font-size: 9px; }
-.lab-v2-wbs-cards header small { font-size: 11px; font-weight: 750; line-height: 1.35; }
-.lab-v2-wbs-cards header > i { align-self: end; margin-top: 6px; font-size: 8px; font-style: normal; }
+.lab-v2-wbs-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: start; margin: 18px 0 8px; }
+.lab-v2-wbs-cards > details { min-width: 0; color: var(--muted); background: var(--paper); border: 1px solid var(--line); }
+.lab-v2-wbs-cards details.active { color: var(--ink); border: 2px solid var(--ink); }
+.lab-v2-wbs-cards details.done > summary { color: var(--paper); background: #686868; }
+.lab-v2-wbs-cards summary { position: relative; display: grid; min-height: 76px; padding: 11px 46px 10px 12px; background: var(--soft); cursor: pointer; list-style: none; }
+.lab-v2-wbs-cards summary::-webkit-details-marker { display: none; }
+.lab-v2-wbs-cards summary > span { display: grid; gap: 3px; }
+.lab-v2-wbs-cards summary strong { font-family: var(--font-geist-mono), monospace; font-size: 10px; }
+.lab-v2-wbs-cards summary small { font-size: 12px; font-weight: 750; line-height: 1.3; }
+.lab-v2-wbs-cards summary > i { align-self: end; margin-top: 5px; font-size: 8px; font-style: normal; }
+.lab-v2-wbs-cards summary > b { position: absolute; top: 12px; right: 11px; color: currentColor; font-size: 8px; }
+.lab-v2-wbs-cards details[open] summary > b::after { content: "收起"; }
+.lab-v2-wbs-cards details[open] summary > b { font-size: 0; }
+.lab-v2-wbs-cards details[open] summary > b::after { font-size: 8px; }
 .lab-v2-wbs-cards ol { display: grid; margin: 0; padding: 6px 12px 9px; list-style: none; }
 .lab-v2-wbs-cards li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 7px; align-items: start; padding: 7px 0; color: var(--muted); border-bottom: 1px solid var(--soft-strong); }
 .lab-v2-wbs-cards li:last-child { border-bottom: 0; }
@@ -7993,6 +7999,7 @@ select {
 @media (max-width: 1280px) {
   .lab-v2-dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lab-v2-management > div { grid-template-columns: repeat(2, 1fr); }
+  .lab-v2-wbs-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
