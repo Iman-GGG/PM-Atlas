@@ -393,9 +393,21 @@ function Sparkline({ values, target = 1 }: { values: number[]; target?: number }
   );
 }
 
-function MiniBars({ values }: { values: number[] }) {
-  const maximum = Math.max(...values, 1);
-  return <div className="lab-v2-mini-bars">{values.map((value, index) => <i key={`${index}-${value}`} style={{ height: `${Math.max(8, value / maximum * 100)}%` }} />)}</div>;
+function WorkloadBars({ weeks, selectedWeek }: { weeks: BaselineWeek[]; selectedWeek: number }) {
+  const windowSize = 8;
+  const startWeek = Math.min(Math.max(1, selectedWeek - 3), Math.max(1, weeks.length - windowSize + 1));
+  const visibleWeeks = weeks.slice(startWeek - 1, startWeek - 1 + windowSize);
+  const maximum = Math.max(...visibleWeeks.map((item) => item.plannedTeamPersonDays), 1);
+  return (
+    <div className="lab-v2-workload-bars">
+      <div>{visibleWeeks.map((item) => (
+        <i key={item.week} className={item.week === selectedWeek ? "current" : item.week < selectedWeek ? "past" : "future"} title={`W${item.week}：${item.plannedTeamPersonDays} 人日`}>
+          <b style={{ height: `${Math.max(8, item.plannedTeamPersonDays / maximum * 100)}%` }} />
+        </i>
+      ))}</div>
+      <footer><span>W{visibleWeeks[0]?.week}</span><strong>当前 W{selectedWeek}</strong><span>W{visibleWeeks.at(-1)?.week}</span></footer>
+    </div>
+  );
 }
 
 type NetworkLayoutActivity = ScheduleActivity & NetworkActivity & {
@@ -686,7 +698,7 @@ export function LabTimelinePage() {
         return;
       }
       const stickyTop = window.innerWidth <= 660 ? 0 : 68;
-      setCompactTimelineVisible(timelinePanel.getBoundingClientRect().top <= stickyTop);
+      setCompactTimelineVisible(timelinePanel.getBoundingClientRect().bottom <= stickyTop);
     };
     updateCompactTimeline();
     window.addEventListener("scroll", updateCompactTimeline, { passive: true });
@@ -840,7 +852,13 @@ export function LabTimelinePage() {
   const currentSprintNumber = selectedWeek < 9 ? 0 : Math.min(10, Math.floor((selectedWeek - 9) / 2) + 1);
   const sprintProgress = selectedWeek < 9 ? 0 : ((selectedWeek - 9) % 2 + 1) / 2;
   const sprintRemaining = Math.round(34 * (1 - sprintProgress));
-  const currentRaci = mainline.stakeholders.workPackageRaci.find((row) => activeWorkPackages.some((item) => item.id === row.workPackageId)) ?? mainline.stakeholders.workPackageRaci[0];
+  const primaryWorkPackageId = Object.entries(weekState.workPackagePersonDays)
+    .filter(([workPackageId, personDays]) => workPackageId !== "WBS-1.0" && personDays > 0)
+    .sort((left, right) => right[1] - left[1])[0]?.[0]
+    ?? activeWorkPackages.find((item) => item.id !== "WBS-1.0")?.id
+    ?? activeWorkPackages[0]?.id;
+  const currentRaci = mainline.stakeholders.workPackageRaci.find((row) => row.workPackageId === primaryWorkPackageId) ?? mainline.stakeholders.workPackageRaci[0];
+  const currentRaciWorkPackage = mainline.workload.workPackages.find((item) => item.id === currentRaci.workPackageId);
   const criticalNow = mainline.baselineWorkload.scheduleNetwork.activities.filter((activity) => activity.isCritical && activity.earliestStart <= selectedWeek && activity.earliestFinish >= selectedWeek);
   const dashboardDetailFacts: Record<DashboardId, string[]> = {
     spi: [`当前 SPI ${weekState.spi.toFixed(3)}`, `累计挣值 ${formatMoney(weekState.cumulativeEarnedValueCny)}`, `累计计划价值 ${formatMoney(weekState.cumulativePlannedValueCny)}`],
@@ -947,6 +965,17 @@ export function LabTimelinePage() {
               onChange={(event) => setSelectedWeek(Number(event.target.value))}
               aria-label="吸顶项目周次"
             />
+            {milestones.slice(1, -1).map((milestone) => (
+              <button
+                key={milestone.week}
+                className={selectedWeek >= milestone.week ? "passed" : ""}
+                style={{ left: `${((milestone.week - 1) / 31) * 100}%` }}
+                onClick={() => setSelectedWeek(milestone.week)}
+                aria-label={`跳转到 W${milestone.week} ${milestone.label}`}
+              >
+                <i /><span>{milestone.label}</span>
+              </button>
+            ))}
             <mark style={{ left: `${((selectedWeek - 1) / 31) * 100}%` }}>
               {selectedWeek !== 1 && selectedWeek !== 32 ? <b>W{selectedWeek}</b> : null}
             </mark>
@@ -992,14 +1021,14 @@ export function LabTimelinePage() {
             <mark><i style={{ left: `${((selectedWeek - 0.5) / 32) * 100}%` }} /></mark>
           </div>
         </DashboardCard>
-        <DashboardCard id="workload" eyebrow="CAPACITY" title="项目工作量" value={`${weekState.plannedTeamPersonDays} 人日`} note={`全项目 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`} onOpen={setSelectedWidget}>
-          <MiniBars values={mainline.baselineWorkload.weeks.map((item) => item.plannedTeamPersonDays)} />
+        <DashboardCard id="workload" eyebrow="CAPACITY" title="项目工作量" value={`${weekState.plannedTeamPersonDays} 人日`} note={`当前周前后 8 周窗口 · 全项目 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`} onOpen={setSelectedWidget}>
+          <WorkloadBars weeks={mainline.baselineWorkload.weeks} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="engagement" eyebrow="STAKEHOLDERS" title="干系人参与度" value={`${engagementPercent}%`} note={`${stakeholderState.filter((item) => item.current === "leading").length} 人处于领导参与`} onOpen={setSelectedWidget}>
           <div className="lab-v2-engagement-dots">{stakeholderState.slice(0, 14).map((item) => <i key={item.id} className={item.current} title={`${item.title}：${item.current}`} />)}</div>
         </DashboardCard>
 
-        <DashboardCard id="raci" eyebrow="RESPONSIBILITY" title="RACI 矩阵" className="wide" note={`当前工作包 ${currentRaci.workPackageId}`} onOpen={setSelectedWidget}>
+        <DashboardCard id="raci" eyebrow="RESPONSIBILITY" title="RACI 矩阵" className="wide" note={`当周主要工作包 ${currentRaci.workPackageId} · ${currentRaciWorkPackage?.title ?? "项目治理"}`} onOpen={setSelectedWidget}>
           <div className="lab-v2-raci">
             {(["A", "R", "C", "I"] as const).map((role) => <div key={role}><b>{role}</b><span>{currentRaci[role].slice(0, role === "C" || role === "I" ? 3 : 2).join(" / ") || "—"}</span></div>)}
           </div>
