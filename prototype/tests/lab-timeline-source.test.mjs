@@ -4,6 +4,7 @@ import test from "node:test";
 
 const appSource = new URL("../app/prototype-app.tsx", import.meta.url);
 const timelineSource = new URL("../app/lab-timeline-page.tsx", import.meta.url);
+const stylesSource = new URL("../app/globals.css", import.meta.url);
 
 test("wires the project lab schedule page to mainline, takeover, and material APIs", async () => {
   const [app, timeline] = await Promise.all([
@@ -24,7 +25,10 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
 });
 
 test("renders the complete monochrome project control center", async () => {
-  const timeline = await readFile(timelineSource, "utf8");
+  const [timeline, styles] = await Promise.all([
+    readFile(timelineSource, "utf8"),
+    readFile(stylesSource, "utf8"),
+  ]);
 
   assert.match(timeline, /type="range"/);
   assert.match(timeline, /从这里接手/);
@@ -40,6 +44,12 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /完整 11 个一级工作包/);
   assert.match(timeline, /完整 35 项活动/);
   assert.match(timeline, /<TimeScaledNetwork/);
+  assert.match(timeline, /<WbsTree/);
+  assert.match(timeline, /35 项计划活动/);
+  assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
+  assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
+  assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
+  assert.doesNotMatch(styles, /\.lab-v2-time-network[^}]*min-width: 1380px/);
   assert.doesNotMatch(timeline, /workPackages\.slice\(0, (5|6)\)/);
   assert.doesNotMatch(timeline, /filter\(\(item\) => item\.isCritical\)\.slice/);
 });
