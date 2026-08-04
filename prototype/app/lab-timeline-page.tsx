@@ -119,7 +119,10 @@ type NetworkActivity = {
   activityId: string;
   earliestStart: number;
   earliestFinish: number;
+  latestStart: number;
+  latestFinish: number;
   totalFloat: number;
+  freeFloat: number;
   isCritical: boolean;
 };
 
@@ -393,6 +396,128 @@ function Sparkline({ values, target = 1 }: { values: number[]; target?: number }
 function MiniBars({ values }: { values: number[] }) {
   const maximum = Math.max(...values, 1);
   return <div className="lab-v2-mini-bars">{values.map((value, index) => <i key={`${index}-${value}`} style={{ height: `${Math.max(8, value / maximum * 100)}%` }} />)}</div>;
+}
+
+type NetworkLayoutActivity = ScheduleActivity & NetworkActivity & {
+  lane: number;
+  rowY: number;
+};
+
+function TimeScaledNetwork({
+  activities,
+  network,
+  workPackages,
+  selectedWeek,
+}: {
+  activities: ScheduleActivity[];
+  network: MainlineData["baselineWorkload"]["scheduleNetwork"];
+  workPackages: WorkPackage[];
+  selectedWeek: number;
+}) {
+  const labelWidth = 190;
+  const weekWidth = 36;
+  const laneHeight = 34;
+  const groupGap = 12;
+  const topOffset = 42;
+  const layout = useMemo(() => {
+    const networkById = new Map(network.activities.map((activity) => [activity.activityId, activity]));
+    const layoutActivities: NetworkLayoutActivity[] = [];
+    const groupBounds: Array<{ id: string; title: string; top: number; bottom: number }> = [];
+    let currentY = topOffset;
+
+    for (const workPackage of workPackages) {
+      const groupedActivities = activities
+        .filter((activity) => activity.parentId === workPackage.id)
+        .sort((left, right) => left.startWeek - right.startWeek || left.endWeek - right.endWeek);
+      const laneEnds: number[] = [];
+      const groupTop = currentY;
+
+      for (const activity of groupedActivities) {
+        const networkActivity = networkById.get(activity.id);
+        if (!networkActivity) continue;
+        let lane = laneEnds.findIndex((endWeek) => endWeek < activity.startWeek);
+        if (lane === -1) {
+          lane = laneEnds.length;
+          laneEnds.push(activity.endWeek);
+        } else {
+          laneEnds[lane] = activity.endWeek;
+        }
+        layoutActivities.push({ ...activity, ...networkActivity, lane, rowY: currentY + lane * laneHeight });
+      }
+
+      const laneCount = Math.max(laneEnds.length, 1);
+      currentY += laneCount * laneHeight;
+      groupBounds.push({ id: workPackage.id, title: workPackage.title, top: groupTop, bottom: currentY });
+      currentY += groupGap;
+    }
+
+    return { activities: layoutActivities, groups: groupBounds, height: currentY + 12 };
+  }, [activities, network.activities, workPackages]);
+  const layoutById = new Map(layout.activities.map((activity) => [activity.id, activity]));
+  const totalWidth = labelWidth + weekWidth * 32 + 18;
+  const weekX = (week: number) => labelWidth + (week - 1) * weekWidth;
+
+  return (
+    <div className="lab-v2-network-scroll">
+      <svg
+        className="lab-v2-time-network"
+        viewBox={`0 0 ${totalWidth} ${layout.height}`}
+        role="img"
+        aria-label="完整项目时标网络图"
+      >
+        <defs>
+          <marker id="lab-v2-network-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" />
+          </marker>
+        </defs>
+        <rect className="network-background" x="0" y="0" width={totalWidth} height={layout.height} />
+        {Array.from({ length: 32 }, (_, index) => index + 1).map((week) => (
+          <g key={week}>
+            <line className={`network-week-line ${week === selectedWeek ? "selected" : ""}`} x1={weekX(week)} x2={weekX(week)} y1="28" y2={layout.height} />
+            <text className={`network-week-label ${week === selectedWeek ? "selected" : ""}`} x={weekX(week) + weekWidth / 2} y="20">W{week}</text>
+          </g>
+        ))}
+        <line className="network-week-line" x1={weekX(32) + weekWidth} x2={weekX(32) + weekWidth} y1="28" y2={layout.height} />
+        {layout.groups.map((group) => (
+          <g key={group.id}>
+            <line className="network-group-line" x1="0" x2={totalWidth} y1={group.bottom + groupGap / 2} y2={group.bottom + groupGap / 2} />
+            <text className="network-group-id" x="8" y={group.top + 13}>{group.id}</text>
+            <text className="network-group-title" x="8" y={group.top + 28}>{group.title}</text>
+          </g>
+        ))}
+        <g className="network-connections">
+          {layout.activities.flatMap((activity) => (activity.predecessors ?? []).flatMap((predecessor) => {
+            const predecessorActivity = layoutById.get(predecessor.activityId);
+            if (!predecessorActivity) return [];
+            const startX = weekX(predecessorActivity.endWeek) + weekWidth / 2;
+            const startY = predecessorActivity.rowY + 13;
+            const endX = weekX(activity.startWeek) + weekWidth / 2;
+            const endY = activity.rowY + 13;
+            const turnX = Math.max(startX + 10, (startX + endX) / 2);
+            const critical = predecessorActivity.isCritical && activity.isCritical;
+            return [<path key={`${predecessor.activityId}-${activity.id}`} className={critical ? "critical" : ""} d={`M ${startX} ${startY} L ${turnX} ${startY} L ${turnX} ${endY} L ${endX} ${endY}`} />];
+          }))}
+        </g>
+        <g className="network-activities">
+          {layout.activities.map((activity) => {
+            const nodeX = weekX(activity.startWeek) + 2;
+            const nodeWidth = Math.max(30, (activity.endWeek - activity.startWeek + 1) * weekWidth - 4);
+            const completed = activity.endWeek < selectedWeek;
+            const active = activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek;
+            return (
+              <g key={activity.id} className={`${activity.isCritical ? "critical" : ""} ${completed ? "completed" : active ? "active" : "planned"}`}>
+                <title>{`${activity.id} ${activity.title}；W${activity.startWeek}–W${activity.endWeek}；ES ${activity.earliestStart} / EF ${activity.earliestFinish} / LS ${activity.latestStart} / LF ${activity.latestFinish} / TF ${activity.totalFloat} / FF ${activity.freeFloat}`}</title>
+                <rect x={nodeX} y={activity.rowY} width={nodeWidth} height="26" rx="4" />
+                <text x={nodeX + 7} y={activity.rowY + 17}>{completed ? "✓ " : active ? "● " : ""}{activity.id}</text>
+                {!activity.isCritical && nodeWidth >= 80 ? <text className="network-float" x={nodeX + nodeWidth - 7} y={activity.rowY + 17}>TF {activity.totalFloat}</text> : null}
+              </g>
+            );
+          })}
+        </g>
+        <line className="network-now-line" x1={weekX(selectedWeek) + weekWidth / 2} x2={weekX(selectedWeek) + weekWidth / 2} y1="28" y2={layout.height} />
+      </svg>
+    </div>
+  );
 }
 
 function DashboardCard({
@@ -741,12 +866,20 @@ export function LabTimelinePage() {
           <div className="lab-v2-cost-comparison"><i style={{ width: `${weekState.cumulativeActualCostCny / mainline.workload.budgetAtCompletionCny * 100}%` }} /><b style={{ left: `${progressPercent}%` }} /></div>
         </DashboardCard>
 
-        <DashboardCard id="gantt" eyebrow="SCHEDULE" title="里程碑甘特图" className="wide" note={`${activeWorkPackages.length} 个工作包进行中`} onOpen={setSelectedWidget}>
+        <DashboardCard id="gantt" eyebrow="SCHEDULE" title="里程碑甘特图" className="full gantt-widget" note={`完整 11 个一级工作包 · ${activeWorkPackages.length} 个进行中`} onOpen={setSelectedWidget}>
           <div className="lab-v2-gantt">
-            {mainline.workload.workPackages.slice(0, 6).map((item) => (
-              <div key={item.id}><span>{item.id}</span><i><b style={{ left: `${((item.startWeek - 1) / 31) * 100}%`, width: `${((item.endWeek - item.startWeek + 1) / 32) * 100}%` }} /></i></div>
-            ))}
-            <em style={{ left: `${((selectedWeek - 1) / 31) * 100}%` }} />
+            <div className="lab-v2-gantt-axis"><span>一级 WBS</span><i>{[1, 4, 8, 12, 16, 20, 24, 28, 32].map((week) => <b key={week} style={{ left: `${((week - 1) / 31) * 100}%` }}>W{week}</b>)}</i></div>
+            {mainline.workload.workPackages.map((item) => {
+              const completed = item.endWeek < selectedWeek;
+              const active = item.startWeek <= selectedWeek && item.endWeek >= selectedWeek;
+              return (
+                <div key={item.id} className={completed ? "done" : active ? "active" : "planned"}>
+                  <span><b>{completed ? "✓" : active ? "●" : "○"}</b><i><strong>{item.id}</strong><small>{item.title}</small></i></span>
+                  <em><b style={{ left: `${((item.startWeek - 1) / 32) * 100}%`, width: `${((item.endWeek - item.startWeek + 1) / 32) * 100}%` }} /></em>
+                </div>
+              );
+            })}
+            <mark style={{ left: `calc(238px + (100% - 238px) * ${(selectedWeek - 0.5) / 32})` }} />
           </div>
         </DashboardCard>
         <DashboardCard id="workload" eyebrow="CAPACITY" title="项目工作量" value={`${weekState.plannedTeamPersonDays} 人日`} note={`全项目 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`} onOpen={setSelectedWidget}>
@@ -782,13 +915,15 @@ export function LabTimelinePage() {
         <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" value={nextGate && nextGate.week - selectedWeek <= 1 ? "1" : "0"} note={nextGate ? `下一阶段门 W${nextGate.week}` : "所有阶段门已完成"} onOpen={setSelectedWidget}>
           <div className="lab-v2-gates">{milestones.slice(1).map((item) => <i key={item.week} className={item.week <= selectedWeek ? "done" : item.week - selectedWeek <= 1 ? "pending" : ""}><b>W{item.week}</b><span>{item.label}</span></i>)}</div>
         </DashboardCard>
-        <DashboardCard id="network" eyebrow="CRITICAL PATH" title="时标网络图" className="wide" note={`${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
-          <div className="lab-v2-network">
-            {mainline.baselineWorkload.scheduleNetwork.activities.filter((item) => item.isCritical).slice(0, 8).map((item, index) => <span key={item.activityId} className={item.earliestFinish < selectedWeek ? "done" : item.earliestStart <= selectedWeek ? "active" : ""}><b>{item.activityId}</b>{index < 7 && <i>→</i>}</span>)}
-          </div>
+        <DashboardCard id="network" eyebrow="SCHEDULE NETWORK" title="时标网络图" className="full network-widget" note={`完整 35 项活动 · ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
+          <TimeScaledNetwork activities={mainline.schedule.activities} network={mainline.baselineWorkload.scheduleNetwork} workPackages={mainline.workload.workPackages} selectedWeek={selectedWeek} />
         </DashboardCard>
-        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" note={`${activeWorkPackages.length} 个工作包进行中`} onOpen={setSelectedWidget}>
-          <div className="lab-v2-wbs-list">{mainline.workload.workPackages.slice(0, 5).map((item) => <div key={item.id} className={item.endWeek < selectedWeek ? "done" : item.startWeek <= selectedWeek ? "active" : ""}><b>{item.id}</b><span>{item.title}</span></div>)}</div>
+        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" note={`完整 11 个一级工作包 · ${activeWorkPackages.length} 个进行中`} onOpen={setSelectedWidget}>
+          <div className="lab-v2-wbs-list">{mainline.workload.workPackages.map((item) => {
+            const completed = item.endWeek < selectedWeek;
+            const active = item.startWeek <= selectedWeek && item.endWeek >= selectedWeek;
+            return <div key={item.id} className={completed ? "done" : active ? "active" : "planned"}><b>{completed ? "✓" : active ? "●" : "○"}</b><span><strong>{item.id}</strong><small>{item.title}</small></span><i>W{item.startWeek}–W{item.endWeek}</i><em>{completed ? "已完成" : active ? "进行中" : "未开始"}</em></div>;
+          })}</div>
         </DashboardCard>
         <DashboardCard id="risk-status" eyebrow="RISK REGISTER" title="风险状态统计" value={`${openRiskCount} 开放`} note={`${completedRiskCount}/${riskState.length} 已关闭`} onOpen={setSelectedWidget}>
           <div className="lab-v2-risk-status"><i style={{ width: `${completedRiskCount / riskState.length * 100}%` }} /></div>

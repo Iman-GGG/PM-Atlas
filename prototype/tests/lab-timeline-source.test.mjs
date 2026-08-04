@@ -37,6 +37,11 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /干系人 RACI 矩阵/);
   assert.match(timeline, /风险影响概率矩阵/);
   assert.match(timeline, /时标网络图/);
+  assert.match(timeline, /完整 11 个一级工作包/);
+  assert.match(timeline, /完整 35 项活动/);
+  assert.match(timeline, /<TimeScaledNetwork/);
+  assert.doesNotMatch(timeline, /workPackages\.slice\(0, (5|6)\)/);
+  assert.doesNotMatch(timeline, /filter\(\(item\) => item\.isCritical\)\.slice/);
 });
 
 test("keeps evaluation answers out of the timeline client", async () => {
