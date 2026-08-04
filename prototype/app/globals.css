@@ -7611,15 +7611,11 @@ select {
 .lab-v2-head-status small { margin-top: 9px; color: #ccc; }
 
 .lab-v2-timeline-panel {
-  position: sticky;
-  z-index: 40;
-  top: 68px;
   margin-top: 14px;
   padding: 26px 36px 24px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 .lab-v2-timeline-panel > header { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
@@ -7648,6 +7644,20 @@ select {
 .lab-v2-range-fill { z-index: 1; background: var(--ink); pointer-events: none; }
 .lab-v2-range-wrap input { position: absolute; z-index: 6; top: 80px; left: -8px; width: calc(100% + 16px); height: 28px; margin: 0; opacity: 0; cursor: grab; }
 .lab-v2-range-wrap input:active { cursor: grabbing; }
+.lab-v2-current-week-label { position: absolute; z-index: 5; top: 55px; display: grid; justify-items: center; pointer-events: none; transform: translateX(-50%); }
+.lab-v2-current-week-label::after { width: 1px; height: 16px; background: var(--ink); content: ""; }
+.lab-v2-current-week-label b { padding: 4px 7px; color: var(--paper); background: var(--ink); border-radius: 5px; font-family: var(--font-geist-mono), monospace; font-size: 9px; }
+
+.lab-v2-compact-timeline { position: fixed; z-index: 45; top: 68px; left: 50%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; width: min(var(--max-page), calc(100% - 40px)); min-height: 48px; padding: 8px 18px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08); transform: translateX(-50%); }
+.lab-v2-compact-timeline > span { color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 9px; }
+.lab-v2-compact-timeline > div { position: relative; height: 28px; }
+.lab-v2-compact-timeline > div::before,
+.lab-v2-compact-timeline > div > i { position: absolute; top: 19px; left: 0; height: 3px; border-radius: 999px; content: ""; }
+.lab-v2-compact-timeline > div::before { right: 0; background: var(--pressed); }
+.lab-v2-compact-timeline > div > i { z-index: 1; background: var(--ink); pointer-events: none; }
+.lab-v2-compact-timeline input { position: absolute; z-index: 4; inset: 0; width: 100%; height: 28px; margin: 0; opacity: 0; cursor: grab; }
+.lab-v2-compact-timeline mark { position: absolute; z-index: 3; top: 14px; width: 12px; height: 12px; padding: 0; background: var(--ink); border-radius: 50%; pointer-events: none; transform: translateX(-50%); }
+.lab-v2-compact-timeline mark b { position: absolute; top: -14px; left: 50%; padding: 2px 5px; color: var(--paper); background: var(--ink); border-radius: 4px; font-family: var(--font-geist-mono), monospace; font-size: 8px; white-space: nowrap; transform: translateX(-50%); }
 
 .lab-v2-milestone {
   position: absolute;
@@ -8015,7 +8025,7 @@ select {
 }
 
 @media (max-width: 640px) {
-  .lab-v2-timeline-panel { top: 0; }
+  .lab-v2-compact-timeline { top: 0; width: calc(100% - 20px); }
   .lab-v2-project-head > div:first-child,
   .lab-v2-head-status,
   .lab-v2-timeline-panel,

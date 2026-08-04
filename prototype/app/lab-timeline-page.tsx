@@ -613,7 +613,9 @@ export function LabTimelinePage() {
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compactTimelineVisible, setCompactTimelineVisible] = useState(false);
   const idempotencyKeys = useRef(new Map<string, string>());
+  const timelinePanelRef = useRef<HTMLElement | null>(null);
 
   const loadMaterials = async (branchId: string, nextScenarioId: string) => {
     const list = await apiJson<MaterialList>(
@@ -675,6 +677,25 @@ export function LabTimelinePage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [manifest?.totalWeeks]);
+
+  useEffect(() => {
+    const updateCompactTimeline = () => {
+      const timelinePanel = timelinePanelRef.current;
+      if (!timelinePanel) {
+        setCompactTimelineVisible(false);
+        return;
+      }
+      const stickyTop = window.innerWidth <= 660 ? 0 : 68;
+      setCompactTimelineVisible(timelinePanel.getBoundingClientRect().top <= stickyTop);
+    };
+    updateCompactTimeline();
+    window.addEventListener("scroll", updateCompactTimeline, { passive: true });
+    window.addEventListener("resize", updateCompactTimeline);
+    return () => {
+      window.removeEventListener("scroll", updateCompactTimeline);
+      window.removeEventListener("resize", updateCompactTimeline);
+    };
+  }, [mainline]);
 
   const takeover = async (point: TakeoverPoint) => {
     setSelectedWeek(point.week);
@@ -745,6 +766,8 @@ export function LabTimelinePage() {
   const activeWorkPackages = useMemo(() => mainline?.workload.workPackages.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
   const activeActivities = useMemo(() => mainline?.schedule.activities.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
   const currentTakeoverPoint = manifest?.takeoverPoints.find((point) => point.week === selectedWeek) ?? null;
+  const currentWeekHasLabel = milestones.some((milestone) => milestone.week === selectedWeek)
+    || manifest?.takeoverPoints.some((point) => point.week === selectedWeek);
 
   const stakeholderState = useMemo(() => {
     if (!mainline) return [];
@@ -852,7 +875,7 @@ export function LabTimelinePage() {
         </div>
       </section>
 
-      <section className="lab-v2-timeline-panel" aria-label="项目主线进度条">
+      <section ref={timelinePanelRef} className="lab-v2-timeline-panel" aria-label="项目主线进度条">
         <header>
           <div><span>MAINLINE / 最短成功路径</span><strong>拖动进度条，观察项目状态与文件版本同步变化</strong></div>
           <div className="lab-v2-playback-status"><i />主线回放 · ← → 切换周</div>
@@ -889,6 +912,11 @@ export function LabTimelinePage() {
               <span>接手点</span><b>W{point.week}</b>
             </button>
           ))}
+          {!currentWeekHasLabel && (
+            <div className="lab-v2-current-week-label" style={{ left: `${((selectedWeek - 1) / 31) * 100}%` }}>
+              <b>W{selectedWeek}</b>
+            </div>
+          )}
         </div>
         <div className="lab-v2-timeline-meta">
           <span>W01</span>
@@ -904,6 +932,28 @@ export function LabTimelinePage() {
           </div>
         )}
       </section>
+
+      {compactTimelineVisible && (
+        <section className="lab-v2-compact-timeline" aria-label={`吸顶项目时间轴，当前第 ${selectedWeek} 周`}>
+          <span>W01</span>
+          <div>
+            <i style={{ width: `${((selectedWeek - 1) / 31) * 100}%` }} />
+            <input
+              type="range"
+              min="1"
+              max="32"
+              step="1"
+              value={selectedWeek}
+              onChange={(event) => setSelectedWeek(Number(event.target.value))}
+              aria-label="吸顶项目周次"
+            />
+            <mark style={{ left: `${((selectedWeek - 1) / 31) * 100}%` }}>
+              {selectedWeek !== 1 && selectedWeek !== 32 ? <b>W{selectedWeek}</b> : null}
+            </mark>
+          </div>
+          <span>W32</span>
+        </section>
+      )}
 
       {error && <div className="lab-v2-error" role="alert"><strong>暂时无法继续</strong><span>{error}</span></div>}
 

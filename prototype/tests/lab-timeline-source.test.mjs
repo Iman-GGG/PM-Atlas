@@ -48,7 +48,10 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /项二级子任务/);
   assert.match(timeline, /window\.addEventListener\("keydown", onKeyDown\)/);
   assert.match(timeline, /event\.key === "ArrowLeft" \? -1 : 1/);
-  assert.match(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
+  assert.match(timeline, /compactTimelineVisible &&/);
+  assert.match(timeline, /!currentWeekHasLabel/);
+  assert.match(styles, /\.lab-v2-compact-timeline[^{]*\{[^}]*position: fixed/);
+  assert.doesNotMatch(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
   assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
