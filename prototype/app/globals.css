@@ -7832,35 +7832,23 @@ select {
 .lab-v2-time-network .network-activities .network-float { text-anchor: end; font-size: 7px; font-weight: 600; }
 .lab-v2-time-network .network-now-line { stroke: var(--ink); stroke-dasharray: 4 3; stroke-width: 2; pointer-events: none; }
 
-.lab-v2-wbs-tree { margin: 20px 0 8px; }
-.lab-v2-wbs-root { position: relative; display: grid; width: min(360px, 100%); min-height: 74px; margin: 0 auto 34px; padding: 13px 18px; color: var(--paper); background: var(--ink); text-align: center; }
-.lab-v2-wbs-root::after { position: absolute; top: 100%; left: 50%; width: 1px; height: 24px; background: var(--ink); content: ""; }
-.lab-v2-wbs-root span { color: #aaa; font-family: var(--font-geist-mono), monospace; font-size: 8px; letter-spacing: .12em; }
-.lab-v2-wbs-root strong { font-size: 15px; }
-.lab-v2-wbs-root small { color: #bbb; font-size: 9px; }
-.lab-v2-wbs-branches { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 12px; padding-top: 14px; }
-.lab-v2-wbs-branches::before { position: absolute; top: 0; right: 16.66%; left: 16.66%; height: 1px; background: var(--ink); content: ""; }
-.lab-v2-wbs-branches > article { position: relative; min-width: 0; color: var(--muted); }
-.lab-v2-wbs-branches > article::before { position: absolute; bottom: 100%; left: 50%; width: 1px; height: 14px; background: var(--ink); content: ""; }
-.lab-v2-wbs-branches article > header { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 66px; padding: 9px 10px; background: var(--soft); border: 1px solid var(--soft-strong); }
-.lab-v2-wbs-branches article.active > header { color: var(--ink); background: var(--paper); border: 2px solid var(--ink); }
-.lab-v2-wbs-branches article.done > header { color: var(--paper); background: #686868; border-color: #686868; }
-.lab-v2-wbs-branches header > b,
-.lab-v2-wbs-branches section > b { font-family: var(--font-geist-mono), monospace; font-size: 11px; }
-.lab-v2-wbs-branches header > span,
-.lab-v2-wbs-branches section > span { display: grid; min-width: 0; }
-.lab-v2-wbs-branches header strong,
-.lab-v2-wbs-branches section strong { font-family: var(--font-geist-mono), monospace; font-size: 8px; }
-.lab-v2-wbs-branches header small { font-size: 9px; line-height: 1.35; }
-.lab-v2-wbs-branches header > i,
-.lab-v2-wbs-branches section > i { font-size: 7px; font-style: normal; white-space: nowrap; }
-.lab-v2-wbs-branches article > div { position: relative; display: grid; gap: 5px; margin: 12px 0 0 10px; padding-left: 18px; }
-.lab-v2-wbs-branches article > div::before { position: absolute; top: -12px; bottom: 18px; left: 0; width: 1px; background: var(--line); content: ""; }
-.lab-v2-wbs-branches section { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 43px; padding: 7px 8px; color: var(--muted); background: var(--paper); border: 1px solid var(--line); }
-.lab-v2-wbs-branches section::before { position: absolute; top: 50%; right: 100%; width: 18px; height: 1px; background: var(--line); content: ""; }
-.lab-v2-wbs-branches section.active { color: var(--ink); border: 2px solid var(--ink); }
-.lab-v2-wbs-branches section.done { color: var(--paper); background: #8a8a8a; border-color: #8a8a8a; }
-.lab-v2-wbs-branches section small { font-size: 8px; line-height: 1.3; }
+.lab-v2-wbs-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 20px 0 8px; }
+.lab-v2-wbs-cards > article { min-width: 0; color: var(--muted); background: var(--paper); border: 1px solid var(--line); }
+.lab-v2-wbs-cards article > header { display: grid; min-height: 76px; padding: 12px 13px 10px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.lab-v2-wbs-cards article.active { color: var(--ink); border: 2px solid var(--ink); }
+.lab-v2-wbs-cards article.done > header { color: var(--paper); background: #686868; }
+.lab-v2-wbs-cards header > span { display: grid; gap: 3px; }
+.lab-v2-wbs-cards header strong { font-family: var(--font-geist-mono), monospace; font-size: 9px; }
+.lab-v2-wbs-cards header small { font-size: 11px; font-weight: 750; line-height: 1.35; }
+.lab-v2-wbs-cards header > i { align-self: end; margin-top: 6px; font-size: 8px; font-style: normal; }
+.lab-v2-wbs-cards ol { display: grid; margin: 0; padding: 6px 12px 9px; list-style: none; }
+.lab-v2-wbs-cards li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 7px; align-items: start; padding: 7px 0; color: var(--muted); border-bottom: 1px solid var(--soft-strong); }
+.lab-v2-wbs-cards li:last-child { border-bottom: 0; }
+.lab-v2-wbs-cards li.active { color: var(--ink); font-weight: 800; }
+.lab-v2-wbs-cards li.done { color: #666; }
+.lab-v2-wbs-cards li > b { font-family: var(--font-geist-mono), monospace; font-size: 8px; }
+.lab-v2-wbs-cards li > span { font-size: 9px; line-height: 1.35; }
+.lab-v2-wbs-cards li > i { font-size: 7px; font-style: normal; white-space: nowrap; }
 
 .lab-v2-management { margin-top: 42px; padding: 32px; color: var(--paper); background: var(--ink); border-radius: var(--radius-card); }
 .lab-v2-management > header { margin: 0 0 22px; }
@@ -8016,8 +8004,7 @@ select {
   .lab-v2-material-layout { grid-template-columns: 1fr; }
   .lab-v2-material-layout > aside { border-right: 0; border-bottom: 1px solid var(--line); }
   .lab-v2-document-layout { grid-template-columns: 310px 1fr; }
-  .lab-v2-wbs-branches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lab-v2-wbs-branches::before { right: 25%; left: 25%; }
+  .lab-v2-wbs-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -8040,8 +8027,7 @@ select {
   .lab-v2-management > div { grid-template-columns: 1fr; }
   .lab-v2-gantt { --gantt-label-width: 116px; }
   .lab-v2-gantt-axis > span { padding-left: 0; }
-  .lab-v2-wbs-branches { grid-template-columns: 1fr; }
-  .lab-v2-wbs-branches::before { right: 50%; left: 50%; }
+  .lab-v2-wbs-cards { grid-template-columns: 1fr; }
   .lab-v2-action-cards > div { grid-template-columns: 1fr; }
   .lab-v2-document-drawer { width: 100%; padding: 18px; }
   .lab-v2-document-layout { grid-template-columns: 1fr; overflow-y: auto; }

@@ -403,19 +403,13 @@ type NetworkLayoutActivity = ScheduleActivity & NetworkActivity & {
   rowY: number;
 };
 
-function WbsTree({ workPackages, activities, selectedWeek }: {
+function WbsCards({ workPackages, activities, selectedWeek }: {
   workPackages: WorkPackage[];
   activities: ScheduleActivity[];
   selectedWeek: number;
 }) {
   return (
-    <div className="lab-v2-wbs-tree">
-      <div className="lab-v2-wbs-root">
-        <span>PROJECT</span>
-        <strong>项目交付 WBS</strong>
-        <small>11 个一级工作包 / 35 项计划活动</small>
-      </div>
-      <div className="lab-v2-wbs-branches">
+    <div className="lab-v2-wbs-cards">
         {workPackages.map((workPackage) => {
           const packageActivities = activities.filter((activity) => activity.parentId === workPackage.id);
           const packageCompleted = workPackage.endWeek < selectedWeek;
@@ -424,27 +418,25 @@ function WbsTree({ workPackages, activities, selectedWeek }: {
           return (
             <article key={workPackage.id} className={packageState}>
               <header>
-                <b>{packageCompleted ? "✓" : packageActive ? "●" : "○"}</b>
                 <span><strong>{workPackage.id}</strong><small>{workPackage.title}</small></span>
-                <i>W{workPackage.startWeek}–W{workPackage.endWeek}</i>
+                <i>{packageCompleted ? "✓ 已完成" : packageActive ? "● 进行中" : "○ 未开始"} · W{workPackage.startWeek}–W{workPackage.endWeek}</i>
               </header>
-              <div>
-                {packageActivities.map((activity) => {
+              <ol>
+                {packageActivities.map((activity, activityIndex) => {
                   const completed = activity.endWeek < selectedWeek;
                   const active = activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek;
                   return (
-                    <section key={activity.id} className={completed ? "done" : active ? "active" : "planned"}>
-                      <b>{completed ? "✓" : active ? "●" : "○"}</b>
-                      <span><strong>{activity.id}</strong><small>{activity.title}</small></span>
+                    <li key={activity.id} className={completed ? "done" : active ? "active" : "planned"}>
+                      <b>{String(activityIndex + 1).padStart(2, "0")}</b>
+                      <span>{activity.title}</span>
                       <i>W{activity.startWeek}–W{activity.endWeek}</i>
-                    </section>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             </article>
           );
         })}
-      </div>
     </div>
   );
 }
@@ -964,8 +956,8 @@ export function LabTimelinePage() {
         <DashboardCard id="network" eyebrow="SCHEDULE NETWORK" title="时标网络图" className="full network-widget" note={`完整 35 项活动 · ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length} 项关键活动 · W32 完工`} onOpen={setSelectedWidget}>
           <TimeScaledNetwork activities={mainline.schedule.activities} network={mainline.baselineWorkload.scheduleNetwork} workPackages={mainline.workload.workPackages} selectedWeek={selectedWeek} />
         </DashboardCard>
-        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" note={`完整树状分解 · 11 个一级工作包 · ${mainline.schedule.activities.length} 项计划活动`} onOpen={setSelectedWidget}>
-          <WbsTree workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} selectedWeek={selectedWeek} />
+        <DashboardCard id="wbs" eyebrow="DELIVERABLES" title="WBS" className="full wbs-widget" note={`11 个一级工作包 · 纵向展开 ${mainline.schedule.activities.length} 项二级子任务`} onOpen={setSelectedWidget}>
+          <WbsCards workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} selectedWeek={selectedWeek} />
         </DashboardCard>
         <DashboardCard id="risk-status" eyebrow="RISK REGISTER" title="风险状态统计" value={`${openRiskCount} 开放`} note={`${completedRiskCount}/${riskState.length} 已关闭`} onOpen={setSelectedWidget}>
           <div className="lab-v2-risk-status"><i style={{ width: `${completedRiskCount / riskState.length * 100}%` }} /></div>

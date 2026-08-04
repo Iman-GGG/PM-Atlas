@@ -44,8 +44,8 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /完整 11 个一级工作包/);
   assert.match(timeline, /完整 35 项活动/);
   assert.match(timeline, /<TimeScaledNetwork/);
-  assert.match(timeline, /<WbsTree/);
-  assert.match(timeline, /35 项计划活动/);
+  assert.match(timeline, /<WbsCards/);
+  assert.match(timeline, /项二级子任务/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
   assert.match(styles, /\.lab-v2-time-network[^}]*width: 100%/);
   assert.doesNotMatch(styles, /\.lab-v2-network-scroll[^}]*overflow: auto/);
