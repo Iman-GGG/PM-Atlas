@@ -164,6 +164,7 @@ export type PrivateLabCasePackage = LabCasePackageIdentity & {
     schedulePlan: StateEffect;
     stakeholderPlan: StateEffect;
     documentPlan: StateEffect;
+    requirementPlan: StateEffect;
     riskPlan: StateEffect;
     qualityPlan: StateEffect;
     scenarioPlan: ScenarioPlan;
@@ -184,6 +185,7 @@ export type PublicLabCaseBaseline = LabCasePackageIdentity & {
     schedule: StateEffect;
     stakeholders: StateEffect;
     documents: StateEffect;
+    requirements: StateEffect;
     risks: StateEffect;
     quality: StateEffect;
     baselineWorkload: StateEffect;

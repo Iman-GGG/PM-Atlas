@@ -98,8 +98,35 @@ type RiskItem = {
   id: string;
   title: string;
   owner: string;
+  category: string;
+  impactDimensions: string[];
+  discoveredWeek: number;
+  assessmentWeek: number;
+  responseCompletedWeek: number;
+  triggeredWeek: number | null;
+  closedWeek: number;
+  responseActions: string[];
+  postTreatmentResult: string;
   inherent: { probability: number; impact: number };
   residual: { probability: number; impact: number };
+};
+
+type RequirementItem = {
+  id: string;
+  title: string;
+  category: string;
+  priority: "P0" | "P1" | "P2" | "P3";
+  discoveredWeek: number;
+  baselinedWeek?: number;
+  implementationCompletedWeek?: number;
+  verifiedWeek?: number;
+  targetRelease: string;
+  traceabilityStatus: "baselined" | "candidate_unplanned";
+  primaryWbsId?: string;
+  supportingWbsIds?: string[];
+  proposedPrimaryWbsId?: string;
+  proposedSupportingWbsIds?: string[];
+  acceptanceCriteria: string[];
 };
 
 type RiskEvent = {
@@ -142,6 +169,9 @@ type MainlineData = {
     documents: ProjectDocument[];
     mainlineEvents: DocumentEvent[];
     relations: DocumentRelation[];
+  };
+  requirements: {
+    requirements: RequirementItem[];
   };
   risks: {
     initialRisks: RiskItem[];
@@ -244,7 +274,7 @@ type ManagementArea = {
 
 const caseId = "car-control";
 const caseVersion = "v1";
-const mainlineSections = "workload,schedule,stakeholders,documents,risks,quality,baselineWorkload";
+const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
   { week: 8, label: "范围基线" },
@@ -378,6 +408,22 @@ function documentStatus(document: ProjectDocument, events: DocumentEvent[], week
   if (latestActions.some((action) => action.toLowerCase().includes("approved"))) return "已批准";
   if (latestActions.length > 0) return "已更新";
   return "已创建";
+}
+
+function riskSeverity(probability: number, impact: number): string {
+  const score = probability * impact;
+  if (score >= 17) return "极高";
+  if (score >= 10) return "高";
+  if (score >= 5) return "中";
+  return "低";
+}
+
+function requirementStatus(requirement: RequirementItem, week: number): string {
+  if (requirement.traceabilityStatus === "candidate_unplanned") return "候选";
+  if (requirement.verifiedWeek !== undefined && requirement.verifiedWeek <= week) return "已验证";
+  if (requirement.implementationCompletedWeek !== undefined && requirement.implementationCompletedWeek <= week) return "开发完成";
+  if (requirement.baselinedWeek !== undefined && requirement.baselinedWeek <= week) return "已基线";
+  return "分析中";
 }
 
 function Sparkline({ values, target = 1 }: { values: number[]; target?: number }) {
@@ -895,7 +941,18 @@ export function LabTimelinePage() {
     for (const event of mainline.risks.mainlineLifecycleEvents.filter((item) => item.week <= selectedWeek)) {
       for (const riskId of event.riskIds) lifecycleById.set(riskId, event.toLifecycleState);
     }
-    return mainline.risks.initialRisks.map((risk) => ({ ...risk, lifecycle: lifecycleById.get(risk.id) ?? "identified" }));
+    return mainline.risks.initialRisks
+      .filter((risk) => risk.discoveredWeek <= selectedWeek)
+      .map((risk) => ({
+        ...risk,
+        lifecycle: lifecycleById.get(risk.id) ?? "identified",
+        currentAssessment: risk.responseCompletedWeek <= selectedWeek ? risk.residual : risk.inherent,
+      }));
+  }, [mainline, selectedWeek]);
+
+  const requirementState = useMemo(() => {
+    if (!mainline) return [];
+    return mainline.requirements.requirements.filter((requirement) => requirement.discoveredWeek <= selectedWeek);
   }, [mainline, selectedWeek]);
 
   const documentState = useMemo(() => {
@@ -933,13 +990,12 @@ export function LabTimelinePage() {
   const progressPercent = weekState.cumulativeEarnedValueCny / mainline.workload.budgetAtCompletionCny * 100;
   const completedRiskCount = riskState.filter((risk) => risk.lifecycle === "closed").length;
   const openRiskCount = riskState.length - completedRiskCount;
-  const qualityPassRate = interpolateSeries(mainline.quality.mainlineSeries.find((series) => series.metricId === "core_test_pass_rate"), selectedWeek);
   const blockerDefects = interpolateSeries(mainline.quality.mainlineSeries.find((series) => series.metricId === "blocker_defects"), selectedWeek);
-  const requirementTotal = 24;
-  const requirementBaselined = Math.min(requirementTotal, Math.round(requirementTotal * Math.min(selectedWeek / 8, 1)));
-  const developmentProgress = Math.max(0, Math.min(1, (selectedWeek - 8) / 20));
-  const requirementCompleted = Math.round(requirementTotal * developmentProgress);
-  const requirementVerified = Math.round(requirementCompleted * (typeof qualityPassRate === "number" ? qualityPassRate : 0));
+  const requirementTotal = requirementState.length;
+  const requirementBaselined = requirementState.filter((requirement) => requirement.baselinedWeek !== undefined && requirement.baselinedWeek <= selectedWeek).length;
+  const requirementCompleted = requirementState.filter((requirement) => requirement.implementationCompletedWeek !== undefined && requirement.implementationCompletedWeek <= selectedWeek).length;
+  const requirementVerified = requirementState.filter((requirement) => requirement.verifiedWeek !== undefined && requirement.verifiedWeek <= selectedWeek).length;
+  const requirementCandidates = requirementState.filter((requirement) => requirement.traceabilityStatus === "candidate_unplanned").length;
   const completedGates = milestones.filter((milestone) => milestone.week <= selectedWeek).length;
   const nextGate = milestones.find((milestone) => milestone.week > selectedWeek);
   const currentSprintNumber = selectedWeek < 9 ? 0 : Math.min(10, Math.floor((selectedWeek - 9) / 2) + 1);
@@ -962,13 +1018,13 @@ export function LabTimelinePage() {
     workload: [`全项目计划工作量 ${mainline.baselineWorkload.totalPlannedPersonDays} 人日`, `本周计划 ${weekState.plannedTeamPersonDays} 人日`, `当前投入峰值 ${Math.max(...visibleWeeks.map((item) => item.plannedTeamPersonDays))} 人日/周`],
     engagement: [`总体参与度 ${engagementPercent}%`, `领先参与 ${stakeholderState.filter((item) => item.current === "leading").length} 人`, `支持参与 ${stakeholderState.filter((item) => item.current === "supportive").length} 人`],
     raci: [`当前工作包 ${currentRaci.workPackageId}`, `A：${currentRaci.A.join("、")}`, `R：${currentRaci.R.join("、")}`],
-    "risk-matrix": [`开放风险 ${openRiskCount} 项`, `已关闭风险 ${completedRiskCount} 项`, `高影响开放风险 ${riskState.filter((risk) => risk.lifecycle !== "closed" && risk.residual.impact >= 4).length} 项`],
-    requirements: [`需求总数 ${requirementTotal}`, `已基线 ${requirementBaselined}`, `已完成 ${requirementCompleted}，已验证 ${requirementVerified}`, `阻断缺陷 ${typeof blockerDefects === "number" ? Math.round(blockerDefects) : 0} 个`],
+    "risk-matrix": [`本周累计发现 ${riskState.length} 项`, `开放风险 ${openRiskCount} 项，已关闭 ${completedRiskCount} 项`, `高影响开放风险 ${riskState.filter((risk) => risk.lifecycle !== "closed" && risk.currentAssessment.impact >= 4).length} 项`],
+    requirements: [`当前已发现需求 ${requirementTotal} 项`, `已基线 ${requirementBaselined}，候选 ${requirementCandidates}`, `开发完成 ${requirementCompleted}，已验证 ${requirementVerified}`, `阻断缺陷 ${typeof blockerDefects === "number" ? Math.round(blockerDefects) : 0} 个`],
     burndown: [currentSprintNumber ? `当前 S${currentSprintNumber}` : "尚未进入迭代", `迭代剩余 ${sprintRemaining} 点`, `当前周 W${selectedWeek}`],
     ccb: [`已完成阶段门 ${completedGates} 个`, `下一阶段门 ${nextGate ? `W${nextGate.week}` : "无"}`, `当前待办 ${nextGate && nextGate.week - selectedWeek <= 1 ? 1 : 0} 项`],
     network: [`当前关键活动 ${criticalNow.length} 项`, `关键活动总数 ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length}`, `主线预测完工 W${mainline.baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek}`],
     wbs: [`工作包总数 ${mainline.workload.workPackages.length}`, `进行中 ${activeWorkPackages.length}`, `已完成 ${mainline.workload.workPackages.filter((item) => item.endWeek < selectedWeek).length}`],
-    "risk-status": [`识别风险 ${riskState.length} 项`, `监控中 ${riskState.filter((risk) => risk.lifecycle === "monitoring").length} 项`, `已关闭 ${completedRiskCount} 项`],
+    "risk-status": [`累计发现风险 ${riskState.length} 项`, `监控中 ${riskState.filter((risk) => risk.lifecycle === "monitoring").length} 项`, `已关闭 ${completedRiskCount} 项`, `本周新增 ${riskState.filter((risk) => risk.discoveredWeek === selectedWeek).length} 项`],
   };
 
   return (
@@ -1131,13 +1187,13 @@ export function LabTimelinePage() {
             {Array.from({ length: 25 }, (_, cellIndex) => {
               const probability = 5 - Math.floor(cellIndex / 5);
               const impact = cellIndex % 5 + 1;
-              const count = riskState.filter((risk) => risk.lifecycle !== "closed" && risk.residual.probability === probability && risk.residual.impact === impact).length;
+              const count = riskState.filter((risk) => risk.lifecycle !== "closed" && risk.currentAssessment.probability === probability && risk.currentAssessment.impact === impact).length;
               return <i key={`${probability}-${impact}`} className={probability * impact >= 12 ? "high" : probability * impact >= 6 ? "medium" : "low"}>{count || ""}</i>;
             })}
           </div>
         </DashboardCard>
-        <DashboardCard id="requirements" eyebrow="SCOPE CONTROL" title="需求状态统计" value={`${requirementVerified}/${requirementTotal}`} note={`${requirementBaselined} 条已进入基线`} onOpen={setSelectedWidget}>
-          <div className="lab-v2-stacked"><i style={{ width: `${requirementVerified / requirementTotal * 100}%` }} /><b style={{ width: `${Math.max(0, requirementCompleted - requirementVerified) / requirementTotal * 100}%` }} /><em /></div>
+        <DashboardCard id="requirements" eyebrow="SCOPE CONTROL" title="需求状态统计" value={`${requirementVerified}/${requirementTotal}`} note={`${requirementBaselined} 条已进入基线${requirementCandidates ? ` · ${requirementCandidates} 条候选` : ""}`} onOpen={setSelectedWidget}>
+          <div className="lab-v2-stacked"><i style={{ width: `${requirementTotal ? requirementVerified / requirementTotal * 100 : 0}%` }} /><b style={{ width: `${requirementTotal ? Math.max(0, requirementCompleted - requirementVerified) / requirementTotal * 100 : 0}%` }} /><em /></div>
           <div className="lab-v2-legend"><span>已验证 {requirementVerified}</span><span>开发完成 {requirementCompleted}</span><span>总计 {requirementTotal}</span></div>
         </DashboardCard>
 
@@ -1154,7 +1210,7 @@ export function LabTimelinePage() {
           <WbsCards workPackages={mainline.workload.workPackages} activities={mainline.schedule.activities} />
         </DashboardCard>
         <DashboardCard id="risk-status" eyebrow="RISK REGISTER" title="风险状态统计" value={`${openRiskCount} 开放`} note={`${completedRiskCount}/${riskState.length} 已关闭`} onOpen={setSelectedWidget}>
-          <div className="lab-v2-risk-status"><i style={{ width: `${completedRiskCount / riskState.length * 100}%` }} /></div>
+          <div className="lab-v2-risk-status"><i style={{ width: `${riskState.length ? completedRiskCount / riskState.length * 100 : 0}%` }} /></div>
           <div className="lab-v2-legend"><span>已关闭 {completedRiskCount}</span><span>监控中 {openRiskCount}</span></div>
         </DashboardCard>
       </section>
@@ -1244,6 +1300,28 @@ export function LabTimelinePage() {
                     <div className="lab-v2-document-title"><span>{selectedDocument.id} / W{selectedWeek} 主线版本</span><h3>{selectedDocument.title}</h3><div><b>{selectedDocument.status}</b><i>v{selectedDocument.version}</i><small>创建于 W{selectedDocument.createdWeek}</small></div></div>
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
+                      {selectedDocument.id === "D22" && (
+                        <section className="lab-v2-document-data">
+                          <span>需求跟踪矩阵 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table>
+                              <thead><tr><th>编号</th><th>需求</th><th>优先级</th><th>状态</th><th>主要WBS</th><th>支持WBS</th><th>目标版本</th></tr></thead>
+                              <tbody>{requirementState.map((requirement) => <tr key={requirement.id}><td>{requirement.id}</td><td>{requirement.title}</td><td>{requirement.priority}</td><td>{requirementStatus(requirement, selectedWeek)}</td><td>{requirement.primaryWbsId ?? requirement.proposedPrimaryWbsId}</td><td>{(requirement.supportingWbsIds ?? requirement.proposedSupportingWbsIds ?? []).join("、")}</td><td>{requirement.targetRelease}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D26" && (
+                        <section className="lab-v2-document-data">
+                          <span>风险登记册 · W{selectedWeek}</span>
+                          <div className="lab-v2-data-table-wrap">
+                            <table>
+                              <thead><tr><th>编号</th><th>风险</th><th>等级</th><th>影响范围</th><th>发现</th><th>执行措施</th><th>负责人</th><th>关闭</th><th>处理后结果</th></tr></thead>
+                              <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.impactDimensions.join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
                       <section className="lab-v2-document-relations"><span>关联文件</span><div>{mainline.documents.relations.filter((relation) => relation.effectiveWeek <= selectedWeek && (relation.fromDocumentId === selectedDocument.id || relation.toDocumentId === selectedDocument.id)).map((relation) => { const relatedId = relation.fromDocumentId === selectedDocument.id ? relation.toDocumentId : relation.fromDocumentId; const related = documentState.find((document) => document.id === relatedId); return <button key={relation.id} onClick={() => setSelectedDocumentId(relatedId)}><b>{relatedId}</b><span>{related?.title}</span><small>{relation.reason}</small></button>; })}</div></section>
                       <section className="lab-v2-document-history"><span>版本历史</span><ol><li><b>v1</b><div><strong>W{selectedDocument.createdWeek} · 创建</strong><p>形成首个可引用版本。</p></div></li>{selectedDocument.history.map((historyEvent, historyIndex) => <li key={historyEvent.id}><b>v{historyIndex + 2}</b><div><strong>W{historyEvent.week} · {documentActions(historyEvent, selectedDocument.id).join(" / ")}</strong><p>{historyEvent.reason}</p></div></li>)}</ol></section>
                     </>}

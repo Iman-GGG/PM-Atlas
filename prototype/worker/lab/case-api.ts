@@ -23,6 +23,7 @@ const sectionNames = [
   "schedule",
   "stakeholders",
   "documents",
+  "requirements",
   "risks",
   "quality",
   "baselineWorkload",
@@ -79,6 +80,13 @@ function projectSection(section: SectionName, week: number | null): StateEffect 
       documents: (source.documents as StateEffect[]).filter((item) => Number(item.createdWeek) <= week),
       mainlineEvents: (source.mainlineEvents as StateEffect[]).filter((item) => Number(item.week) <= week),
       relations: (source.relations as StateEffect[]).filter((item) => Number(item.effectiveWeek) <= week),
+    };
+  }
+  if (section === "requirements") {
+    return {
+      ...source,
+      requirements: (source.requirements as StateEffect[]).filter((item) => Number(item.discoveredWeek) <= week),
+      mainlineEvents: (source.mainlineEvents as StateEffect[]).filter((item) => Number(item.week) <= week),
     };
   }
   if (section === "risks") {

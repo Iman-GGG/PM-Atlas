@@ -37,16 +37,17 @@ function visit(value, visitor, pathParts = []) {
 }
 
 export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
-  const [workload, schedule, stakeholders, documents, risks, scenarios] = await Promise.all([
+  const [workload, schedule, stakeholders, documents, requirements, risks, scenarios] = await Promise.all([
     readJson(caseDirectory, "workload-plan.json"),
     readJson(caseDirectory, "schedule-plan.json"),
     readJson(caseDirectory, "stakeholder-plan.json"),
     readJson(caseDirectory, "document-plan.json"),
+    readJson(caseDirectory, "requirement-plan.json"),
     readJson(caseDirectory, "risk-plan.json"),
     readJson(caseDirectory, "scenario-plan.json"),
   ]);
 
-  for (const plan of [workload, schedule, stakeholders, documents, risks, scenarios]) {
+  for (const plan of [workload, schedule, stakeholders, documents, requirements, risks, scenarios]) {
     assert(plan.caseId === workload.caseId, `Case id mismatch in ${plan.caseId ?? "unknown plan"}`);
     assert(plan.caseVersion === workload.caseVersion, `Case version mismatch in ${plan.caseVersion ?? "unknown plan"}`);
   }
@@ -54,6 +55,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const documentById = uniqueMap(documents.documents, "document");
   const stakeholderById = uniqueMap(stakeholders.stakeholders, "stakeholder");
   const activityById = uniqueMap(schedule.activities, "activity");
+  const workPackageById = uniqueMap(workload.workPackages, "work package");
+  const deliverableById = new Map([...workPackageById, ...activityById]);
+  const requirementById = uniqueMap(requirements.requirements, "requirement");
   const riskById = uniqueMap(risks.initialRisks, "risk");
   const scenarioById = uniqueMap(scenarios.scenarios, "scenario");
   const lifecycleStates = new Set(risks.lifecycle.states);
@@ -62,6 +66,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const columnIndex = new Map(allowedColumns.map((column, index) => [column, index]));
 
   assert(documentById.size === 32, `Expected 32 documents; found ${documentById.size}`);
+  assert(requirementById.size === 30, `Expected 30 requirements; found ${requirementById.size}`);
+  assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "baselined").length === 24, "Expected 24 baselined requirements");
+  assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "candidate_unplanned").length === 6, "Expected 6 candidate requirements");
   assert(scenarioById.size === 3, `Expected 3 scenarios; found ${scenarioById.size}`);
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.primaryClues === 3, "Primary clue policy must require 3 items");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.corroboratingClues === 1, "Corroborating clue policy must require 1 item");
@@ -69,10 +76,48 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(scenarios.decisionReasoningPolicy.fields.length === 3, "Decision reasoning must contain 3 fields");
   assert(scenarios.aiReviewPolicy.capabilityDimensions.length === 5, "AI review must contain 5 capability dimensions");
 
+  for (const requirement of requirementById.values()) {
+    assert(["P0", "P1", "P2", "P3"].includes(requirement.priority), `${requirement.id} has invalid priority`);
+    assert(Number.isInteger(requirement.discoveredWeek) && requirement.discoveredWeek >= 1 && requirement.discoveredWeek <= workload.totalWeeks, `${requirement.id} has invalid discovery week`);
+    assert(stakeholderById.has(requirement.sourceStakeholderId), `${requirement.id} references unknown source stakeholder ${requirement.sourceStakeholderId}`);
+    assert(requirement.acceptanceCriteria?.length >= 1, `${requirement.id} has no acceptance criteria`);
+    if (requirement.traceabilityStatus === "baselined") {
+      assert(requirement.baselinedWeek >= requirement.discoveredWeek, `${requirement.id} is baselined before discovery`);
+      assert(deliverableById.has(requirement.primaryWbsId), `${requirement.id} references unknown primary WBS ${requirement.primaryWbsId}`);
+      for (const wbsId of requirement.supportingWbsIds ?? []) assert(deliverableById.has(wbsId), `${requirement.id} references unknown supporting WBS ${wbsId}`);
+      assert(requirement.implementationCompletedWeek >= requirement.baselinedWeek, `${requirement.id} completes before baseline`);
+      assert(requirement.verifiedWeek >= requirement.implementationCompletedWeek, `${requirement.id} verifies before implementation`);
+    } else {
+      assert(!requirement.baselinedWeek, `${requirement.id} candidate must not have a baseline week`);
+      assert(deliverableById.has(requirement.proposedPrimaryWbsId), `${requirement.id} references unknown proposed primary WBS ${requirement.proposedPrimaryWbsId}`);
+      for (const wbsId of requirement.proposedSupportingWbsIds ?? []) assert(deliverableById.has(wbsId), `${requirement.id} references unknown proposed supporting WBS ${wbsId}`);
+    }
+  }
+
+  for (const event of requirements.mainlineEvents) {
+    assert(Number.isInteger(event.week) && event.week >= 1 && event.week <= workload.totalWeeks, `${event.id} has invalid week`);
+    for (const requirementId of event.requirementIds) assert(requirementById.has(requirementId), `${event.id} references unknown requirement ${requirementId}`);
+    for (const documentId of event.documentRevisionIds) assert(documentById.has(documentId), `${event.id} references unknown document ${documentId}`);
+  }
+
   for (const event of risks.mainlineLifecycleEvents) {
     assert(lifecycleStates.has(event.toLifecycleState), `Invalid lifecycle state ${event.toLifecycleState}`);
     if (event.controlStatus) assert(controlStates.has(event.controlStatus), `Invalid control status ${event.controlStatus}`);
     for (const riskId of event.riskIds) assert(riskById.has(riskId), `Unknown risk ${riskId} in mainline event`);
+  }
+  for (const risk of riskById.values()) {
+    assert(Number.isInteger(risk.discoveredWeek) && risk.discoveredWeek >= 1 && risk.discoveredWeek <= workload.totalWeeks, `${risk.id} has invalid discovery week`);
+    assert(risk.assessmentWeek === risk.discoveredWeek, `${risk.id} must be assessed in its discovery week`);
+    assert(risk.responseCompletedWeek >= risk.assessmentWeek, `${risk.id} response completes before assessment`);
+    assert(risk.closedWeek >= risk.responseCompletedWeek, `${risk.id} closes before response completion`);
+    assert(stakeholderById.has(risk.ownerStakeholderId), `${risk.id} references unknown owner stakeholder ${risk.ownerStakeholderId}`);
+    assert(risk.responseActions?.length >= 1, `${risk.id} has no response actions`);
+    for (const wbsId of risk.linkedWbsIds ?? []) assert(deliverableById.has(wbsId), `${risk.id} references unknown WBS ${wbsId}`);
+    for (const requirementId of risk.linkedRequirementIds ?? []) assert(requirementById.has(requirementId), `${risk.id} references unknown requirement ${requirementId}`);
+    for (const reopening of risk.reopenHistory ?? []) {
+      assert(scenarioById.has(reopening.scenarioId), `${risk.id} reopening references unknown scenario ${reopening.scenarioId}`);
+      assert(reopening.week > reopening.fromClosedWeek, `${risk.id} reopening must occur after closure`);
+    }
   }
   for (const override of risks.scenarioOverrides) {
     assert(scenarioById.has(override.scenarioId), `Unknown scenario ${override.scenarioId} in risk override`);
@@ -188,6 +233,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
     documents: documentById.size,
     stakeholders: stakeholderById.size,
     activities: activityById.size,
+    requirements: requirementById.size,
     risks: riskById.size,
     scenarios: scenarioById.size,
   };

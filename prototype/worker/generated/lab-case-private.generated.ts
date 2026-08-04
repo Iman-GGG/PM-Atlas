@@ -6,7 +6,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
   "schemaVersion": 1,
   "caseId": "car-control",
   "caseVersion": "v1",
-  "contentHash": "60e75a09b7043b00d18401ab272fe98536348adef8769ab38130a9a99af0466d",
+  "contentHash": "f294d83f41971824406568664b20f4f3822a77da32427e71ccff41f9a8806e35",
   "sourceFiles": {
     "workloadPlan": {
       "schemaVersion": 1,
@@ -3720,6 +3720,768 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
         }
       ]
     },
+    "requirementPlan": {
+      "schemaVersion": 1,
+      "caseId": "car-control",
+      "caseVersion": "v1",
+      "documentIds": {
+        "requirements": "D21",
+        "traceabilityMatrix": "D22"
+      },
+      "priorityPolicy": [
+        {
+          "id": "P0",
+          "label": "上线硬门槛",
+          "rule": "缺失或未验证时不得发布相关能力"
+        },
+        {
+          "id": "P1",
+          "label": "基线重要需求",
+          "rule": "应在目标版本交付，延期必须经过审批"
+        },
+        {
+          "id": "P2",
+          "label": "增强需求",
+          "rule": "可以顺延到后续版本，不影响V1.0成功判定"
+        },
+        {
+          "id": "P3",
+          "label": "体验或探索需求",
+          "rule": "作为候选项管理，不进入当前版本承诺"
+        }
+      ],
+      "traceabilityPolicy": {
+        "relationship": "many_to_many",
+        "primaryWbsRule": "每项已基线需求指定一个主要交付工作包",
+        "supportingWbsRule": "设计、安全、测试和发布工作包作为支持关系保留",
+        "candidateRule": "候选需求仅记录建议WBS，CCB批准前不得计入当前WBS基线"
+      },
+      "requirements": [
+        {
+          "id": "REQ-001",
+          "title": "用户使用平台账号安全登录车控应用",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "product_ba",
+          "discoveredWeek": 1,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 10,
+          "verifiedWeek": 14,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-4.1",
+          "supportingWbsIds": [
+            "WBS-3.3",
+            "WBS-4.3",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "合法账号可以登录，非法凭证被拒绝",
+            "登录与失败事件保留审计记录"
+          ]
+        },
+        {
+          "id": "REQ-002",
+          "title": "登录会话、授权范围和凭证失效得到统一控制",
+          "category": "security",
+          "priority": "P0",
+          "sourceStakeholderId": "devsecops",
+          "discoveredWeek": 3,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 14,
+          "verifiedWeek": 24,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-4.3",
+          "supportingWbsIds": [
+            "WBS-3.3",
+            "WBS-6.1",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "会话超时、退出和撤销后凭证立即失效",
+            "用户只能访问已授权车辆和能力"
+          ]
+        },
+        {
+          "id": "REQ-003",
+          "title": "车主可以完成本人车辆绑定",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 1,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 13,
+          "verifiedWeek": 18,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-4.2",
+          "supportingWbsIds": [
+            "WBS-4.1",
+            "WBS-4.3",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "通过车辆身份校验后完成绑定",
+            "重复绑定和无权绑定得到明确提示"
+          ]
+        },
+        {
+          "id": "REQ-004",
+          "title": "车主可以安全解绑车辆并处理换车异常",
+          "category": "functional",
+          "priority": "P1",
+          "sourceStakeholderId": "operations_support",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 13,
+          "verifiedWeek": 18,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-4.2",
+          "supportingWbsIds": [
+            "WBS-4.3",
+            "WBS-7.2",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "解绑前进行身份确认",
+            "解绑后旧凭证和车辆访问权限失效"
+          ]
+        },
+        {
+          "id": "REQ-005",
+          "title": "首页集中展示车辆核心状态摘要",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 1,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 22,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-5.2",
+          "supportingWbsIds": [
+            "WBS-5.1",
+            "WBS-5.3",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "同一页面展示锁车、电量、续航和车辆在线状态",
+            "异常或过期数据具有明确标识"
+          ]
+        },
+        {
+          "id": "REQ-006",
+          "title": "查看门锁、车窗、电量、续航和充电状态",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "product_ba",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 22,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-5.1",
+          "supportingWbsIds": [
+            "WBS-3.2",
+            "WBS-5.2",
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "字段映射与车端定义一致",
+            "缺失字段不会被展示为正常值"
+          ]
+        },
+        {
+          "id": "REQ-007",
+          "title": "在隐私授权范围内查看车辆位置",
+          "category": "security",
+          "priority": "P0",
+          "sourceStakeholderId": "legal_privacy",
+          "discoveredWeek": 3,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-5.2",
+          "supportingWbsIds": [
+            "WBS-3.3",
+            "WBS-4.1",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "仅已授权车主可查看位置",
+            "位置数据按最小必要原则采集和展示"
+          ]
+        },
+        {
+          "id": "REQ-008",
+          "title": "用户可以手动刷新并识别缓存数据时间",
+          "category": "functional",
+          "priority": "P1",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 22,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-5.2",
+          "supportingWbsIds": [
+            "WBS-5.1",
+            "WBS-5.3"
+          ],
+          "acceptanceCriteria": [
+            "刷新操作返回成功、失败或超时状态",
+            "页面显示数据最后更新时间"
+          ]
+        },
+        {
+          "id": "REQ-009",
+          "title": "车辆状态查询满足准确率与性能目标",
+          "category": "quality",
+          "priority": "P0",
+          "sourceStakeholderId": "qa",
+          "discoveredWeek": 4,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 18,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-5.3",
+          "supportingWbsIds": [
+            "WBS-5.1",
+            "WBS-9.3",
+            "WBS-10.3"
+          ],
+          "acceptanceCriteria": [
+            "试点阶段状态查询成功率不低于99%",
+            "P95响应时间不超过3秒"
+          ]
+        },
+        {
+          "id": "REQ-010",
+          "title": "车主可以远程锁车和解锁",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "product_ba",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.2",
+          "supportingWbsIds": [
+            "WBS-6.1",
+            "WBS-6.4",
+            "WBS-9.2",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "鉴权和确认通过后才发送指令",
+            "端到端结果可追踪且失败原因明确"
+          ]
+        },
+        {
+          "id": "REQ-011",
+          "title": "车主可以远程鸣笛并快速寻车",
+          "category": "functional",
+          "priority": "P1",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 16,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.2",
+          "supportingWbsIds": [
+            "WBS-5.2",
+            "WBS-6.4",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "指令结果在页面明确反馈",
+            "无权限、车辆离线和超时状态可识别"
+          ]
+        },
+        {
+          "id": "REQ-012",
+          "title": "车主可以设置并执行空调预设",
+          "category": "functional",
+          "priority": "P1",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 3,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 19,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.3",
+          "supportingWbsIds": [
+            "WBS-6.1",
+            "WBS-6.4",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "用户可选择受支持的温度和时长",
+            "不支持的车型或参数给出替代提示"
+          ]
+        },
+        {
+          "id": "REQ-013",
+          "title": "高风险远程指令必须经过二次确认",
+          "category": "security",
+          "priority": "P0",
+          "sourceStakeholderId": "devsecops",
+          "discoveredWeek": 4,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 12,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.1",
+          "supportingWbsIds": [
+            "WBS-3.3",
+            "WBS-6.4",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "敏感指令发送前显示对象、动作和后果",
+            "确认不可被语音包或快捷入口绕过"
+          ]
+        },
+        {
+          "id": "REQ-014",
+          "title": "异步指令支持处理中、成功、失败和超时状态",
+          "category": "functional",
+          "priority": "P0",
+          "sourceStakeholderId": "tech_lead",
+          "discoveredWeek": 4,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 19,
+          "verifiedWeek": 24,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.3",
+          "supportingWbsIds": [
+            "WBS-3.2",
+            "WBS-6.4",
+            "WBS-9.2"
+          ],
+          "acceptanceCriteria": [
+            "每次指令都有唯一状态链",
+            "超时和失败可安全重试且不产生重复动作"
+          ]
+        },
+        {
+          "id": "REQ-015",
+          "title": "重复提交远程指令不得导致重复车辆动作",
+          "category": "security",
+          "priority": "P0",
+          "sourceStakeholderId": "tech_lead",
+          "discoveredWeek": 5,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 22,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.4",
+          "supportingWbsIds": [
+            "WBS-6.1",
+            "WBS-9.2",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "相同幂等键只执行一次车辆动作",
+            "重复请求返回原执行结果"
+          ]
+        },
+        {
+          "id": "REQ-016",
+          "title": "远程控制具备审计、撤销和凭证过期机制",
+          "category": "security",
+          "priority": "P0",
+          "sourceStakeholderId": "legal_privacy",
+          "discoveredWeek": 5,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 22,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-6.4",
+          "supportingWbsIds": [
+            "WBS-7.2",
+            "WBS-10.1",
+            "WBS-10.3"
+          ],
+          "acceptanceCriteria": [
+            "所有远程控制事件可按用户、车辆和时间追溯",
+            "撤销授权或凭证过期后不能继续控制车辆"
+          ]
+        },
+        {
+          "id": "REQ-017",
+          "title": "用户可以管理车辆通知订阅偏好",
+          "category": "functional",
+          "priority": "P1",
+          "sourceStakeholderId": "operations_support",
+          "discoveredWeek": 3,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 15,
+          "verifiedWeek": 22,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-7.1",
+          "supportingWbsIds": [
+            "WBS-4.1",
+            "WBS-7.2",
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "用户可以启停非强制通知",
+            "安全和服务类强制通知具有明确说明"
+          ]
+        },
+        {
+          "id": "REQ-018",
+          "title": "运营后台支持审计查询和异常工单处理",
+          "category": "operational",
+          "priority": "P1",
+          "sourceStakeholderId": "operations_support",
+          "discoveredWeek": 4,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 20,
+          "verifiedWeek": 24,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-7.2",
+          "supportingWbsIds": [
+            "WBS-6.4",
+            "WBS-7.3",
+            "WBS-11.1"
+          ],
+          "acceptanceCriteria": [
+            "客服可按权限查询指令和通知记录",
+            "异常处理过程和结果可追溯"
+          ]
+        },
+        {
+          "id": "REQ-019",
+          "title": "核心能力兼容约定试点车型和系统版本",
+          "category": "quality",
+          "priority": "P1",
+          "sourceStakeholderId": "vehicle_integration",
+          "discoveredWeek": 5,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 25,
+          "verifiedWeek": 26,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-9.3",
+          "supportingWbsIds": [
+            "WBS-3.2",
+            "WBS-5.3",
+            "WBS-8.2"
+          ],
+          "acceptanceCriteria": [
+            "兼容矩阵覆盖全部试点车型和移动系统版本",
+            "差异能力具有降级或提示方案"
+          ]
+        },
+        {
+          "id": "REQ-020",
+          "title": "服务满足可用性、监控、恢复和回滚要求",
+          "category": "quality",
+          "priority": "P0",
+          "sourceStakeholderId": "devsecops",
+          "discoveredWeek": 5,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 27,
+          "verifiedWeek": 30,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-11.1",
+          "supportingWbsIds": [
+            "WBS-3.3",
+            "WBS-9.3",
+            "WBS-10.3"
+          ],
+          "acceptanceCriteria": [
+            "试点服务可用性不低于99.5%",
+            "关键故障具备告警、恢复和回滚演练证据"
+          ]
+        },
+        {
+          "id": "REQ-021",
+          "title": "个人与车辆数据遵循最小采集和最短保留原则",
+          "category": "compliance",
+          "priority": "P0",
+          "sourceStakeholderId": "legal_privacy",
+          "discoveredWeek": 4,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 24,
+          "verifiedWeek": 25,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-3.3",
+          "supportingWbsIds": [
+            "WBS-4.1",
+            "WBS-7.2",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "数据项具有用途、权限和保留期限",
+            "日志和报表不展示不必要的敏感数据"
+          ]
+        },
+        {
+          "id": "REQ-022",
+          "title": "远程控制通过安全测试和上线安全门",
+          "category": "quality",
+          "priority": "P0",
+          "sourceStakeholderId": "security_vendor",
+          "discoveredWeek": 6,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 28,
+          "verifiedWeek": 30,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-10.3",
+          "supportingWbsIds": [
+            "WBS-6.4",
+            "WBS-10.1",
+            "WBS-10.2"
+          ],
+          "acceptanceCriteria": [
+            "高危和极高危问题关闭或获得正式残余风险决定",
+            "安全门明确批准可发布范围"
+          ]
+        },
+        {
+          "id": "REQ-023",
+          "title": "300名试点车主完成核心流程并形成验收反馈",
+          "category": "transition",
+          "priority": "P1",
+          "sourceStakeholderId": "sponsor",
+          "discoveredWeek": 2,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 29,
+          "verifiedWeek": 29,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-11.2",
+          "supportingWbsIds": [
+            "WBS-9.4",
+            "WBS-10.1",
+            "WBS-11.1"
+          ],
+          "acceptanceCriteria": [
+            "完成试点名单、任务和反馈记录",
+            "核心流程成功且满意度达到4.2分"
+          ]
+        },
+        {
+          "id": "REQ-024",
+          "title": "正式上线前完成运营移交、支持和回滚准备",
+          "category": "transition",
+          "priority": "P1",
+          "sourceStakeholderId": "operations_support",
+          "discoveredWeek": 5,
+          "baselinedWeek": 8,
+          "implementationCompletedWeek": 32,
+          "verifiedWeek": 32,
+          "targetRelease": "V1.0",
+          "traceabilityStatus": "baselined",
+          "primaryWbsId": "WBS-11.3",
+          "supportingWbsIds": [
+            "WBS-7.3",
+            "WBS-10.3",
+            "WBS-11.1"
+          ],
+          "acceptanceCriteria": [
+            "运营手册、支持责任和升级路径完成移交",
+            "上线检查和回滚方案得到批准"
+          ]
+        },
+        {
+          "id": "REQ-025",
+          "title": "iPhone主屏幕小组件显示车辆核心状态",
+          "category": "experience",
+          "priority": "P2",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.1",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-5.2",
+          "proposedSupportingWbsIds": [
+            "WBS-4.1",
+            "WBS-7.1",
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "小组件展示锁车、电量和续航摘要",
+            "锁屏状态不泄露敏感位置和车辆信息"
+          ]
+        },
+        {
+          "id": "REQ-026",
+          "title": "定期生成并推送车辆使用报告",
+          "category": "experience",
+          "priority": "P2",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.1",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-7.3",
+          "proposedSupportingWbsIds": [
+            "WBS-5.1",
+            "WBS-7.1",
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "用户可以选择月度报告和推送开关",
+            "报告数据准确且符合隐私授权"
+          ]
+        },
+        {
+          "id": "REQ-027",
+          "title": "用户可以选择自定义车控语音包",
+          "category": "experience",
+          "priority": "P3",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.2",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-6.2",
+          "proposedSupportingWbsIds": [
+            "WBS-4.1",
+            "WBS-6.3",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "语音包只改变表达层，不改变指令含义",
+            "身份验证和二次确认不可被语音交互绕过"
+          ]
+        },
+        {
+          "id": "REQ-028",
+          "title": "通过锁屏或系统快捷指令进入常用车控流程",
+          "category": "experience",
+          "priority": "P2",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.1",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-6.2",
+          "proposedSupportingWbsIds": [
+            "WBS-4.1",
+            "WBS-5.2",
+            "WBS-10.1"
+          ],
+          "acceptanceCriteria": [
+            "快捷入口遵循现有授权与确认规则",
+            "设备锁定时不直接执行高风险指令"
+          ]
+        },
+        {
+          "id": "REQ-029",
+          "title": "用户可以调整首页卡片顺序和可见性",
+          "category": "experience",
+          "priority": "P3",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.1",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-5.2",
+          "proposedSupportingWbsIds": [
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "用户可以排序或隐藏非强制卡片",
+            "安全告警和必要状态不可被永久隐藏"
+          ]
+        },
+        {
+          "id": "REQ-030",
+          "title": "展示用车、能耗趋势和月度对比洞察",
+          "category": "experience",
+          "priority": "P3",
+          "sourceStakeholderId": "pilot_owner_representative",
+          "discoveredWeek": 28,
+          "targetRelease": "V1.2",
+          "traceabilityStatus": "candidate_unplanned",
+          "proposedPrimaryWbsId": "WBS-7.3",
+          "proposedSupportingWbsIds": [
+            "WBS-5.1",
+            "WBS-9.3"
+          ],
+          "acceptanceCriteria": [
+            "趋势数据具有清晰统计口径",
+            "洞察不推断或暴露未授权的个人行程"
+          ]
+        }
+      ],
+      "mainlineEvents": [
+        {
+          "id": "requirements-w8-baseline",
+          "week": 8,
+          "type": "baseline_approved",
+          "requirementIds": [
+            "REQ-001",
+            "REQ-002",
+            "REQ-003",
+            "REQ-004",
+            "REQ-005",
+            "REQ-006",
+            "REQ-007",
+            "REQ-008",
+            "REQ-009",
+            "REQ-010",
+            "REQ-011",
+            "REQ-012",
+            "REQ-013",
+            "REQ-014",
+            "REQ-015",
+            "REQ-016",
+            "REQ-017",
+            "REQ-018",
+            "REQ-019",
+            "REQ-020",
+            "REQ-021",
+            "REQ-022",
+            "REQ-023",
+            "REQ-024"
+          ],
+          "documentRevisionIds": [
+            "D21",
+            "D22"
+          ]
+        },
+        {
+          "id": "requirements-w28-pilot-candidates",
+          "week": 28,
+          "type": "candidates_recorded",
+          "requirementIds": [
+            "REQ-025",
+            "REQ-026",
+            "REQ-027",
+            "REQ-028",
+            "REQ-029",
+            "REQ-030"
+          ],
+          "decision": "纳入后续版本",
+          "documentRevisionIds": [
+            "D22"
+          ]
+        }
+      ]
+    },
     "riskPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
@@ -3855,7 +4617,10 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "triggered": [
             "closed"
           ],
-          "closed": []
+          "closed": [
+            "assessed",
+            "triggered"
+          ]
         },
         "triggerCreatesLinkedIssue": true,
         "triggeredCloseRequirements": [
@@ -3878,209 +4643,766 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
         {
           "id": "R01",
           "title": "试点反馈引发范围变更",
+          "category": "scope",
+          "description": {
+            "cause": "真实使用场景在范围基线后才充分显现",
+            "event": "试点反馈提出新的共享、交互或便捷性需求",
+            "effect": "未经控制直接开发会造成范围蔓延、返工和延期"
+          },
           "owner": "产品/业务分析师",
+          "ownerStakeholderId": "product_ba",
+          "impactDimensions": [
+            "scope",
+            "schedule",
+            "cost",
+            "quality"
+          ],
+          "discoveredWeek": 6,
+          "assessmentWeek": 6,
           "inherent": {
             "probability": 3,
             "impact": 4
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "建立试点反馈分级规则",
+            "新增需求先完成影响分析并提交CCB",
+            "用功能开关和后续版本池隔离未批准范围"
+          ],
+          "responseDueWeek": 7,
+          "responseCompletedWeek": 7,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 3
-          }
+          },
+          "closedWeek": 29,
+          "closureEvidence": [
+            "试点反馈清单",
+            "CCB决议",
+            "V1.1候选需求池"
+          ],
+          "postTreatmentResult": "试点反馈均完成分类，V1.0范围未发生未经批准的扩张。",
+          "linkedWbsIds": [
+            "WBS-2.3",
+            "WBS-11.2"
+          ],
+          "linkedRequirementIds": [
+            "REQ-023",
+            "REQ-025",
+            "REQ-026",
+            "REQ-027",
+            "REQ-028",
+            "REQ-029",
+            "REQ-030"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R02",
           "title": "车端供应商接口延期",
+          "category": "procurement",
+          "description": {
+            "cause": "供应商同时服务多个车型项目且接口交付依赖车端版本",
+            "event": "约定接口、Mock或联调支持未按批次到位",
+            "effect": "核心能力集成、测试和阶段门可能顺延"
+          },
           "owner": "车端接口集成工程师",
+          "ownerStakeholderId": "vehicle_integration",
+          "impactDimensions": [
+            "schedule",
+            "cost",
+            "quality"
+          ],
+          "discoveredWeek": 6,
+          "assessmentWeek": 6,
           "inherent": {
             "probability": 4,
             "impact": 4
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "在合同和SLA中约定分批交付",
+            "建立Mock服务与接口契约测试",
+            "每周联合跟踪交付和排障"
+          ],
+          "responseDueWeek": 7,
+          "responseCompletedWeek": 7,
+          "triggeredWeek": null,
           "residual": {
             "probability": 3,
             "impact": 4
-          }
+          },
+          "closedWeek": 24,
+          "closureEvidence": [
+            "接口批次签收记录",
+            "联合排障关闭清单",
+            "供应商履约验收"
+          ],
+          "postTreatmentResult": "接口按最小可执行批次完成交付，未阻断主线集成与试点。",
+          "linkedWbsIds": [
+            "WBS-3.2",
+            "WBS-8.1",
+            "WBS-8.2",
+            "WBS-8.3"
+          ],
+          "linkedRequirementIds": [
+            "REQ-006",
+            "REQ-010",
+            "REQ-014",
+            "REQ-019"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R03",
           "title": "关键专业人员临时不可用",
+          "category": "resource",
+          "description": {
+            "cause": "关键工程师同时承担线上生产支持职责",
+            "event": "工程师被临时抽调处理线上生产事故",
+            "effect": "关键活动停滞、知识交接不足并增加质量风险"
+          },
           "owner": "项目经理",
+          "ownerStakeholderId": "pm",
+          "impactDimensions": [
+            "resource",
+            "schedule",
+            "cost",
+            "quality"
+          ],
+          "discoveredWeek": 10,
+          "assessmentWeek": 10,
           "inherent": {
             "probability": 3,
             "impact": 4
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "建立关键岗位备份和结对机制",
+            "维护接口与部署知识库",
+            "预留可控加班和一周顺延方案"
+          ],
+          "responseDueWeek": 11,
+          "responseCompletedWeek": 11,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 3
-          }
+          },
+          "closedWeek": 27,
+          "closureEvidence": [
+            "岗位备份表",
+            "知识交接记录",
+            "资源日历更新"
+          ],
+          "postTreatmentResult": "关键活动均有备份责任人，资源波动未造成不可恢复的关键路径中断。",
+          "linkedWbsIds": [
+            "WBS-1.2",
+            "WBS-6.2",
+            "WBS-8.2",
+            "WBS-9.2"
+          ],
+          "linkedRequirementIds": [
+            "REQ-010",
+            "REQ-014",
+            "REQ-019"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R04",
           "title": "远程控制安全控制未通过验证",
+          "category": "security",
+          "description": {
+            "cause": "远程控制依赖鉴权、幂等、审计、撤销和凭证失效等多层控制",
+            "event": "安全测试发现任一关键控制缺失或可以被绕过",
+            "effect": "可能产生越权或不安全车辆控制，构成上线红线"
+          },
           "owner": "DevOps/安全工程师",
+          "ownerStakeholderId": "devsecops",
+          "impactDimensions": [
+            "safety",
+            "quality",
+            "schedule",
+            "scope"
+          ],
+          "discoveredWeek": 9,
+          "assessmentWeek": 9,
           "inherent": {
             "probability": 3,
             "impact": 5
           },
+          "severityOverride": "vehicle_control_red_line",
+          "responseStrategy": "avoid_and_mitigate",
+          "responseActions": [
+            "把关键安全控制列为远程控制硬门槛",
+            "执行威胁建模、专项测试和独立复测",
+            "用功能开关隔离未通过安全门的能力"
+          ],
+          "responseDueWeek": 10,
+          "responseCompletedWeek": 10,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 5
-          }
+          },
+          "closedWeek": 24,
+          "closureEvidence": [
+            "威胁模型",
+            "安全测试报告",
+            "关键控制验证记录"
+          ],
+          "postTreatmentResult": "主线远程控制安全控制在W24完成验证；情景分支仍可因新证据重新触发。",
+          "linkedWbsIds": [
+            "WBS-3.3",
+            "WBS-6.1",
+            "WBS-6.4",
+            "WBS-10.1"
+          ],
+          "linkedRequirementIds": [
+            "REQ-002",
+            "REQ-010",
+            "REQ-013",
+            "REQ-015",
+            "REQ-016",
+            "REQ-022"
+          ],
+          "reopenHistory": [
+            {
+              "week": 25,
+              "scenarioId": "scenario-3",
+              "reason": "安全测试报告出现可重放远程控制指令的新证据",
+              "fromClosedWeek": 24,
+              "toLifecycleState": "triggered"
+            }
+          ]
         },
         {
           "id": "R05",
           "title": "集成环境或测试车辆不可用",
+          "category": "resource",
+          "description": {
+            "cause": "测试环境、车端版本和实体车辆由不同团队共同提供",
+            "event": "集成窗口内环境不稳定或测试车辆无法预约",
+            "effect": "端到端验证和缺陷复现被阻断"
+          },
           "owner": "测试工程师",
+          "ownerStakeholderId": "qa",
+          "impactDimensions": [
+            "schedule",
+            "quality",
+            "resource"
+          ],
+          "discoveredWeek": 17,
+          "assessmentWeek": 17,
           "inherent": {
             "probability": 3,
             "impact": 3
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "锁定测试车辆预约窗口",
+            "准备Mock和回放数据",
+            "建立环境健康检查和故障升级机制"
+          ],
+          "responseDueWeek": 18,
+          "responseCompletedWeek": 18,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 3
-          }
+          },
+          "closedWeek": 26,
+          "closureEvidence": [
+            "环境健康报告",
+            "测试车辆排期",
+            "系统测试退出评审"
+          ],
+          "postTreatmentResult": "集成环境和车辆资源稳定支撑到候选版本验收。",
+          "linkedWbsIds": [
+            "WBS-9.1",
+            "WBS-9.2",
+            "WBS-9.3"
+          ],
+          "linkedRequirementIds": [
+            "REQ-009",
+            "REQ-019",
+            "REQ-022"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R06",
           "title": "不同车型接口兼容性偏差",
+          "category": "technical",
+          "description": {
+            "cause": "不同车型和车端版本对字段、指令和状态码的实现存在差异",
+            "event": "同一能力在部分试点车型出现数据或行为偏差",
+            "effect": "用户体验不一致并增加缺陷和支持成本"
+          },
           "owner": "技术负责人",
+          "ownerStakeholderId": "tech_lead",
+          "impactDimensions": [
+            "quality",
+            "scope",
+            "schedule"
+          ],
+          "discoveredWeek": 13,
+          "assessmentWeek": 13,
           "inherent": {
             "probability": 3,
             "impact": 4
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "维护车型能力矩阵",
+            "对接口差异进行适配和降级",
+            "按车型执行契约、兼容和回归测试"
+          ],
+          "responseDueWeek": 14,
+          "responseCompletedWeek": 14,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 3
-          }
+          },
+          "closedWeek": 27,
+          "closureEvidence": [
+            "车型兼容矩阵",
+            "兼容测试报告",
+            "差异能力说明"
+          ],
+          "postTreatmentResult": "全部试点车型完成验证，不支持能力采用明确降级提示。",
+          "linkedWbsIds": [
+            "WBS-3.2",
+            "WBS-5.3",
+            "WBS-6.3",
+            "WBS-9.3"
+          ],
+          "linkedRequirementIds": [
+            "REQ-006",
+            "REQ-012",
+            "REQ-019"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R07",
           "title": "需求追踪或验收标准不完整",
+          "category": "scope",
+          "description": {
+            "cause": "多方需求在调研初期粒度和表达方式不一致",
+            "event": "需求缺少可验证标准或没有关联交付物和测试",
+            "effect": "开发理解偏差、测试遗漏并增加返工"
+          },
           "owner": "产品/业务分析师",
+          "ownerStakeholderId": "product_ba",
+          "impactDimensions": [
+            "scope",
+            "quality",
+            "schedule"
+          ],
+          "discoveredWeek": 2,
+          "assessmentWeek": 2,
           "inherent": {
             "probability": 3,
             "impact": 3
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "统一需求模板和验收标准",
+            "建立需求到主要及支持WBS的多对多追踪",
+            "基线前完成需求、设计和测试覆盖审查"
+          ],
+          "responseDueWeek": 3,
+          "responseCompletedWeek": 3,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 2
-          }
+          },
+          "closedWeek": 8,
+          "closureEvidence": [
+            "需求文件V1.0",
+            "需求跟踪矩阵V1.0",
+            "范围基线审批记录"
+          ],
+          "postTreatmentResult": "24项V1.0需求均具备验收标准并关联主要及支持WBS。",
+          "linkedWbsIds": [
+            "WBS-2.1",
+            "WBS-2.2",
+            "WBS-2.3"
+          ],
+          "linkedRequirementIds": [
+            "REQ-001",
+            "REQ-002",
+            "REQ-003",
+            "REQ-004",
+            "REQ-005",
+            "REQ-006",
+            "REQ-007",
+            "REQ-008",
+            "REQ-009",
+            "REQ-010",
+            "REQ-011",
+            "REQ-012",
+            "REQ-013",
+            "REQ-014",
+            "REQ-015",
+            "REQ-016",
+            "REQ-017",
+            "REQ-018",
+            "REQ-019",
+            "REQ-020",
+            "REQ-021",
+            "REQ-022",
+            "REQ-023",
+            "REQ-024"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R08",
           "title": "试点参与度和支持能力不足",
+          "category": "stakeholder",
+          "description": {
+            "cause": "试点车主使用频率、培训完成度和客服支持能力存在差异",
+            "event": "试点任务完成率或反馈质量低于计划",
+            "effect": "无法形成可信验收结论并影响上线决策"
+          },
           "owner": "运营负责人",
+          "ownerStakeholderId": "operations_support",
+          "impactDimensions": [
+            "stakeholder",
+            "quality",
+            "schedule"
+          ],
+          "discoveredWeek": 25,
+          "assessmentWeek": 25,
           "inherent": {
             "probability": 3,
             "impact": 3
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "分批邀请并确认试点名单",
+            "提供任务指引和问题升级渠道",
+            "每日跟踪完成率和高频反馈"
+          ],
+          "responseDueWeek": 26,
+          "responseCompletedWeek": 26,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 2
-          }
+          },
+          "closedWeek": 29,
+          "closureEvidence": [
+            "试点完成统计",
+            "培训记录",
+            "反馈关闭清单"
+          ],
+          "postTreatmentResult": "300名试点车主完成核心流程，满意度和反馈质量达到验收要求。",
+          "linkedWbsIds": [
+            "WBS-11.1",
+            "WBS-11.2"
+          ],
+          "linkedRequirementIds": [
+            "REQ-023"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R09",
           "title": "隐私、授权或审计要求遗漏",
+          "category": "compliance",
+          "description": {
+            "cause": "车辆位置、身份和控制日志涉及多类敏感数据与授权关系",
+            "event": "设计或实现遗漏隐私告知、最小权限、保留期限或审计要求",
+            "effect": "产生合规问题、数据暴露或上线阻断"
+          },
           "owner": "安全负责人",
+          "ownerStakeholderId": "devsecops",
+          "impactDimensions": [
+            "safety",
+            "quality",
+            "scope"
+          ],
+          "discoveredWeek": 4,
+          "assessmentWeek": 4,
           "inherent": {
             "probability": 2,
             "impact": 5
           },
+          "severityOverride": "privacy_red_line",
+          "responseStrategy": "avoid",
+          "responseActions": [
+            "建立隐私和授权需求清单",
+            "执行最小权限与数据保留审查",
+            "在安全测试中验证越权和审计场景"
+          ],
+          "responseDueWeek": 5,
+          "responseCompletedWeek": 5,
+          "triggeredWeek": null,
           "residual": {
             "probability": 1,
             "impact": 4
-          }
+          },
+          "closedWeek": 30,
+          "closureEvidence": [
+            "隐私评审记录",
+            "授权测试结果",
+            "安全门决议"
+          ],
+          "postTreatmentResult": "隐私、授权和审计要求完成设计、测试及上线门验证。",
+          "linkedWbsIds": [
+            "WBS-3.3",
+            "WBS-4.3",
+            "WBS-7.2",
+            "WBS-10.1"
+          ],
+          "linkedRequirementIds": [
+            "REQ-002",
+            "REQ-007",
+            "REQ-016",
+            "REQ-021",
+            "REQ-022"
+          ],
+          "reopenHistory": []
         },
         {
           "id": "R10",
           "title": "固定上线窗口与质量门槛冲突",
+          "category": "governance",
+          "description": {
+            "cause": "市场窗口固定，但远程控制和安全验证结果存在不确定性",
+            "event": "上线门前仍有能力未达到质量或安全准入条件",
+            "effect": "可能被迫延期、带风险上线或裁剪范围"
+          },
           "owner": "项目发起人",
+          "ownerStakeholderId": "sponsor",
+          "impactDimensions": [
+            "schedule",
+            "scope",
+            "quality",
+            "safety",
+            "stakeholder"
+          ],
+          "discoveredWeek": 24,
+          "assessmentWeek": 24,
           "inherent": {
             "probability": 3,
             "impact": 4
           },
+          "responseStrategy": "mitigate",
+          "responseActions": [
+            "预先定义按能力分阶段发布方案",
+            "以质量和安全门作为不可绕过约束",
+            "通过CCB管理范围裁剪和干系人预期"
+          ],
+          "responseDueWeek": 25,
+          "responseCompletedWeek": 25,
+          "triggeredWeek": null,
           "residual": {
             "probability": 2,
             "impact": 3
-          }
+          },
+          "closedWeek": 32,
+          "closureEvidence": [
+            "上线阶段门决议",
+            "发布范围清单",
+            "干系人沟通记录"
+          ],
+          "postTreatmentResult": "主线按质量门完成上线；必要时按期上线只读能力并把远程控制纳入后续版本。",
+          "linkedWbsIds": [
+            "WBS-1.3",
+            "WBS-10.3",
+            "WBS-11.3"
+          ],
+          "linkedRequirementIds": [
+            "REQ-020",
+            "REQ-022",
+            "REQ-024"
+          ],
+          "reopenHistory": []
         }
       ],
       "mainlineLifecycleEvents": [
         {
-          "week": 1,
-          "riskIds": [
-            "R01",
-            "R02",
-            "R03",
-            "R04",
-            "R05",
-            "R06",
-            "R07",
-            "R08",
-            "R09",
-            "R10"
-          ],
-          "toLifecycleState": "identified"
-        },
-        {
+          "id": "risk-w2-assessment",
           "week": 2,
           "riskIds": [
-            "R01",
-            "R02",
-            "R03",
-            "R04",
-            "R05",
-            "R06",
-            "R07",
-            "R08",
-            "R09",
-            "R10"
+            "R07"
           ],
           "toLifecycleState": "assessed"
         },
         {
-          "week": 4,
+          "id": "risk-w3-response",
+          "week": 3,
           "riskIds": [
-            "R01",
-            "R02",
-            "R03",
-            "R04",
-            "R05",
-            "R06",
-            "R07",
-            "R08",
-            "R09",
-            "R10"
-          ],
-          "toLifecycleState": "response_approved",
-          "controlStatus": "prepared"
-        },
-        {
-          "week": 5,
-          "riskIds": [
-            "R01",
-            "R02",
-            "R03",
-            "R04",
-            "R05",
-            "R06",
-            "R07",
-            "R08",
-            "R09",
-            "R10"
+            "R07"
           ],
           "toLifecycleState": "monitoring",
           "controlStatus": "prepared"
         },
         {
-          "week": 12,
+          "id": "risk-w4-assessment",
+          "week": 4,
+          "riskIds": [
+            "R09"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w5-response",
+          "week": 5,
+          "riskIds": [
+            "R09"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w6-assessment",
+          "week": 6,
+          "riskIds": [
+            "R01",
+            "R02"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w7-response",
+          "week": 7,
+          "riskIds": [
+            "R01",
+            "R02"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w8-close",
+          "week": 8,
           "riskIds": [
             "R07"
           ],
           "toLifecycleState": "closed"
         },
         {
+          "id": "risk-w9-assessment",
+          "week": 9,
+          "riskIds": [
+            "R04"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w10-response",
+          "week": 10,
+          "riskIds": [
+            "R04"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w10-assessment",
+          "week": 10,
+          "riskIds": [
+            "R03"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w11-response",
+          "week": 11,
+          "riskIds": [
+            "R03"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w13-assessment",
+          "week": 13,
+          "riskIds": [
+            "R06"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w14-response",
+          "week": 14,
+          "riskIds": [
+            "R06"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w17-assessment",
+          "week": 17,
+          "riskIds": [
+            "R05"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w18-response",
+          "week": 18,
+          "riskIds": [
+            "R05"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w24-close",
+          "week": 24,
+          "riskIds": [
+            "R02",
+            "R04"
+          ],
+          "toLifecycleState": "closed"
+        },
+        {
+          "id": "risk-w24-assessment",
+          "week": 24,
+          "riskIds": [
+            "R10"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w25-response",
+          "week": 25,
+          "riskIds": [
+            "R10"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w25-assessment",
+          "week": 25,
+          "riskIds": [
+            "R08"
+          ],
+          "toLifecycleState": "assessed"
+        },
+        {
+          "id": "risk-w26-response",
+          "week": 26,
+          "riskIds": [
+            "R08"
+          ],
+          "toLifecycleState": "monitoring",
+          "controlStatus": "prepared"
+        },
+        {
+          "id": "risk-w26-close",
           "week": 26,
           "riskIds": [
             "R05"
@@ -4088,6 +5410,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "toLifecycleState": "closed"
         },
         {
+          "id": "risk-w27-close",
           "week": 27,
           "riskIds": [
             "R03",
@@ -4096,13 +5419,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "toLifecycleState": "closed"
         },
         {
-          "week": 28,
-          "riskIds": [
-            "R02"
-          ],
-          "toLifecycleState": "closed"
-        },
-        {
+          "id": "risk-w29-close",
           "week": 29,
           "riskIds": [
             "R01",
@@ -4111,9 +5428,9 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "toLifecycleState": "closed"
         },
         {
+          "id": "risk-w30-close",
           "week": 30,
           "riskIds": [
-            "R04",
             "R09"
           ],
           "toLifecycleState": "closed"
@@ -4152,8 +5469,12 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "riskIds": [
             "R04"
           ],
+          "fromLifecycleState": "closed",
           "toLifecycleState": "triggered",
-          "controlStatus": "active_uncontrolled"
+          "controlStatus": "active_uncontrolled",
+          "reopensClosedRisk": true,
+          "reopenedFromClosedWeek": 24,
+          "triggeredWeek": 25
         },
         {
           "scenarioId": "scenario-3",
