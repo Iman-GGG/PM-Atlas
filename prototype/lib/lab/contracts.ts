@@ -219,24 +219,11 @@ export type VisibleScenarioProjection = {
   cards: PublicScenarioCard[];
 };
 
-export type DecisionReference = {
-  type: "event_material" | "project_document" | "action_card";
-  id: string;
-};
-
-export type DecisionReasoning = {
-  observedSignals: string;
-  riskOrRootCause: string;
-  actionRationale: string;
-  references: DecisionReference[];
-};
-
 export type RoundSubmissionRequest = {
   scenarioId: string;
   expectedRoundNumber: number;
   idempotencyKey: string;
   actionChains: ManagementActionChain[];
-  reasoning: DecisionReasoning;
 };
 
 export type RuleGap = {

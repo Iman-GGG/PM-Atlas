@@ -64,7 +64,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   };
 
   const first = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v3/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v4/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -127,15 +127,6 @@ test("persists an idempotent takeover branch against the real migration", async 
       toolTechniqueCardIds: ["S2-C05"],
       stakeholderCardIds: ["S2-C10"],
     }],
-    reasoning: {
-      observedSignals: "供应商接口交付与工程师可用性同时发生偏差。",
-      riskOrRootCause: "外部依赖和关键资源冲突可能共同影响关键路径。",
-      actionRationale: "通过联合排障、分阶段交付和责任人协作维持并行开发节奏。",
-      references: [
-        { type: "event_material", id: "S2-M01" },
-        { type: "project_document", id: "D14" },
-      ],
-    },
   };
   const savedDraft = await worker.fetch(
     new Request(`http://localhost${draftPath}`, {
@@ -194,7 +185,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal((await roundReplay.json()).idempotentReplay, true);
 
   const replay = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v3/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v4/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );

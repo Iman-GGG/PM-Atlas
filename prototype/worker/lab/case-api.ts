@@ -1,7 +1,5 @@
 import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated";
 import type {
-  DecisionReasoning,
-  DecisionReference,
   ManagementActionChain,
   RoundResult,
   RoundSubmissionRequest,
@@ -192,17 +190,10 @@ function materialSummary(group: string, material: Record<string, unknown>, opene
   };
 }
 
-const referenceTypes = new Set<DecisionReference["type"]>(["event_material", "project_document", "action_card"]);
-
 type RoundDraftBody = {
   expectedRoundNumber: number;
   actionChains: ManagementActionChain[];
-  reasoning: DecisionReasoning;
 };
-
-function emptyReasoning(): DecisionReasoning {
-  return { observedSignals: "", riskOrRootCause: "", actionRationale: "", references: [] };
-}
 
 function parseStoredJson<T>(value: string, fallback: T): T {
   try {
@@ -276,30 +267,11 @@ function parseRoundDraftValue(body: Record<string, unknown>): RoundDraftBody | n
   try {
     if (!Number.isInteger(body.expectedRoundNumber) || Number(body.expectedRoundNumber) < 1) return null;
     if (!Array.isArray(body.actionChains) || body.actionChains.length > 16) return null;
-    if (!body.reasoning || typeof body.reasoning !== "object" || Array.isArray(body.reasoning)) return null;
-    const reasoning = body.reasoning as Record<string, unknown>;
-    const reasoningFields = [reasoning.observedSignals, reasoning.riskOrRootCause, reasoning.actionRationale];
-    if (reasoningFields.some((value) => typeof value !== "string" || value.length > 500)) return null;
-    if (!Array.isArray(reasoning.references) || reasoning.references.length > 100) return null;
     const actionChains = body.actionChains.map(parseActionChainValue);
     if (actionChains.some((chain) => !chain)) return null;
-    const references = reasoning.references;
-    if (references.some((reference) => (
-      !reference
-      || typeof reference !== "object"
-      || !referenceTypes.has(reference.type as DecisionReference["type"])
-      || typeof reference.id !== "string"
-      || !/^[A-Za-z0-9._:-]{1,64}$/.test(reference.id)
-    ))) return null;
     return {
       expectedRoundNumber: Number(body.expectedRoundNumber),
       actionChains: actionChains as ManagementActionChain[],
-      reasoning: {
-        observedSignals: reasoning.observedSignals as string,
-        riskOrRootCause: reasoning.riskOrRootCause as string,
-        actionRationale: reasoning.actionRationale as string,
-        references: references as DecisionReference[],
-      },
     };
   } catch {
     return null;
@@ -337,8 +309,6 @@ type RoundValidationIssue = { status: number; code: string; message: string };
 
 function validateRoundContent(
   scenario: ScenarioDefinition,
-  visibility: ReturnType<typeof parseEventVisibility>,
-  currentWeek: number,
   body: RoundDraftBody,
   requireCompleteInput: boolean,
 ): RoundValidationIssue | null {
@@ -364,40 +334,9 @@ function validateRoundContent(
       }
     }
   }
-  const selectedCardIds = new Set(flattenActionChainCardIds(body.actionChains));
-
-  const availableDocuments = new Set((publicLabCaseBaseline.plans.documents.documents as StateEffect[])
-    .filter((document) => Number(document.createdWeek) <= currentWeek)
-    .map((document) => String(document.id)));
-  const visibleMaterialIds = new Set(visibility.visibleMaterialIds);
-  const referenceKeys = new Set<string>();
-  for (const reference of body.reasoning.references) {
-    const key = `${reference.type}\u0000${reference.id}`;
-    const isValid = reference.type === "event_material"
-      ? visibleMaterialIds.has(reference.id)
-      : reference.type === "project_document"
-        ? availableDocuments.has(reference.id)
-        : selectedCardIds.has(reference.id) && cardById.has(reference.id);
-    if (!isValid || referenceKeys.has(key)) {
-      return { status: 400, code: "INVALID_DECISION_REFERENCE", message: "Decision references must point to visible materials, available documents, or selected cards." };
-    }
-    referenceKeys.add(key);
-  }
-
   if (requireCompleteInput) {
-    const reasoningLengths = [
-      body.reasoning.observedSignals.trim().length,
-      body.reasoning.riskOrRootCause.trim().length,
-      body.reasoning.actionRationale.trim().length,
-    ];
-    if (reasoningLengths.some((length) => length < 20 || length > 500)) {
-      return { status: 400, code: "INCOMPLETE_REASONING", message: "Each decision-reasoning field must contain 20-500 characters." };
-    }
     if (body.actionChains.length === 0) {
       return { status: 400, code: "INCOMPLETE_ACTION_CHAIN", message: "At least one complete action chain is required." };
-    }
-    if (body.reasoning.references.length === 0) {
-      return { status: 400, code: "DECISION_REFERENCE_REQUIRED", message: "At least one decision reference is required." };
     }
   }
   return null;
@@ -668,7 +607,6 @@ async function readScenarioDraft(
     scenarioId,
     roundNumber,
     actionChains: storedDraft ? readStoredActionChains(storedDraft.connectionsJson, selectedCardIds, scenario) : [],
-    reasoning: storedDraft ? parseStoredJson<DecisionReasoning>(storedDraft.reasoningJson, emptyReasoning()) : emptyReasoning(),
     updatedAt: storedDraft?.updatedAt ?? null,
   }));
 }
@@ -697,7 +635,7 @@ async function saveScenarioDraft(
     return withPrivateCache(errorResponse(409, "ROUND_CONFLICT", "The branch has advanced. Reload the latest round before saving."));
   }
 
-  const validationIssue = validateRoundContent(scenario, context.visibility, context.branch.currentWeek, body, false);
+  const validationIssue = validateRoundContent(scenario, body, false);
   if (validationIssue) {
     return withPrivateCache(errorResponse(validationIssue.status, validationIssue.code, validationIssue.message));
   }
@@ -710,14 +648,13 @@ async function saveScenarioDraft(
     scenarioId,
     selectedCardIdsJson: JSON.stringify(flattenActionChainCardIds(body.actionChains)),
     connectionsJson: JSON.stringify(body.actionChains),
-    reasoningJson: JSON.stringify(body.reasoning),
+    reasoningJson: "{}",
   });
   return withPrivateCache(jsonResponse({
     branchId,
     scenarioId,
     roundNumber,
     actionChains: body.actionChains,
-    reasoning: body.reasoning,
     updatedAt: new Date().toISOString(),
   }));
 }
@@ -725,7 +662,7 @@ async function saveScenarioDraft(
 async function submitRound(request: Request, env: LabApiEnv, branchId: string): Promise<Response> {
   const body = await parseRoundSubmissionBody(request);
   if (!body) {
-    return withPrivateCache(errorResponse(400, "INVALID_ROUND_SUBMISSION", "A valid scenario, action chain, reasoning, and idempotency key are required."));
+    return withPrivateCache(errorResponse(400, "INVALID_ROUND_SUBMISSION", "A valid scenario, action chain, and idempotency key are required."));
   }
   const context = await readOwnedScenarioContext(request, env, branchId, body.scenarioId);
   if (context instanceof Response) return context;
@@ -754,7 +691,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
   if (!context.visibility.cardsUnlocked) {
     return withPrivateCache(errorResponse(409, "ACTION_CARDS_LOCKED", "Open every event material before submitting the action chain."));
   }
-  const validationIssue = validateRoundContent(scenario, context.visibility, context.branch.currentWeek, body, true);
+  const validationIssue = validateRoundContent(scenario, body, true);
   if (validationIssue) {
     return withPrivateCache(errorResponse(validationIssue.status, validationIssue.code, validationIssue.message));
   }
@@ -803,7 +740,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
       submissionJson: JSON.stringify({
         actionChains: body.actionChains,
       }),
-      reasoningJson: JSON.stringify(body.reasoning),
+      reasoningJson: "{}",
       ruleResultJson,
       idempotencyKey: body.idempotencyKey,
       snapshotId: `${branchId}:snapshot:${nextRoundNumber}`,

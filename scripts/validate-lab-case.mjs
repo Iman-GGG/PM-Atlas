@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
-const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v3");
+const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v4");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -79,7 +79,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.primaryClues === 3, "Primary clue policy must require 3 items");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.corroboratingClues === 1, "Corroborating clue policy must require 1 item");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.dashboardAnomalies === 1, "Dashboard anomaly policy must require 1 item");
-  assert(scenarios.decisionReasoningPolicy.fields.length === 3, "Decision reasoning must contain 3 fields");
+  assert(scenarios.decisionReasoningPolicy.enabled === false, "Decision reasoning must be disabled");
+  assert(scenarios.decisionReasoningPolicy.fields.length === 0, "Disabled decision reasoning must not contain fields");
+  assert(scenarios.decisionReasoningPolicy.submissionRequirement === "at_least_one_complete_action_chain", "Submission must require one complete action chain");
   assert(scenarios.aiReviewPolicy.capabilityDimensions.length === 5, "AI review must contain 5 capability dimensions");
 
   for (const requirement of requirementById.values()) {

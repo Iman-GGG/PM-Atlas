@@ -299,24 +299,11 @@ type ManagementActionChain = {
 
 type ActionChainPools = Record<PublicCard["column"], string[]>;
 
-type DecisionReference = {
-  type: "event_material" | "project_document" | "action_card";
-  id: string;
-};
-
-type DecisionReasoning = {
-  observedSignals: string;
-  riskOrRootCause: string;
-  actionRationale: string;
-  references: DecisionReference[];
-};
-
 type RoundDraft = {
   branchId: string;
   scenarioId: string;
   roundNumber: number;
   actionChains: ManagementActionChain[];
-  reasoning: DecisionReasoning;
   updatedAt: string | null;
 };
 
@@ -424,7 +411,7 @@ type ManagementArea = {
 };
 
 const caseId = "car-control";
-const caseVersion = "v3";
+const caseVersion = "v4";
 const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
@@ -494,16 +481,6 @@ const pathClassificationLabels: Record<string, string> = {
   delayed_success: "延期成功",
   scenario_failure: "情景失败",
 };
-const reasoningFields = [
-  { id: "observedSignals", label: "观察到的信号", placeholder: "写下你从邮件、报告、消息和仪表盘异常中观察到的客观信号。" },
-  { id: "riskOrRootCause", label: "风险或根因判断", placeholder: "说明这些信号指向的风险、问题或根本原因。" },
-  { id: "actionRationale", label: "行动理由", placeholder: "说明为什么选择这些项目文件、工具与技术和干系人，以及预期如何闭环。" },
-] as const;
-
-function emptyDecisionReasoning(): DecisionReasoning {
-  return { observedSignals: "", riskOrRootCause: "", actionRationale: "", references: [] };
-}
-
 function emptyActionChainPools(): ActionChainPools {
   return { evidence_document: [], tool_technique: [], stakeholder: [] };
 }
@@ -1009,7 +986,6 @@ export function LabTimelinePage() {
   const [actionTarget, setActionTarget] = useState("");
   const [actionChainPools, setActionChainPools] = useState<ActionChainPools>(emptyActionChainPools);
   const [editingActionChainId, setEditingActionChainId] = useState<string | null>(null);
-  const [decisionReasoning, setDecisionReasoning] = useState<DecisionReasoning>(emptyDecisionReasoning);
   const [draftStatus, setDraftStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(null);
   const [draftLoadedKey, setDraftLoadedKey] = useState<string | null>(null);
@@ -1136,7 +1112,6 @@ export function LabTimelinePage() {
       setActionTarget("");
       setActionChainPools(emptyActionChainPools());
       setEditingActionChainId(null);
-      setDecisionReasoning(emptyDecisionReasoning());
       setDraftLoadedKey(null);
       draftLoadingKeyRef.current = null;
       setDraftStatus("idle");
@@ -1292,25 +1267,6 @@ export function LabTimelinePage() {
     Object.keys(cardColumnLabels).map((column) => [column, cards.filter((card) => card.column === column)]),
   ) as Record<PublicCard["column"], PublicCard[]>, [cards]);
   const cardById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
-  const openedMaterialReferences = materials?.materials.filter((material) => material.opened) ?? [];
-  const automaticReferences = useMemo<DecisionReference[]>(() => {
-    const references: DecisionReference[] = (materials?.materials ?? [])
-      .filter((material) => material.opened)
-      .map((material) => ({ type: "event_material", id: material.id }));
-    const referenceKeys = new Set(references.map((reference) => `${reference.type}:${reference.id}`));
-    for (const cardId of actionChains.flatMap((chain) => chain.documentCardIds)) {
-      const documentId = cardById.get(cardId)?.referenceId;
-      const key = `project_document:${documentId}`;
-      if (!documentId || referenceKeys.has(key)) continue;
-      references.push({ type: "project_document", id: documentId });
-      referenceKeys.add(key);
-    }
-    return references;
-  }, [actionChains, cardById, materials?.materials]);
-  const reasoningForPersistence = useMemo<DecisionReasoning>(() => ({
-    ...decisionReasoning,
-    references: automaticReferences,
-  }), [automaticReferences, decisionReasoning]);
   const draftKey = branch && scenarioId ? `${branch.id}:${branch.currentRoundNumber + 1}:${scenarioId}` : null;
 
   useEffect(() => {
@@ -1327,7 +1283,6 @@ export function LabTimelinePage() {
         setActionTarget("");
         setActionChainPools(emptyActionChainPools());
         setEditingActionChainId(null);
-        setDecisionReasoning({ ...emptyDecisionReasoning(), ...draft.reasoning, references: [] });
         setDraftUpdatedAt(draft.updatedAt);
         setDraftLoadedKey(draftKey);
         setDraftStatus("saved");
@@ -1353,7 +1308,6 @@ export function LabTimelinePage() {
           body: JSON.stringify({
             expectedRoundNumber: branch.currentRoundNumber + 1,
             actionChains,
-            reasoning: reasoningForPersistence,
           }),
         },
       ).then((saved) => {
@@ -1365,7 +1319,7 @@ export function LabTimelinePage() {
       });
     }, 700);
     return () => window.clearTimeout(saveTimer);
-  }, [actionChains, branch, draftKey, draftLoadedKey, materials?.cardsUnlocked, reasoningForPersistence, scenarioId]);
+  }, [actionChains, branch, draftKey, draftLoadedKey, materials?.cardsUnlocked, scenarioId]);
 
   const toggleCardSelection = (card: PublicCard) => {
     setActionMessage(null);
@@ -1451,15 +1405,10 @@ export function LabTimelinePage() {
     if (editingActionChainId === chainId) resetActionChainEditor();
   };
 
-  const reasoningComplete = reasoningFields.every((field) => {
-    const length = decisionReasoning[field.id].trim().length;
-    return length >= 20 && length <= 500;
-  });
   const actionChainComplete = actionChains.length > 0;
-  const referencesComplete = automaticReferences.length > 0;
   const actionChainEditorComplete = actionTarget.trim().length > 0
     && cardColumnOrder.every((column) => actionChainPools[column].length > 0);
-  const draftReady = reasoningComplete && actionChainComplete && referencesComplete;
+  const draftReady = actionChainComplete;
 
   const submitActionChain = async () => {
     if (!branch || !scenarioId || !draftReady || submittingRound || branch.status !== "active") return;
@@ -1481,7 +1430,6 @@ export function LabTimelinePage() {
           expectedRoundNumber: roundNumber,
           idempotencyKey,
           actionChains,
-          reasoning: reasoningForPersistence,
         }),
       });
       const nextStatus = result.scenarioState === "open" ? "active" : result.scenarioState === "closed" ? "completed" : "failed";
@@ -1501,7 +1449,6 @@ export function LabTimelinePage() {
       if (result.scenarioState === "open") {
         setActionChains([]);
         resetActionChainEditor();
-        setDecisionReasoning(emptyDecisionReasoning());
       }
     } catch (caught) {
       setActionMessage(caught instanceof Error ? caught.message : "行动链提交失败，请重试");
@@ -1913,34 +1860,8 @@ export function LabTimelinePage() {
                   )) : <p className="lab-v2-chain-empty">还没有固定的行动链。完成上方编辑区并点击“确定”后，新行动链会出现在这里，编辑区会自动清空。</p>}
                 </section>
 
-                <section className="lab-v2-reasoning-editor">
-                  <header><div><span>02 / DECISION REASONING</span><h4>决策依据</h4></div><p>三项均需填写 20–500 字，系统不会根据措辞给分。</p></header>
-                  <div className="lab-v2-reasoning-fields">
-                    {reasoningFields.map((field) => {
-                      const value = decisionReasoning[field.id];
-                      const valid = value.trim().length >= 20;
-                      return (
-                        <label key={field.id}>
-                          <span>{field.label}<b className={valid ? "valid" : ""}>{value.length}/500</b></span>
-                          <textarea value={value} disabled={branch.status !== "active"} maxLength={500} placeholder={field.placeholder} onChange={(event) => setDecisionReasoning((current) => ({ ...current, [field.id]: event.target.value }))} />
-                          <small>{valid ? "已满足最低字数" : `还需 ${Math.max(0, 20 - value.trim().length)} 字`}</small>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <section className="lab-v2-reference-editor">
-                  <header><div><span>03 / AUTOMATIC REFERENCES</span><h4>判断依据已自动关联</h4></div><p>系统自动引用你已读的事件材料，以及行动链中实际使用的项目文件，不需要重复勾选。</p></header>
-                  <div className="lab-v2-auto-references">
-                    <section><span>已读事件材料 · {openedMaterialReferences.length}</span>{openedMaterialReferences.map((material) => <i key={material.id}><b>{material.id}</b>{material.title}</i>)}</section>
-                    <section><span>行动链项目文件 · {automaticReferences.filter((reference) => reference.type === "project_document").length}</span>{automaticReferences.filter((reference) => reference.type === "project_document").map((reference) => <i key={reference.id}><b>{reference.id}</b>{documentState.find((document) => document.id === reference.id)?.title ?? "项目文件"}</i>)}</section>
-                  </div>
-                </section>
-
                 <footer className={`lab-v2-draft-readiness ${draftReady ? "ready" : ""}`}>
-                  <div><span>{draftReady ? "草稿已完整" : "提交前检查"}</span><strong>{draftReady ? "行动链、决策依据与自动引用均已满足提交条件" : "完成所有必填内容后才能提交行动链"}</strong></div>
-                  <ul><li className={actionChainComplete ? "done" : ""}>至少固定 1 条行动链</li><li className={reasoningComplete ? "done" : ""}>三段依据均满 20 字</li><li className={referencesComplete ? "done" : ""}>材料与项目文件已自动引用</li></ul>
+                  <div><span>{draftReady ? "行动链已就绪" : "还不能提交"}</span><strong>{draftReady ? "已固定行动链，可以推进项目一周" : "请先完成并固定至少 1 条行动链"}</strong></div>
                   <button type="button" disabled={!draftReady || submittingRound || branch.status !== "active"} onClick={() => void submitActionChain()}>{submittingRound ? "正在结算项目状态…" : branch.status !== "active" ? "情景已结算" : "提交行动链并推进一周"}</button>
                 </footer>
               </>

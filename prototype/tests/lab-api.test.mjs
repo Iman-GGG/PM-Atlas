@@ -14,7 +14,7 @@ function createEnv({
   const branch = {
     id: "branch-1",
     caseId: "car-control",
-    caseVersion: "v3",
+    caseVersion: "v4",
     contentHash,
     currentWeek,
     currentRoundNumber: 1,
@@ -33,7 +33,7 @@ function createEnv({
 
   const state = {
     branches: new Map(includeExistingBranch ? [[branch.id, { ...branch, identityKey }]] : []),
-    caseVersions: new Map(contentHash ? [["car-control:v3", contentHash]] : []),
+    caseVersions: new Map(contentHash ? [["car-control:v4", contentHash]] : []),
     users: new Map(),
     events: includeExistingBranch ? [...events] : [],
     snapshots: [],
@@ -170,7 +170,7 @@ async function request(path, options = {}, env = createEnv()) {
 }
 
 test("serves a public case manifest without private scenario content", async () => {
-  const response = await request("/api/lab/cases/car-control/v3");
+  const response = await request("/api/lab/cases/car-control/v4");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("cache-control") ?? "", /^public,/);
   const body = await response.json();
@@ -182,7 +182,7 @@ test("serves a public case manifest without private scenario content", async () 
 });
 
 test("filters public mainline data by section and week", async () => {
-  const response = await request("/api/lab/cases/car-control/v3/mainline?week=9&sections=baselineWorkload,documents");
+  const response = await request("/api/lab/cases/car-control/v4/mainline?week=9&sections=baselineWorkload,documents");
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.deepEqual(body.sections.baselineWorkload.weeks.map((item) => item.week), [9]);
@@ -238,7 +238,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
     },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-001" }),
   };
-  const response = await request("/api/lab/cases/car-control/v3/branches", options, env);
+  const response = await request("/api/lab/cases/car-control/v4/branches", options, env);
   assert.equal(response.status, 201);
   assert.match(response.headers.get("location") ?? "", /^\/api\/lab\/branches\/branch-/);
   const body = await response.json();
@@ -252,7 +252,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(env.__state.events.length, 1);
   assert.equal(env.__state.progress[0].highestUnlockedWeek, 9);
 
-  const replay = await request("/api/lab/cases/car-control/v3/branches", options, env);
+  const replay = await request("/api/lab/cases/car-control/v4/branches", options, env);
   assert.equal(replay.status, 200);
   const replayBody = await replay.json();
   assert.equal(replayBody.branch.id, body.branch.id);
@@ -306,34 +306,34 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(openedBody.cardsUnlocked, false);
 });
 
-test("creates a v3 branch when an immutable v2 case record already exists", async () => {
+test("creates a v4 branch when an immutable v3 case record already exists", async () => {
   const env = createEnv({ includeExistingBranch: false });
-  env.__state.caseVersions.set("car-control:v2", "legacy-v2-content-hash");
+  env.__state.caseVersions.set("car-control:v3", "legacy-v3-content-hash");
 
-  const response = await request("/api/lab/cases/car-control/v3/branches", {
+  const response = await request("/api/lab/cases/car-control/v4/branches", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       "oai-authenticated-user-id": "user-123",
       "oai-authenticated-user-email": "iman@example.com",
     },
-    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-version-003" }),
+    body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-version-004" }),
   }, env);
 
   assert.equal(response.status, 201);
-  assert.equal((await response.json()).branch.caseVersion, "v3");
-  assert.equal(env.__state.caseVersions.get("car-control:v2"), "legacy-v2-content-hash");
+  assert.equal((await response.json()).branch.caseVersion, "v4");
+  assert.equal(env.__state.caseVersions.get("car-control:v3"), "legacy-v3-content-hash");
 });
 
 test("requires login and a valid takeover request when creating a branch", async () => {
-  const anonymous = await request("/api/lab/cases/car-control/v3/branches", {
+  const anonymous = await request("/api/lab/cases/car-control/v4/branches", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-002" }),
   }, createEnv({ includeExistingBranch: false }));
   assert.equal(anonymous.status, 401);
 
-  const invalid = await request("/api/lab/cases/car-control/v3/branches", {
+  const invalid = await request("/api/lab/cases/car-control/v4/branches", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -346,7 +346,7 @@ test("requires login and a valid takeover request when creating a branch", async
 });
 
 test("validates branch ownership and strips scenario scoring fields", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v3");
+  const manifestResponse = await request("/api/lab/cases/car-control/v4");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -365,7 +365,7 @@ test("validates branch ownership and strips scenario scoring fields", async () =
 });
 
 test("does not reveal whether another user's branch exists", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v3");
+  const manifestResponse = await request("/api/lab/cases/car-control/v4");
   const manifest = await manifestResponse.json();
   const env = createEnv({ identityKey: "oai-user:owner", contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -379,7 +379,7 @@ test("does not reveal whether another user's branch exists", async () => {
 });
 
 test("reads and autosaves an owned action-chain draft", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v3");
+  const manifestResponse = await request("/api/lab/cases/car-control/v4");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const path = "/api/lab/branches/branch-1/scenarios/scenario-1/draft";
@@ -402,19 +402,10 @@ test("reads and autosaves an owned action-chain draft", async () => {
     toolTechniqueCardIds: ["S1-C05"],
     stakeholderCardIds: ["S1-C10"],
   }];
-  const reasoning = {
-    observedSignals: "试点车主反馈家庭成员无法查看车辆状态。",
-    riskOrRootCause: "新需求尚未纳入范围基线，直接开发会形成范围蔓延。",
-    actionRationale: "先分析影响并提交CCB，批准后纳入后续版本。",
-    references: [
-      { type: "event_material", id: "S1-M01" },
-      { type: "project_document", id: "D21" },
-    ],
-  };
   const savedResponse = await request(path, {
     method: "PUT",
     headers,
-    body: JSON.stringify({ expectedRoundNumber: 2, actionChains, reasoning }),
+    body: JSON.stringify({ expectedRoundNumber: 2, actionChains }),
   }, env);
   assert.equal(savedResponse.status, 200);
   assert.equal(env.__state.drafts.size, 1);
@@ -423,7 +414,7 @@ test("reads and autosaves an owned action-chain draft", async () => {
   assert.equal(restoredResponse.status, 200);
   const restoredDraft = await restoredResponse.json();
   assert.deepEqual(restoredDraft.actionChains, actionChains);
-  assert.deepEqual(restoredDraft.reasoning, reasoning);
+  assert.equal("reasoning" in restoredDraft, false);
 
   const invalidResponse = await request(path, {
     method: "PUT",
@@ -431,7 +422,6 @@ test("reads and autosaves an owned action-chain draft", async () => {
     body: JSON.stringify({
       expectedRoundNumber: 2,
       actionChains: [{ ...actionChains[0], stakeholderCardIds: ["S1-C05"] }],
-      reasoning: { ...reasoning, references: [] },
     }),
   }, env);
   assert.equal(invalidResponse.status, 400);

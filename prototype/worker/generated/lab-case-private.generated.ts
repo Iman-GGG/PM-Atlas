@@ -5,13 +5,13 @@ import type { PrivateLabCasePackage } from "../../lib/lab/contracts";
 export const privateLabCasePackage: PrivateLabCasePackage = {
   "schemaVersion": 1,
   "caseId": "car-control",
-  "caseVersion": "v3",
-  "contentHash": "e2ef46b6e929a4303d1d43f8478c0169d3371991ef8756a61af4d3de28d70847",
+  "caseVersion": "v4",
+  "contentHash": "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353",
   "sourceFiles": {
     "workloadPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "totalWeeks": 32,
       "personDaysPerPersonWeek": 5,
       "budgetAtCompletionCny": 2600000,
@@ -429,7 +429,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "schedulePlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "resourceSchedulingPolicy": {
         "defaultBufferWeeks": 3,
         "outsideWindowCostPerWeek": 5,
@@ -1695,7 +1695,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "stakeholderPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "raciPolicy": {
         "overviewRows": "level_1_work_packages",
         "exactlyOneAccountablePerRow": true,
@@ -2632,7 +2632,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "documentPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "statusPolicy": {
         "lifecycleStates": [
           "not_created",
@@ -4495,7 +4495,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "requirementPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "documentIds": {
         "requirements": "D21",
         "traceabilityMatrix": "D22"
@@ -5257,7 +5257,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "riskPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "probabilityScale": [
         {
           "level": 1,
@@ -6266,7 +6266,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "qualityPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "preMeasurementState": "not_measured",
       "scopeExclusionState": "not_applicable_by_approved_scope_change",
       "hardGates": [
@@ -6555,7 +6555,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "scenarioPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "eventDiscoveryPolicy": {
         "showDirectEventAnswerOnTakeover": false,
         "entrySignals": [
@@ -6578,44 +6578,10 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
         "trackMaterialViewsForAiReview": true
       },
       "decisionReasoningPolicy": {
-        "fields": [
-          {
-            "id": "observed_signals",
-            "label": "我观察到的关键信号",
-            "required": true,
-            "minimumCharacters": 20,
-            "maximumCharacters": 500
-          },
-          {
-            "id": "risk_or_root_cause",
-            "label": "我判断的主要风险/根因",
-            "required": true,
-            "minimumCharacters": 20,
-            "maximumCharacters": 500
-          },
-          {
-            "id": "action_rationale",
-            "label": "我选择这些行动的原因",
-            "required": true,
-            "minimumCharacters": 20,
-            "maximumCharacters": 500
-          }
-        ],
-        "allowReferences": [
-          "viewed_event_material",
-          "viewed_project_document",
-          "selected_action_card"
-        ],
-        "autosaveDraft": true,
-        "blockSubmissionWhenInvalid": true,
-        "showInlineValidation": true,
-        "keywordScoringEnabled": false,
-        "requireStandardTerminology": false,
-        "aiEvaluationBasis": [
-          "consistency_with_viewed_evidence",
-          "consistency_with_action_chain",
-          "consistency_with_objective_outcomes"
-        ]
+        "enabled": false,
+        "fields": [],
+        "submissionRequirement": "at_least_one_complete_action_chain",
+        "autosaveDraft": true
       },
       "aiReviewPolicy": {
         "overallScoreEnabled": false,
@@ -6681,7 +6647,6 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
         "takeoverCreatesForkPoint": true,
         "nodeDetails": [
           "action_chain",
-          "decision_reasoning",
           "state_diff",
           "document_diff"
         ],
@@ -9217,13 +9182,13 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "baselineWorkload": {
       "schemaVersion": 1,
       "generatedFrom": [
-        "content/lab-cases/car-control/v3/workload-plan.json",
-        "content/lab-cases/car-control/v3/schedule-plan.json",
-        "content/lab-cases/car-control/v3/stakeholder-plan.json",
-        "content/lab-cases/car-control/v3/document-plan.json"
+        "content/lab-cases/car-control/v4/workload-plan.json",
+        "content/lab-cases/car-control/v4/schedule-plan.json",
+        "content/lab-cases/car-control/v4/stakeholder-plan.json",
+        "content/lab-cases/car-control/v4/document-plan.json"
       ],
       "caseId": "car-control",
-      "caseVersion": "v3",
+      "caseVersion": "v4",
       "totalPlannedPersonDays": 1024,
       "totalActivities": 35,
       "budgetAtCompletionCny": 2600000,

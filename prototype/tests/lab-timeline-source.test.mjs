@@ -30,10 +30,8 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /确定并新增行动链/);
   assert.match(timeline, /function cardDisplayId/);
   assert.match(timeline, /`T\$\{toolMatch\[1\]\}`/);
-  assert.match(timeline, /判断依据已自动关联/);
-  assert.match(timeline, /观察到的信号/);
-  assert.match(timeline, /风险或根因判断/);
-  assert.match(timeline, /行动理由/);
+  assert.doesNotMatch(timeline, /DECISION REASONING|决策依据|AUTOMATIC REFERENCES|判断依据已自动关联/);
+  assert.match(timeline, /const draftReady = actionChainComplete/);
   assert.match(timeline, /云端保存中/);
   assert.match(timeline, /\/api\/lab\/branches\/\$\{encodeURIComponent\(branch\.id\)\}\/rounds/);
   assert.match(timeline, /提交行动链并推进一周/);
@@ -93,7 +91,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(styles, /\.lab-v2-chain-pools/);
   assert.match(styles, /\.lab-v2-chain-pool > div > button[^}]*width: fit-content[^}]*border-radius: 999px/);
   assert.match(styles, /\.lab-v2-action-chain-list/);
-  assert.match(styles, /\.lab-v2-reasoning-fields/);
+  assert.doesNotMatch(styles, /\.lab-v2-reasoning-fields|\.lab-v2-reference-editor|\.lab-v2-auto-references/);
   assert.match(styles, /\.lab-v2-draft-readiness/);
   assert.match(styles, /\.lab-v2-round-result/);
   assert.match(styles, /\.lab-v2-round-metrics/);
