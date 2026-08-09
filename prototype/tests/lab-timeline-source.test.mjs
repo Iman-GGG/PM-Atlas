@@ -88,8 +88,10 @@ test("renders the complete monochrome project control center", async () => {
   assert.doesNotMatch(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
   assert.match(styles, /\.lab-v2-card-candidates/);
+  assert.match(styles, /\.lab-v2-card-candidates > section > button[^}]*width: fit-content[^}]*border-radius: 999px/);
   assert.match(styles, /\.lab-v2-action-chain-composer/);
   assert.match(styles, /\.lab-v2-chain-pools/);
+  assert.match(styles, /\.lab-v2-chain-pool > div > button[^}]*width: fit-content[^}]*border-radius: 999px/);
   assert.match(styles, /\.lab-v2-action-chain-list/);
   assert.match(styles, /\.lab-v2-reasoning-fields/);
   assert.match(styles, /\.lab-v2-draft-readiness/);
