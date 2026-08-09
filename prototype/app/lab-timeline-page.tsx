@@ -284,15 +284,20 @@ type MaterialList = {
 
 type PublicCard = {
   id: string;
-  column: "evidence_document" | "tool_technique" | "execution_action" | "stakeholder";
+  column: "evidence_document" | "tool_technique" | "stakeholder";
   referenceId: string;
   title: string;
 };
 
-type CardConnection = {
-  fromCardId: string;
-  toCardId: string;
+type ManagementActionChain = {
+  id: string;
+  title: string;
+  documentCardIds: string[];
+  toolTechniqueCardIds: string[];
+  stakeholderCardIds: string[];
 };
+
+type ActionChainPools = Record<PublicCard["column"], string[]>;
 
 type DecisionReference = {
   type: "event_material" | "project_document" | "action_card";
@@ -310,8 +315,7 @@ type RoundDraft = {
   branchId: string;
   scenarioId: string;
   roundNumber: number;
-  selectedCardIds: string[];
-  connections: CardConnection[];
+  actionChains: ManagementActionChain[];
   reasoning: DecisionReasoning;
   updatedAt: string | null;
 };
@@ -420,7 +424,7 @@ type ManagementArea = {
 };
 
 const caseId = "car-control";
-const caseVersion = "v2";
+const caseVersion = "v3";
 const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
@@ -450,10 +454,9 @@ const materialGroupLabels: Record<string, string> = {
 const cardColumnLabels: Record<PublicCard["column"], string> = {
   evidence_document: "项目文件",
   tool_technique: "工具与技术",
-  execution_action: "执行行动",
   stakeholder: "干系人",
 };
-const cardColumnOrder = Object.keys(cardColumnLabels) as PublicCard["column"][];
+const cardColumnOrder: PublicCard["column"][] = ["evidence_document", "tool_technique", "stakeholder"];
 const gapCategoryLabels: Record<string, string> = {
   evidence: "证据识别",
   communication: "沟通",
@@ -494,11 +497,26 @@ const pathClassificationLabels: Record<string, string> = {
 const reasoningFields = [
   { id: "observedSignals", label: "观察到的信号", placeholder: "写下你从邮件、报告、消息和仪表盘异常中观察到的客观信号。" },
   { id: "riskOrRootCause", label: "风险或根因判断", placeholder: "说明这些信号指向的风险、问题或根本原因。" },
-  { id: "actionRationale", label: "行动理由", placeholder: "说明为什么选择这组文件、工具、行动和干系人，以及预期如何闭环。" },
+  { id: "actionRationale", label: "行动理由", placeholder: "说明为什么选择这些项目文件、工具与技术和干系人，以及预期如何闭环。" },
 ] as const;
 
 function emptyDecisionReasoning(): DecisionReasoning {
   return { observedSignals: "", riskOrRootCause: "", actionRationale: "", references: [] };
+}
+
+function emptyActionChainPools(): ActionChainPools {
+  return { evidence_document: [], tool_technique: [], stakeholder: [] };
+}
+
+function actionChainCardIds(chain: ManagementActionChain, column: PublicCard["column"]): string[] {
+  if (column === "evidence_document") return chain.documentCardIds;
+  if (column === "tool_technique") return chain.toolTechniqueCardIds;
+  return chain.stakeholderCardIds;
+}
+
+function cardDisplayId(card: PublicCard): string {
+  const toolMatch = /^tool:(\d{3})$/.exec(card.referenceId);
+  return toolMatch ? `T${toolMatch[1]}` : card.referenceId;
 }
 const engagementScores: Record<string, number> = {
   unaware: 1,
@@ -987,10 +1005,11 @@ export function LabTimelinePage() {
   const [materials, setMaterials] = useState<MaterialList | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<OpenedMaterial | null>(null);
   const [cards, setCards] = useState<PublicCard[]>([]);
-  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
-  const [cardConnections, setCardConnections] = useState<CardConnection[]>([]);
+  const [actionChains, setActionChains] = useState<ManagementActionChain[]>([]);
+  const [actionTarget, setActionTarget] = useState("");
+  const [actionChainPools, setActionChainPools] = useState<ActionChainPools>(emptyActionChainPools);
+  const [editingActionChainId, setEditingActionChainId] = useState<string | null>(null);
   const [decisionReasoning, setDecisionReasoning] = useState<DecisionReasoning>(emptyDecisionReasoning);
-  const [pendingConnectionFromId, setPendingConnectionFromId] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(null);
   const [draftLoadedKey, setDraftLoadedKey] = useState<string | null>(null);
@@ -1113,10 +1132,11 @@ export function LabTimelinePage() {
       setScenarioTitle(created.scenario.title);
       setSelectedMaterial(null);
       setCards([]);
-      setSelectedCardIds([]);
-      setCardConnections([]);
+      setActionChains([]);
+      setActionTarget("");
+      setActionChainPools(emptyActionChainPools());
+      setEditingActionChainId(null);
       setDecisionReasoning(emptyDecisionReasoning());
-      setPendingConnectionFromId(null);
       setDraftLoadedKey(null);
       draftLoadingKeyRef.current = null;
       setDraftStatus("idle");
@@ -1246,7 +1266,7 @@ export function LabTimelinePage() {
       const history = allDocumentEvents.filter((event) => event.week <= selectedWeek && documentActions(event, document.id).length > 0);
       const branchUpdated = Boolean(branch && branchState && selectedWeek === branch.currentWeek && branchState.documentRevisions.includes(document.id));
       const visibleHistory = branchUpdated
-        ? [...history, { id: `branch-${branch.currentRoundNumber}-${document.id}`, week: branch.currentWeek, reason: "个人分支回合结算更新" }]
+        ? [...history, { id: `branch-${branch?.currentRoundNumber ?? 0}-${document.id}`, week: branch?.currentWeek ?? selectedWeek, reason: "个人分支回合结算更新" }]
         : history;
       return {
         ...document,
@@ -1272,12 +1292,25 @@ export function LabTimelinePage() {
     Object.keys(cardColumnLabels).map((column) => [column, cards.filter((card) => card.column === column)]),
   ) as Record<PublicCard["column"], PublicCard[]>, [cards]);
   const cardById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
-  const selectedCards = selectedCardIds.flatMap((cardId) => {
-    const card = cardById.get(cardId);
-    return card ? [card] : [];
-  });
   const openedMaterialReferences = materials?.materials.filter((material) => material.opened) ?? [];
-  const availableDocumentReferences = documentState.filter((document) => document.createdWeek <= (branch?.currentWeek ?? selectedWeek));
+  const automaticReferences = useMemo<DecisionReference[]>(() => {
+    const references: DecisionReference[] = (materials?.materials ?? [])
+      .filter((material) => material.opened)
+      .map((material) => ({ type: "event_material", id: material.id }));
+    const referenceKeys = new Set(references.map((reference) => `${reference.type}:${reference.id}`));
+    for (const cardId of actionChains.flatMap((chain) => chain.documentCardIds)) {
+      const documentId = cardById.get(cardId)?.referenceId;
+      const key = `project_document:${documentId}`;
+      if (!documentId || referenceKeys.has(key)) continue;
+      references.push({ type: "project_document", id: documentId });
+      referenceKeys.add(key);
+    }
+    return references;
+  }, [actionChains, cardById, materials?.materials]);
+  const reasoningForPersistence = useMemo<DecisionReasoning>(() => ({
+    ...decisionReasoning,
+    references: automaticReferences,
+  }), [automaticReferences, decisionReasoning]);
   const draftKey = branch && scenarioId ? `${branch.id}:${branch.currentRoundNumber + 1}:${scenarioId}` : null;
 
   useEffect(() => {
@@ -1290,9 +1323,11 @@ export function LabTimelinePage() {
         const draft = await apiJson<RoundDraft>(
           `/api/lab/branches/${encodeURIComponent(branch.id)}/scenarios/${encodeURIComponent(scenarioId)}/draft`,
         );
-        setSelectedCardIds(draft.selectedCardIds.filter((cardId) => cards.some((card) => card.id === cardId)));
-        setCardConnections(draft.connections);
-        setDecisionReasoning({ ...emptyDecisionReasoning(), ...draft.reasoning, references: draft.reasoning.references ?? [] });
+        setActionChains(draft.actionChains);
+        setActionTarget("");
+        setActionChainPools(emptyActionChainPools());
+        setEditingActionChainId(null);
+        setDecisionReasoning({ ...emptyDecisionReasoning(), ...draft.reasoning, references: [] });
         setDraftUpdatedAt(draft.updatedAt);
         setDraftLoadedKey(draftKey);
         setDraftStatus("saved");
@@ -1308,8 +1343,8 @@ export function LabTimelinePage() {
 
   useEffect(() => {
     if (!branch || branch.status !== "active" || !scenarioId || !draftKey || draftLoadedKey !== draftKey || !materials?.cardsUnlocked) return;
-    setDraftStatus("saving");
     const saveTimer = window.setTimeout(() => {
+      setDraftStatus("saving");
       void apiJson<RoundDraft>(
         `/api/lab/branches/${encodeURIComponent(branch.id)}/scenarios/${encodeURIComponent(scenarioId)}/draft`,
         {
@@ -1317,9 +1352,8 @@ export function LabTimelinePage() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             expectedRoundNumber: branch.currentRoundNumber + 1,
-            selectedCardIds,
-            connections: cardConnections,
-            reasoning: decisionReasoning,
+            actionChains,
+            reasoning: reasoningForPersistence,
           }),
         },
       ).then((saved) => {
@@ -1331,27 +1365,79 @@ export function LabTimelinePage() {
       });
     }, 700);
     return () => window.clearTimeout(saveTimer);
-  }, [branch, cardConnections, decisionReasoning, draftKey, draftLoadedKey, materials?.cardsUnlocked, scenarioId, selectedCardIds]);
+  }, [actionChains, branch, draftKey, draftLoadedKey, materials?.cardsUnlocked, reasoningForPersistence, scenarioId]);
 
-  const toggleCardSelection = (cardId: string) => {
+  const toggleCardSelection = (card: PublicCard) => {
     setActionMessage(null);
-    setSelectedCardIds((current) => {
-      if (!current.includes(cardId)) return [...current, cardId];
-      return current.filter((selectedId) => selectedId !== cardId);
-    });
-    if (selectedCardIds.includes(cardId)) {
-      setCardConnections((current) => current.filter((connection) => connection.fromCardId !== cardId && connection.toCardId !== cardId));
-      setDecisionReasoning((current) => ({
-        ...current,
-        references: current.references.filter((reference) => reference.type !== "action_card" || reference.id !== cardId),
-      }));
-      if (pendingConnectionFromId === cardId) setPendingConnectionFromId(null);
-    }
+    setActionChainPools((current) => ({
+      ...current,
+      [card.column]: current[card.column].includes(card.id)
+        ? current[card.column].filter((cardId) => cardId !== card.id)
+        : [...current[card.column], card.id],
+    }));
   };
 
-  const moveSelectedCard = (cardId: string, direction: -1 | 1) => {
-    setSelectedCardIds((current) => {
-      const index = current.indexOf(cardId);
+  const resetActionChainEditor = () => {
+    setActionTarget("");
+    setActionChainPools(emptyActionChainPools());
+    setEditingActionChainId(null);
+    setActionMessage(null);
+  };
+
+  const confirmActionChain = () => {
+    const title = actionTarget.trim();
+    if (!title) {
+      setActionMessage("请先写清这条行动链要解决的行动目标。");
+      return;
+    }
+    if (cardColumnOrder.some((column) => actionChainPools[column].length === 0)) {
+      setActionMessage("每条行动链都需要至少 1 个项目文件、1 个工具与技术和 1 个干系人。");
+      return;
+    }
+    const chain: ManagementActionChain = {
+      id: editingActionChainId ?? `chain-${crypto.randomUUID()}`,
+      title,
+      documentCardIds: actionChainPools.evidence_document,
+      toolTechniqueCardIds: actionChainPools.tool_technique,
+      stakeholderCardIds: actionChainPools.stakeholder,
+    };
+    setActionChains((current) => editingActionChainId
+      ? current.map((item) => item.id === editingActionChainId ? chain : item)
+      : [...current, chain]);
+    resetActionChainEditor();
+  };
+
+  const editActionChain = (chain: ManagementActionChain) => {
+    setActionTarget(chain.title);
+    setActionChainPools({
+      evidence_document: chain.documentCardIds,
+      tool_technique: chain.toolTechniqueCardIds,
+      stakeholder: chain.stakeholderCardIds,
+    });
+    setEditingActionChainId(chain.id);
+    setActionMessage(null);
+  };
+
+  const duplicateActionChain = (chain: ManagementActionChain) => {
+    const duplicate = {
+      ...chain,
+      id: `chain-${crypto.randomUUID()}`,
+      title: `${chain.title.slice(0, 76)}（副本）`,
+      documentCardIds: [...chain.documentCardIds],
+      toolTechniqueCardIds: [...chain.toolTechniqueCardIds],
+      stakeholderCardIds: [...chain.stakeholderCardIds],
+    };
+    setActionChains((current) => {
+      const index = current.findIndex((item) => item.id === chain.id);
+      const next = [...current];
+      next.splice(index + 1, 0, duplicate);
+      return next;
+    });
+  };
+
+  const moveActionChain = (chainId: string, direction: -1 | 1) => {
+    setActionChains((current) => {
+      const index = current.findIndex((chain) => chain.id === chainId);
       const nextIndex = index + direction;
       if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
       const reordered = [...current];
@@ -1360,49 +1446,20 @@ export function LabTimelinePage() {
     });
   };
 
-  const connectSelectedCard = (cardId: string) => {
-    setActionMessage(null);
-    if (!pendingConnectionFromId) {
-      setPendingConnectionFromId(cardId);
-      return;
-    }
-    if (pendingConnectionFromId === cardId) {
-      setPendingConnectionFromId(null);
-      return;
-    }
-    const fromCard = cardById.get(pendingConnectionFromId);
-    const toCard = cardById.get(cardId);
-    if (!fromCard || !toCard || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1) {
-      setActionMessage("只能按“项目文件 → 工具与技术 → 执行行动 → 干系人”连接相邻列卡片。");
-      return;
-    }
-    setCardConnections((current) => current.some((connection) => connection.fromCardId === fromCard.id && connection.toCardId === toCard.id)
-      ? current
-      : [...current, { fromCardId: fromCard.id, toCardId: toCard.id }]);
-    setPendingConnectionFromId(null);
+  const removeActionChain = (chainId: string) => {
+    setActionChains((current) => current.filter((chain) => chain.id !== chainId));
+    if (editingActionChainId === chainId) resetActionChainEditor();
   };
 
-  const toggleDecisionReference = (reference: DecisionReference) => {
-    setDecisionReasoning((current) => {
-      const exists = current.references.some((item) => item.type === reference.type && item.id === reference.id);
-      return {
-        ...current,
-        references: exists
-          ? current.references.filter((item) => item.type !== reference.type || item.id !== reference.id)
-          : [...current.references, reference],
-      };
-    });
-  };
-
-  const connectedCardIds = new Set(cardConnections.flatMap((connection) => [connection.fromCardId, connection.toCardId]));
   const reasoningComplete = reasoningFields.every((field) => {
     const length = decisionReasoning[field.id].trim().length;
     return length >= 20 && length <= 500;
   });
-  const actionChainComplete = selectedCardIds.length > 1
-    && cardConnections.length > 0
-    && selectedCardIds.every((cardId) => connectedCardIds.has(cardId));
-  const draftReady = reasoningComplete && actionChainComplete && decisionReasoning.references.length > 0;
+  const actionChainComplete = actionChains.length > 0;
+  const referencesComplete = automaticReferences.length > 0;
+  const actionChainEditorComplete = actionTarget.trim().length > 0
+    && cardColumnOrder.every((column) => actionChainPools[column].length > 0);
+  const draftReady = reasoningComplete && actionChainComplete && referencesComplete;
 
   const submitActionChain = async () => {
     if (!branch || !scenarioId || !draftReady || submittingRound || branch.status !== "active") return;
@@ -1423,9 +1480,8 @@ export function LabTimelinePage() {
           scenarioId,
           expectedRoundNumber: roundNumber,
           idempotencyKey,
-          selectedCardIds,
-          connections: cardConnections,
-          reasoning: decisionReasoning,
+          actionChains,
+          reasoning: reasoningForPersistence,
         }),
       });
       const nextStatus = result.scenarioState === "open" ? "active" : result.scenarioState === "closed" ? "completed" : "failed";
@@ -1442,10 +1498,9 @@ export function LabTimelinePage() {
       draftLoadingKeyRef.current = null;
       setDraftStatus("idle");
       setDraftUpdatedAt(null);
-      setPendingConnectionFromId(null);
       if (result.scenarioState === "open") {
-        setSelectedCardIds([]);
-        setCardConnections([]);
+        setActionChains([]);
+        resetActionChainEditor();
         setDecisionReasoning(emptyDecisionReasoning());
       }
     } catch (caught) {
@@ -1725,7 +1780,7 @@ export function LabTimelinePage() {
         <section className="lab-v2-branch-workspace">
           <header>
             <div><span>PERSONAL BRANCH / W{branch.currentWeek} / ROUND {branch.currentRoundNumber}</span><h2>{scenarioTitle}</h2><p>事件材料需要逐项打开；系统只呈现客观事实，不提示正确答案。</p></div>
-            <div><strong>{materials?.openedCount ?? 0}/{materials?.totalCount ?? 0}</strong><span>材料已查看</span><small>{branch.status !== "active" ? "情景结算完成" : materials?.cardsUnlocked ? "行动卡已解锁" : "继续观察线索"}</small></div>
+            <div><strong>{materials?.openedCount ?? 0}/{materials?.totalCount ?? 0}</strong><span>材料已查看</span><small>{branch.status !== "active" ? "情景结算完成" : materials?.cardsUnlocked ? "三类卡池已解锁" : "继续观察线索"}</small></div>
           </header>
           <div className="lab-v2-material-layout">
             <aside>
@@ -1755,7 +1810,7 @@ export function LabTimelinePage() {
           </div>
           <div className={`lab-v2-action-cards ${materials?.cardsUnlocked ? "unlocked" : ""}`}>
             <header>
-              <div><span>ACTION CHAIN</span><h3>{materials?.cardsUnlocked ? "组装你的管理行动链" : "查看全部材料后解锁行动链"}</h3></div>
+              <div><span>ACTION CHAIN</span><h3>{materials?.cardsUnlocked ? "定义目标并创建管理行动链" : "查看全部材料后解锁行动链"}</h3></div>
               <strong>{materials?.cardsUnlocked ? branch.status !== "active" ? "情景已结算" : draftStatus === "loading" ? "读取草稿" : draftStatus === "saving" ? "云端保存中" : draftStatus === "error" ? "保存失败" : draftUpdatedAt ? `已保存 ${formatDraftTime(draftUpdatedAt)}` : "云端草稿" : "LOCKED"}</strong>
             </header>
             {materials?.cardsUnlocked ? (
@@ -1792,42 +1847,70 @@ export function LabTimelinePage() {
                   {cardColumnOrder.map((column) => (
                     <section key={column}>
                       <span>{cardColumnLabels[column]} · {cardsByColumn[column].length}</span>
-                      {cardsByColumn[column].map((card) => (
-                        <button key={card.id} type="button" disabled={branch.status !== "active"} className={selectedCardIds.includes(card.id) ? "selected" : ""} onClick={() => toggleCardSelection(card.id)}>
-                          <small>{card.id}</small><strong>{card.title}</strong><i>{selectedCardIds.includes(card.id) ? "已选择" : "+ 选择"}</i>
-                        </button>
-                      ))}
+                      {cardsByColumn[column].map((card) => {
+                        const selected = actionChainPools[column].includes(card.id);
+                        const usageCount = actionChains.filter((chain) => actionChainCardIds(chain, column).includes(card.id)).length;
+                        return (
+                          <button key={card.id} type="button" disabled={branch.status !== "active"} className={selected ? "selected" : ""} onClick={() => toggleCardSelection(card)}>
+                            <small>{cardDisplayId(card)}</small><strong>{card.title}</strong><i>{selected ? "已加入本链" : usageCount ? `已用于 ${usageCount} 条 · 再次加入` : "+ 加入本链"}</i>
+                          </button>
+                        );
+                      })}
                     </section>
                   ))}
                 </div>
 
-                <section className="lab-v2-chain-editor">
-                  <header><div><span>01 / SELECT · CONNECT · ORDER</span><h4>行动链工作台</h4></div><p>先选卡，再从左到右连接相邻列；可调整卡片顺序或删除。</p></header>
-                  {selectedCards.length ? (
-                    <div className="lab-v2-selected-chain">
-                      {selectedCards.map((card, index) => (
-                        <article key={card.id} className={pendingConnectionFromId === card.id ? "linking" : ""}>
-                          <b>{String(index + 1).padStart(2, "0")}</b>
-                          <span><small>{cardColumnLabels[card.column]} · {card.id}</small><strong>{card.title}</strong></span>
-                          <div>
-                            <button type="button" title="上移" disabled={branch.status !== "active" || index === 0} onClick={() => moveSelectedCard(card.id, -1)}>↑</button>
-                            <button type="button" title="下移" disabled={branch.status !== "active" || index === selectedCards.length - 1} onClick={() => moveSelectedCard(card.id, 1)}>↓</button>
-                            <button type="button" className="link" disabled={branch.status !== "active"} onClick={() => connectSelectedCard(card.id)}>{pendingConnectionFromId ? pendingConnectionFromId === card.id ? "取消" : "连到此卡" : "开始连接"}</button>
-                            <button type="button" title="删除" disabled={branch.status !== "active"} onClick={() => toggleCardSelection(card.id)}>×</button>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : <p className="lab-v2-chain-empty">从上方四列中选择卡片，建立你的最小管理行动集合。</p>}
-                  <div className="lab-v2-connections">
-                    <span>已建立 {cardConnections.length} 条连接</span>
-                    <div>{cardConnections.map((connection) => (
-                      <button key={`${connection.fromCardId}-${connection.toCardId}`} type="button" disabled={branch.status !== "active"} onClick={() => setCardConnections((current) => current.filter((item) => item.fromCardId !== connection.fromCardId || item.toCardId !== connection.toCardId))}>
-                        <b>{cardById.get(connection.fromCardId)?.title}</b><i>→</i><b>{cardById.get(connection.toCardId)?.title}</b><em>删除</em>
-                      </button>
-                    ))}</div>
+                <section className="lab-v2-action-chain-composer">
+                  <header><div><span>01 / DEFINE AN ACTION</span><h4>{editingActionChainId ? "编辑行动链" : "创建一条行动链"}</h4></div><p>写明行动目标，再从三个固定卡池中选择本次需要的资源和参与者。</p></header>
+                  <label className="lab-v2-chain-title-field">
+                    <span>行动目标 <b>{actionTarget.length}/80</b></span>
+                    <input value={actionTarget} maxLength={80} disabled={branch.status !== "active"} placeholder="例如：确认延期影响并形成供应商恢复计划" onChange={(event) => setActionTarget(event.target.value)} />
+                    <small>这段文字会作为行动链名称，用于表达你的管理意图；不会按关键词计分。</small>
+                  </label>
+                  <div className="lab-v2-chain-pools">
+                    {cardColumnOrder.map((column) => (
+                      <section key={column} className="lab-v2-chain-pool">
+                        <header><span>{cardColumnLabels[column]}</span><b>{actionChainPools[column].length}</b></header>
+                        <div>
+                          {actionChainPools[column].map((cardId) => {
+                            const card = cardById.get(cardId);
+                            return card ? <button key={cardId} type="button" disabled={branch.status !== "active"} onClick={() => toggleCardSelection(card)}><small>{cardDisplayId(card)}</small><strong>{card.title}</strong><i>×</i></button> : null;
+                          })}
+                          {!actionChainPools[column].length && <p>从上方“{cardColumnLabels[column]}”卡池选择</p>}
+                        </div>
+                      </section>
+                    ))}
                   </div>
+                  <footer className="lab-v2-chain-composer-actions">
+                    <span>{actionChainEditorComplete ? "三个卡池已就绪" : "行动目标和三个卡池都需要填写"}</span>
+                    {editingActionChainId && <button type="button" disabled={branch.status !== "active"} onClick={resetActionChainEditor}>取消编辑</button>}
+                    <button type="button" className="confirm" disabled={branch.status !== "active"} onClick={confirmActionChain}>{editingActionChainId ? "确定修改" : "确定并新增行动链"}</button>
+                  </footer>
                   {actionMessage && <p className="lab-v2-action-message">{actionMessage}</p>}
+                </section>
+
+                <section className="lab-v2-action-chain-list">
+                  <header><div><span>FIXED ACTION CHAINS</span><h4>已生成的行动链</h4></div><strong>{actionChains.length} 条</strong></header>
+                  {actionChains.length ? actionChains.map((chain, index) => (
+                    <article key={chain.id} className={editingActionChainId === chain.id ? "editing" : ""}>
+                      <header>
+                        <b>{String(index + 1).padStart(2, "0")}</b>
+                        <div><small>ACTION TARGET</small><h5>{chain.title}</h5></div>
+                        <nav>
+                          <button type="button" title="上移" disabled={branch.status !== "active" || index === 0} onClick={() => moveActionChain(chain.id, -1)}>↑</button>
+                          <button type="button" title="下移" disabled={branch.status !== "active" || index === actionChains.length - 1} onClick={() => moveActionChain(chain.id, 1)}>↓</button>
+                          <button type="button" disabled={branch.status !== "active"} onClick={() => editActionChain(chain)}>编辑</button>
+                          <button type="button" disabled={branch.status !== "active"} onClick={() => duplicateActionChain(chain)}>复制</button>
+                          <button type="button" className="danger" disabled={branch.status !== "active"} onClick={() => removeActionChain(chain.id)}>删除</button>
+                        </nav>
+                      </header>
+                      <div className="lab-v2-action-chain-groups">
+                        {cardColumnOrder.map((column) => (
+                          <section key={column}><span>{cardColumnLabels[column]}</span><div>{actionChainCardIds(chain, column).map((cardId) => { const card = cardById.get(cardId); return <b key={cardId}><small>{card ? cardDisplayId(card) : cardId}</small>{card?.title ?? cardId}</b>; })}</div></section>
+                        ))}
+                      </div>
+                    </article>
+                  )) : <p className="lab-v2-chain-empty">还没有固定的行动链。完成上方编辑区并点击“确定”后，新行动链会出现在这里，编辑区会自动清空。</p>}
                 </section>
 
                 <section className="lab-v2-reasoning-editor">
@@ -1848,17 +1931,16 @@ export function LabTimelinePage() {
                 </section>
 
                 <section className="lab-v2-reference-editor">
-                  <header><div><span>03 / REFERENCES</span><h4>引用你的判断依据</h4></div><p>可引用已打开材料、当前可用项目文件和已选行动卡。</p></header>
-                  <div>
-                    <section><span>事件材料</span>{openedMaterialReferences.map((material) => <button key={material.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "event_material" && reference.id === material.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "event_material", id: material.id })}><b>{material.id}</b>{material.title}</button>)}</section>
-                    <section><span>项目文件</span>{availableDocumentReferences.map((document) => <button key={document.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "project_document" && reference.id === document.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "project_document", id: document.id })}><b>{document.id}</b>{document.title}</button>)}</section>
-                    <section><span>行动卡片</span>{selectedCards.map((card) => <button key={card.id} type="button" disabled={branch.status !== "active"} className={decisionReasoning.references.some((reference) => reference.type === "action_card" && reference.id === card.id) ? "selected" : ""} onClick={() => toggleDecisionReference({ type: "action_card", id: card.id })}><b>{card.id}</b>{card.title}</button>)}</section>
+                  <header><div><span>03 / AUTOMATIC REFERENCES</span><h4>判断依据已自动关联</h4></div><p>系统自动引用你已读的事件材料，以及行动链中实际使用的项目文件，不需要重复勾选。</p></header>
+                  <div className="lab-v2-auto-references">
+                    <section><span>已读事件材料 · {openedMaterialReferences.length}</span>{openedMaterialReferences.map((material) => <i key={material.id}><b>{material.id}</b>{material.title}</i>)}</section>
+                    <section><span>行动链项目文件 · {automaticReferences.filter((reference) => reference.type === "project_document").length}</span>{automaticReferences.filter((reference) => reference.type === "project_document").map((reference) => <i key={reference.id}><b>{reference.id}</b>{documentState.find((document) => document.id === reference.id)?.title ?? "项目文件"}</i>)}</section>
                   </div>
                 </section>
 
                 <footer className={`lab-v2-draft-readiness ${draftReady ? "ready" : ""}`}>
-                  <div><span>{draftReady ? "草稿已完整" : "提交前检查"}</span><strong>{draftReady ? "行动链、决策依据与引用均已满足提交条件" : "完成所有必填内容后才能提交行动链"}</strong></div>
-                  <ul><li className={actionChainComplete ? "done" : ""}>行动卡均已连接</li><li className={reasoningComplete ? "done" : ""}>三段依据均满 20 字</li><li className={decisionReasoning.references.length ? "done" : ""}>至少引用 1 项依据</li></ul>
+                  <div><span>{draftReady ? "草稿已完整" : "提交前检查"}</span><strong>{draftReady ? "行动链、决策依据与自动引用均已满足提交条件" : "完成所有必填内容后才能提交行动链"}</strong></div>
+                  <ul><li className={actionChainComplete ? "done" : ""}>至少固定 1 条行动链</li><li className={reasoningComplete ? "done" : ""}>三段依据均满 20 字</li><li className={referencesComplete ? "done" : ""}>材料与项目文件已自动引用</li></ul>
                   <button type="button" disabled={!draftReady || submittingRound || branch.status !== "active"} onClick={() => void submitActionChain()}>{submittingRound ? "正在结算项目状态…" : branch.status !== "active" ? "情景已结算" : "提交行动链并推进一周"}</button>
                 </footer>
               </>

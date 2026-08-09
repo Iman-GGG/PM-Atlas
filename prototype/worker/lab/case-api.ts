@@ -1,8 +1,8 @@
 import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated";
 import type {
-  CardConnection,
   DecisionReasoning,
   DecisionReference,
+  ManagementActionChain,
   RoundResult,
   RoundSubmissionRequest,
   ScenarioDefinition,
@@ -192,13 +192,11 @@ function materialSummary(group: string, material: Record<string, unknown>, opene
   };
 }
 
-const cardColumnOrder = ["evidence_document", "tool_technique", "execution_action", "stakeholder"] as const;
 const referenceTypes = new Set<DecisionReference["type"]>(["event_material", "project_document", "action_card"]);
 
 type RoundDraftBody = {
   expectedRoundNumber: number;
-  selectedCardIds: string[];
-  connections: CardConnection[];
+  actionChains: ManagementActionChain[];
   reasoning: DecisionReasoning;
 };
 
@@ -214,25 +212,77 @@ function parseStoredJson<T>(value: string, fallback: T): T {
   }
 }
 
+function parseCardIdList(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length > 32) return null;
+  if (value.some((cardId) => typeof cardId !== "string" || !/^[A-Za-z0-9._:-]{1,64}$/.test(cardId))) return null;
+  return value as string[];
+}
+
+function parseActionChainValue(value: unknown): ManagementActionChain | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const chain = value as Record<string, unknown>;
+  if (typeof chain.id !== "string" || !/^[A-Za-z0-9._:-]{1,96}$/.test(chain.id)) return null;
+  if (typeof chain.title !== "string" || chain.title.trim().length < 1 || chain.title.trim().length > 80) return null;
+  const documentCardIds = parseCardIdList(chain.documentCardIds);
+  const toolTechniqueCardIds = parseCardIdList(chain.toolTechniqueCardIds);
+  const stakeholderCardIds = parseCardIdList(chain.stakeholderCardIds);
+  if (!documentCardIds || !toolTechniqueCardIds || !stakeholderCardIds) return null;
+  return {
+    id: chain.id,
+    title: chain.title.trim(),
+    documentCardIds,
+    toolTechniqueCardIds,
+    stakeholderCardIds,
+  };
+}
+
+function flattenActionChainCardIds(actionChains: ManagementActionChain[]): string[] {
+  return [...new Set(actionChains.flatMap((chain) => [
+    ...chain.documentCardIds,
+    ...chain.toolTechniqueCardIds,
+    ...chain.stakeholderCardIds,
+  ]))];
+}
+
+function readStoredActionChains(
+  storedValue: string,
+  selectedCardIds: string[],
+  scenario: ScenarioDefinition,
+): ManagementActionChain[] {
+  const parsed = parseStoredJson<unknown>(storedValue, []);
+  if (Array.isArray(parsed)) {
+    const actionChains = parsed.map(parseActionChainValue);
+    if (parsed.length > 0 && actionChains.length === parsed.length && actionChains.every(Boolean)) {
+      return actionChains as ManagementActionChain[];
+    }
+    if (parsed.length === 0 && selectedCardIds.length === 0) return [];
+  }
+
+  const selectedCards = scenario.cards.filter((card) => selectedCardIds.includes(card.id));
+  const documentCardIds = selectedCards.filter((card) => card.column === "evidence_document").map((card) => card.id);
+  const toolTechniqueCardIds = selectedCards.filter((card) => card.column === "tool_technique").map((card) => card.id);
+  const stakeholderCardIds = selectedCards.filter((card) => card.column === "stakeholder").map((card) => card.id);
+  if (!documentCardIds.length || !toolTechniqueCardIds.length || !stakeholderCardIds.length) return [];
+  return [{
+    id: `legacy-${scenario.id}`,
+    title: "继续完善上一版行动",
+    documentCardIds,
+    toolTechniqueCardIds,
+    stakeholderCardIds,
+  }];
+}
+
 function parseRoundDraftValue(body: Record<string, unknown>): RoundDraftBody | null {
   try {
     if (!Number.isInteger(body.expectedRoundNumber) || Number(body.expectedRoundNumber) < 1) return null;
-    if (!Array.isArray(body.selectedCardIds) || body.selectedCardIds.length > 64) return null;
-    if (!Array.isArray(body.connections) || body.connections.length > 128) return null;
+    if (!Array.isArray(body.actionChains) || body.actionChains.length > 16) return null;
     if (!body.reasoning || typeof body.reasoning !== "object" || Array.isArray(body.reasoning)) return null;
     const reasoning = body.reasoning as Record<string, unknown>;
     const reasoningFields = [reasoning.observedSignals, reasoning.riskOrRootCause, reasoning.actionRationale];
     if (reasoningFields.some((value) => typeof value !== "string" || value.length > 500)) return null;
     if (!Array.isArray(reasoning.references) || reasoning.references.length > 100) return null;
-    const selectedCardIds = body.selectedCardIds;
-    if (selectedCardIds.some((cardId) => typeof cardId !== "string" || !/^[A-Za-z0-9._:-]{1,64}$/.test(cardId))) return null;
-    const connections = body.connections;
-    if (connections.some((connection) => (
-      !connection
-      || typeof connection !== "object"
-      || typeof connection.fromCardId !== "string"
-      || typeof connection.toCardId !== "string"
-    ))) return null;
+    const actionChains = body.actionChains.map(parseActionChainValue);
+    if (actionChains.some((chain) => !chain)) return null;
     const references = reasoning.references;
     if (references.some((reference) => (
       !reference
@@ -243,8 +293,7 @@ function parseRoundDraftValue(body: Record<string, unknown>): RoundDraftBody | n
     ))) return null;
     return {
       expectedRoundNumber: Number(body.expectedRoundNumber),
-      selectedCardIds: selectedCardIds as string[],
-      connections: connections as CardConnection[],
+      actionChains: actionChains as ManagementActionChain[],
       reasoning: {
         observedSignals: reasoning.observedSignals as string,
         riskOrRootCause: reasoning.riskOrRootCause as string,
@@ -294,30 +343,28 @@ function validateRoundContent(
   requireCompleteInput: boolean,
 ): RoundValidationIssue | null {
   const cardById = new Map(scenario.cards.map((card) => [card.id, card]));
-  if (new Set(body.selectedCardIds).size !== body.selectedCardIds.length || body.selectedCardIds.some((id) => !cardById.has(id))) {
-    return { status: 400, code: "INVALID_CARD_SELECTION", message: "The selected action cards are not valid for this scenario." };
-  }
-  const selectedCardIds = new Set(body.selectedCardIds);
-  const connectionKeys = new Set<string>();
-  const connectedCardIds = new Set<string>();
-  for (const connection of body.connections) {
-    const fromCard = cardById.get(connection.fromCardId);
-    const toCard = cardById.get(connection.toCardId);
-    const key = `${connection.fromCardId}\u0000${connection.toCardId}`;
-    if (
-      !fromCard
-      || !toCard
-      || !selectedCardIds.has(fromCard.id)
-      || !selectedCardIds.has(toCard.id)
-      || cardColumnOrder.indexOf(toCard.column) !== cardColumnOrder.indexOf(fromCard.column) + 1
-      || connectionKeys.has(key)
-    ) {
-      return { status: 400, code: "INVALID_CARD_CONNECTION", message: "Connections must link selected cards in adjacent columns." };
+  const chainIds = new Set<string>();
+  for (const chain of body.actionChains) {
+    const pools = [
+      { cardIds: chain.documentCardIds, column: "evidence_document" },
+      { cardIds: chain.toolTechniqueCardIds, column: "tool_technique" },
+      { cardIds: chain.stakeholderCardIds, column: "stakeholder" },
+    ] as const;
+    if (chainIds.has(chain.id)) {
+      return { status: 400, code: "DUPLICATE_ACTION_CHAIN", message: "Each action chain must have a unique id." };
     }
-    connectionKeys.add(key);
-    connectedCardIds.add(connection.fromCardId);
-    connectedCardIds.add(connection.toCardId);
+    chainIds.add(chain.id);
+    for (const pool of pools) {
+      if (
+        pool.cardIds.length === 0
+        || new Set(pool.cardIds).size !== pool.cardIds.length
+        || pool.cardIds.some((id) => cardById.get(id)?.column !== pool.column)
+      ) {
+        return { status: 400, code: "INVALID_ACTION_CHAIN", message: "Each action chain needs valid project files, tools and techniques, and stakeholders." };
+      }
+    }
   }
+  const selectedCardIds = new Set(flattenActionChainCardIds(body.actionChains));
 
   const availableDocuments = new Set((publicLabCaseBaseline.plans.documents.documents as StateEffect[])
     .filter((document) => Number(document.createdWeek) <= currentWeek)
@@ -346,8 +393,8 @@ function validateRoundContent(
     if (reasoningLengths.some((length) => length < 20 || length > 500)) {
       return { status: 400, code: "INCOMPLETE_REASONING", message: "Each decision-reasoning field must contain 20-500 characters." };
     }
-    if (body.selectedCardIds.length < 2 || body.connections.length === 0 || body.selectedCardIds.some((id) => !connectedCardIds.has(id))) {
-      return { status: 400, code: "INCOMPLETE_ACTION_CHAIN", message: "Every selected card must participate in the action chain." };
+    if (body.actionChains.length === 0) {
+      return { status: 400, code: "INCOMPLETE_ACTION_CHAIN", message: "At least one complete action chain is required." };
     }
     if (body.reasoning.references.length === 0) {
       return { status: 400, code: "DECISION_REFERENCE_REQUIRED", message: "At least one decision reference is required." };
@@ -615,12 +662,12 @@ async function readScenarioDraft(
   if (storedDraft && storedDraft.scenarioId !== scenarioId) {
     return withPrivateCache(errorResponse(409, "DRAFT_SCENARIO_MISMATCH", "The current round already has a draft for another scenario."));
   }
+  const selectedCardIds = storedDraft ? parseStoredJson<string[]>(storedDraft.selectedCardIdsJson, []) : [];
   return withPrivateCache(jsonResponse({
     branchId,
     scenarioId,
     roundNumber,
-    selectedCardIds: storedDraft ? parseStoredJson<string[]>(storedDraft.selectedCardIdsJson, []) : [],
-    connections: storedDraft ? parseStoredJson<CardConnection[]>(storedDraft.connectionsJson, []) : [],
+    actionChains: storedDraft ? readStoredActionChains(storedDraft.connectionsJson, selectedCardIds, scenario) : [],
     reasoning: storedDraft ? parseStoredJson<DecisionReasoning>(storedDraft.reasoningJson, emptyReasoning()) : emptyReasoning(),
     updatedAt: storedDraft?.updatedAt ?? null,
   }));
@@ -661,16 +708,15 @@ async function saveScenarioDraft(
     branchId,
     roundNumber,
     scenarioId,
-    selectedCardIdsJson: JSON.stringify(body.selectedCardIds),
-    connectionsJson: JSON.stringify(body.connections),
+    selectedCardIdsJson: JSON.stringify(flattenActionChainCardIds(body.actionChains)),
+    connectionsJson: JSON.stringify(body.actionChains),
     reasoningJson: JSON.stringify(body.reasoning),
   });
   return withPrivateCache(jsonResponse({
     branchId,
     scenarioId,
     roundNumber,
-    selectedCardIds: body.selectedCardIds,
-    connections: body.connections,
+    actionChains: body.actionChains,
     reasoning: body.reasoning,
     updatedAt: new Date().toISOString(),
   }));
@@ -730,8 +776,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
     roundNumber: nextRoundNumber,
     scenario,
     previousState,
-    selectedCardIds: body.selectedCardIds,
-    connections: body.connections,
+    actionChains: body.actionChains,
     nextBaseline,
     budgetAtCompletionCny,
   });
@@ -756,8 +801,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
       submissionId: await stableId("submission", `${recordScope}\u0000${body.idempotencyKey}`),
       scenarioId: body.scenarioId,
       submissionJson: JSON.stringify({
-        selectedCardIds: body.selectedCardIds,
-        connections: body.connections,
+        actionChains: body.actionChains,
       }),
       reasoningJson: JSON.stringify(body.reasoning),
       ruleResultJson,

@@ -12,7 +12,7 @@ const budgetAtCompletionCny = publicLabCaseBaseline.plans.workload.budgetAtCompl
 function initialState() {
   return {
     caseId: "car-control",
-    caseVersion: "v2",
+    caseVersion: "v3",
     contentHash: publicLabCaseBaseline.contentHash,
     mode: "learning",
     week: 9,
@@ -45,6 +45,24 @@ test("settles the complete scenario-one minimum chain onto the near-mainline pat
   assert.equal(settled.internalState.totals.requirementsTraceabilityCoveragePercent, 100);
   assert.deepEqual(new Set(settled.internalState.documentRevisions), new Set(["D05", "D13", "D21", "D26"]));
   assert.equal(JSON.stringify(settled.result).includes("minimumCorrectCardIds"), false);
+});
+
+test("infers private execution actions from a complete three-pool action chain", () => {
+  const visibleMinimumCards = scenario.cards.filter((card) => (
+    card.column !== "execution_action" && scenario.minimumCorrectCardIds.includes(card.id)
+  ));
+  const settled = settle({
+    actionChains: [{
+      id: "chain-complete-scope-change",
+      title: "澄清需求并完成范围变更闭环",
+      documentCardIds: visibleMinimumCards.filter((card) => card.column === "evidence_document").map((card) => card.id),
+      toolTechniqueCardIds: visibleMinimumCards.filter((card) => card.column === "tool_technique").map((card) => card.id),
+      stakeholderCardIds: visibleMinimumCards.filter((card) => card.column === "stakeholder").map((card) => card.id),
+    }],
+  });
+  assert.equal(settled.result.scenarioState, "closed");
+  assert.equal(settled.result.pathClassification, "near_mainline_success");
+  assert.deepEqual(settled.result.gaps, []);
 });
 
 test("keeps an incomplete action chain open and applies weekly degradation", () => {

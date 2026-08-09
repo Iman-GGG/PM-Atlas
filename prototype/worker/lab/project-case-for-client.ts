@@ -2,6 +2,7 @@ import type {
   EventMaterial,
   EventMaterials,
   PublicScenarioCard,
+  ScenarioCard,
   VisibleScenarioProjection,
 } from "../../lib/lab/contracts";
 import { privateLabCasePackage } from "../generated/lab-case-private.generated";
@@ -17,12 +18,11 @@ function filterMaterials(materials: EventMaterial[], visibleMaterialIds: Set<str
   return materials.filter((material) => visibleMaterialIds.has(material.id));
 }
 
-function toPublicCard(card: {
-  id: string;
-  column: PublicScenarioCard["column"];
-  referenceId: string;
-  title: string;
-}): PublicScenarioCard {
+function isPublicCard(card: ScenarioCard): card is ScenarioCard & { column: PublicScenarioCard["column"] } {
+  return card.column !== "execution_action";
+}
+
+function toPublicCard(card: ScenarioCard & { column: PublicScenarioCard["column"] }): PublicScenarioCard {
   return {
     id: card.id,
     column: card.column,
@@ -47,6 +47,6 @@ export function projectScenarioForClient(context: ScenarioVisibilityContext): Vi
     week: scenario.week,
     title: scenario.title,
     eventMaterials,
-    cards: context.cardsUnlocked ? scenario.cards.map(toPublicCard) : [],
+    cards: context.cardsUnlocked ? scenario.cards.filter(isPublicCard).map(toPublicCard) : [],
   };
 }

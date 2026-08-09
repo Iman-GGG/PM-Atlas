@@ -64,7 +64,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   };
 
   const first = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v2/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v3/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -103,8 +103,9 @@ test("persists an idempotent takeover branch against the real migration", async 
     finalMaterialBody = await opened.json();
   }
   assert.equal(finalMaterialBody.cardsUnlocked, true);
-  assert.ok(finalMaterialBody.cards.length >= 18);
+  assert.ok(finalMaterialBody.cards.length >= 12);
   assert.doesNotMatch(JSON.stringify(finalMaterialBody.cards), /satisfiesActionIds|evaluationRole|consequenceId/);
+  assert.doesNotMatch(JSON.stringify(finalMaterialBody.cards), /execution_action/);
 
   const reopened = await worker.fetch(
     new Request(`http://localhost${materialsPath}/S2-M05/view`, {
@@ -119,12 +120,13 @@ test("persists an idempotent takeover branch against the real migration", async 
   const draftPath = `/api/lab/branches/${firstBody.branch.id}/scenarios/scenario-2/draft`;
   const draft = {
     expectedRoundNumber: 1,
-    selectedCardIds: ["S2-C02", "S2-C05", "S2-C06", "S2-C10"],
-    connections: [
-      { fromCardId: "S2-C02", toCardId: "S2-C05" },
-      { fromCardId: "S2-C05", toCardId: "S2-C06" },
-      { fromCardId: "S2-C06", toCardId: "S2-C10" },
-    ],
+    actionChains: [{
+      id: "chain-supplier-delay",
+      title: "评估供应商延期并制定恢复计划",
+      documentCardIds: ["S2-C02"],
+      toolTechniqueCardIds: ["S2-C05"],
+      stakeholderCardIds: ["S2-C10"],
+    }],
     reasoning: {
       observedSignals: "供应商接口交付与工程师可用性同时发生偏差。",
       riskOrRootCause: "外部依赖和关键资源冲突可能共同影响关键路径。",
@@ -132,7 +134,6 @@ test("persists an idempotent takeover branch against the real migration", async 
       references: [
         { type: "event_material", id: "S2-M01" },
         { type: "project_document", id: "D14" },
-        { type: "action_card", id: "S2-C06" },
       ],
     },
   };
@@ -152,7 +153,7 @@ test("persists an idempotent takeover branch against the real migration", async 
     { waitUntil() {}, passThroughOnException() {} },
   );
   assert.equal(restoredDraft.status, 200);
-  assert.deepEqual((await restoredDraft.json()).selectedCardIds, draft.selectedCardIds);
+  assert.deepEqual((await restoredDraft.json()).actionChains, draft.actionChains);
 
   const roundPath = `/api/lab/branches/${firstBody.branch.id}/rounds`;
   const submitted = await worker.fetch(
@@ -193,7 +194,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal((await roundReplay.json()).idempotentReplay, true);
 
   const replay = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v2/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v3/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );

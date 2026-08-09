@@ -24,6 +24,8 @@ export type CardColumn =
   | "execution_action"
   | "stakeholder";
 
+export type VisibleCardColumn = Exclude<CardColumn, "execution_action">;
+
 export type CardEvaluationRole = "useful_optional" | "harmful";
 export type PathClassification =
   | "near_mainline_success"
@@ -82,6 +84,14 @@ export type ScenarioCard = {
 export type CardConnection = {
   fromCardId: string;
   toCardId: string;
+};
+
+export type ManagementActionChain = {
+  id: string;
+  title: string;
+  documentCardIds: string[];
+  toolTechniqueCardIds: string[];
+  stakeholderCardIds: string[];
 };
 
 export type MissingActionConsequence = {
@@ -197,7 +207,9 @@ export type PublicLabCaseBaseline = LabCasePackageIdentity & {
   takeoverPoints: PublicTakeoverPoint[];
 };
 
-export type PublicScenarioCard = Pick<ScenarioCard, "id" | "column" | "referenceId" | "title">;
+export type PublicScenarioCard = Pick<ScenarioCard, "id" | "referenceId" | "title"> & {
+  column: VisibleCardColumn;
+};
 
 export type VisibleScenarioProjection = {
   id: string;
@@ -223,8 +235,7 @@ export type RoundSubmissionRequest = {
   scenarioId: string;
   expectedRoundNumber: number;
   idempotencyKey: string;
-  selectedCardIds: string[];
-  connections: CardConnection[];
+  actionChains: ManagementActionChain[];
   reasoning: DecisionReasoning;
 };
 

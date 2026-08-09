@@ -1,5 +1,6 @@
 import type {
   CardConnection,
+  ManagementActionChain,
   PathClassification,
   RoundResult,
   ScenarioDefinition,
@@ -59,8 +60,9 @@ type SettleRoundInput = {
   roundNumber: number;
   scenario: ScenarioDefinition;
   previousState: Record<string, unknown>;
-  selectedCardIds: string[];
-  connections: CardConnection[];
+  actionChains?: ManagementActionChain[];
+  selectedCardIds?: string[];
+  connections?: CardConnection[];
   nextBaseline: StateEffect;
   budgetAtCompletionCny: number;
 };
@@ -80,6 +82,56 @@ const additiveFields = [
 
 function connectionKey(connection: CardConnection): string {
   return `${connection.fromCardId}>${connection.toCardId}`;
+}
+
+function cardsAndConnectionsFromActionChains(
+  scenario: ScenarioDefinition,
+  actionChains: ManagementActionChain[],
+): { selectedCardIds: string[]; connections: CardConnection[] } {
+  const selectedCardIds = new Set<string>();
+  const connections = new Map<string, CardConnection>();
+
+  for (const chain of actionChains) {
+    const visibleCardIds = new Set([
+      ...chain.documentCardIds,
+      ...chain.toolTechniqueCardIds,
+      ...chain.stakeholderCardIds,
+    ]);
+    const chainCardIds = new Set(visibleCardIds);
+
+    for (const action of scenario.necessaryManagementActions) {
+      const visibleSupportingCards = scenario.cards.filter((card) => (
+        card.column !== "execution_action" && card.satisfiesActionIds?.includes(action.id)
+      ));
+      if (
+        visibleSupportingCards.length > 0
+        && visibleSupportingCards.every((card) => visibleCardIds.has(card.id))
+      ) {
+        for (const card of scenario.cards) {
+          if (card.column === "execution_action" && card.satisfiesActionIds?.includes(action.id)) {
+            chainCardIds.add(card.id);
+          }
+        }
+      }
+    }
+
+    const chainCards = scenario.cards.filter((card) => chainCardIds.has(card.id));
+    for (const card of chainCards) selectedCardIds.add(card.id);
+    for (const fromCard of chainCards) {
+      for (const toCard of chainCards) {
+        const adjacentColumns = (
+          (fromCard.column === "evidence_document" && toCard.column === "tool_technique")
+          || (fromCard.column === "tool_technique" && toCard.column === "execution_action")
+          || (fromCard.column === "execution_action" && toCard.column === "stakeholder")
+        );
+        if (!adjacentColumns) continue;
+        const connection = { fromCardId: fromCard.id, toCardId: toCard.id };
+        connections.set(connectionKey(connection), connection);
+      }
+    }
+  }
+
+  return { selectedCardIds: [...selectedCardIds], connections: [...connections.values()] };
 }
 
 function numericValue(value: unknown): number {
@@ -259,9 +311,12 @@ export function projectStoredBranchState(state: Record<string, unknown>): Record
 
 export function settleRound(input: SettleRoundInput): SettledRound {
   const state = normalizeState(input.previousState, input.scenario, input.budgetAtCompletionCny);
-  const selectedCardIds = new Set(input.selectedCardIds);
-  const connectedCardIds = new Set(input.connections.flatMap((connection) => [connection.fromCardId, connection.toCardId]));
-  const currentConnectionKeys = new Set(input.connections.map(connectionKey));
+  const resolvedInput = input.actionChains
+    ? cardsAndConnectionsFromActionChains(input.scenario, input.actionChains)
+    : { selectedCardIds: input.selectedCardIds ?? [], connections: input.connections ?? [] };
+  const selectedCardIds = new Set(resolvedInput.selectedCardIds);
+  const connectedCardIds = new Set(resolvedInput.connections.flatMap((connection) => [connection.fromCardId, connection.toCardId]));
+  const currentConnectionKeys = new Set(resolvedInput.connections.map(connectionKey));
   const satisfiedConnectionKeys = new Set([...state.scenario.satisfiedConnectionKeys, ...currentConnectionKeys]);
   const completedActionIds = new Set(state.scenario.completedActionIds);
   const newlyCompletedEffects: StateEffect[] = [];

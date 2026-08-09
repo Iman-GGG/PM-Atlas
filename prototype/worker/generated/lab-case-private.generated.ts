@@ -5,13 +5,13 @@ import type { PrivateLabCasePackage } from "../../lib/lab/contracts";
 export const privateLabCasePackage: PrivateLabCasePackage = {
   "schemaVersion": 1,
   "caseId": "car-control",
-  "caseVersion": "v2",
-  "contentHash": "f2b85b61f1a727785c5e1043be4f2eba77bdc6059920ace1996d1cba50d0eccd",
+  "caseVersion": "v3",
+  "contentHash": "e2ef46b6e929a4303d1d43f8478c0169d3371991ef8756a61af4d3de28d70847",
   "sourceFiles": {
     "workloadPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "totalWeeks": 32,
       "personDaysPerPersonWeek": 5,
       "budgetAtCompletionCny": 2600000,
@@ -429,7 +429,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "schedulePlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "resourceSchedulingPolicy": {
         "defaultBufferWeeks": 3,
         "outsideWindowCostPerWeek": 5,
@@ -1695,7 +1695,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "stakeholderPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "raciPolicy": {
         "overviewRows": "level_1_work_packages",
         "exactlyOneAccountablePerRow": true,
@@ -2632,7 +2632,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "documentPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "statusPolicy": {
         "lifecycleStates": [
           "not_created",
@@ -4495,7 +4495,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "requirementPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "documentIds": {
         "requirements": "D21",
         "traceabilityMatrix": "D22"
@@ -5257,7 +5257,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "riskPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "probabilityScale": [
         {
           "level": 1,
@@ -6266,7 +6266,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "qualityPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "preMeasurementState": "not_measured",
       "scopeExclusionState": "not_applicable_by_approved_scope_change",
       "hardGates": [
@@ -6555,7 +6555,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "scenarioPlan": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "eventDiscoveryPolicy": {
         "showDirectEventAnswerOnTakeover": false,
         "entrySignals": [
@@ -7146,7 +7146,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S1-C03",
               "column": "tool_technique",
-              "referenceId": "tool.interview",
+              "referenceId": "tool:002",
               "title": "访谈",
               "satisfiesActionIds": [
                 "S1-A1"
@@ -7155,8 +7155,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S1-C04",
               "column": "tool_technique",
-              "referenceId": "tool.alternative_and_integrated_impact_analysis",
-              "title": "备选方案与综合影响分析",
+              "referenceId": "tool:010",
+              "title": "备选方案分析",
               "satisfiesActionIds": [
                 "S1-A3"
               ]
@@ -7164,8 +7164,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S1-C05",
               "column": "tool_technique",
-              "referenceId": "tool.ccb_review",
-              "title": "CCB审查",
+              "referenceId": "tool:053",
+              "title": "多标准决策分析",
               "satisfiesActionIds": [
                 "S1-A4",
                 "S1-A5"
@@ -7221,7 +7221,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
               "id": "S1-C11",
               "column": "stakeholder",
               "referenceId": "product_ba",
-              "title": "产品负责人",
+              "title": "产品负责人/业务分析师",
               "satisfiesActionIds": [
                 "S1-A1",
                 "S1-A3",
@@ -7244,7 +7244,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
               "id": "S1-C13",
               "column": "stakeholder",
               "referenceId": "devsecops",
-              "title": "DevOps/安全负责人",
+              "title": "DevOps/安全工程师",
               "satisfiesActionIds": [
                 "S1-A1",
                 "S1-A3",
@@ -7285,7 +7285,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S1-C18",
               "column": "tool_technique",
-              "referenceId": "tool.brainstorming",
+              "referenceId": "tool:008",
               "title": "头脑风暴",
               "evaluationRole": "useful_optional",
               "managementLoad": 1
@@ -7301,8 +7301,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S1-C20",
               "column": "tool_technique",
-              "referenceId": "tool.crashing",
-              "title": "赶工",
+              "referenceId": "tool:098",
+              "title": "进度压缩",
               "evaluationRole": "harmful",
               "consequenceId": "premature_schedule_compression"
             },
@@ -7995,8 +7995,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S2-C04",
               "column": "tool_technique",
-              "referenceId": "tool.schedule_network_dependency_resource_impact_analysis",
-              "title": "进度网络与资源影响分析",
+              "referenceId": "tool:087",
+              "title": "关键路径法",
               "satisfiesActionIds": [
                 "S2-A2"
               ]
@@ -8004,8 +8004,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S2-C05",
               "column": "tool_technique",
-              "referenceId": "tool.supplier_joint_problem_solving_meeting",
-              "title": "供应商联合问题解决会议",
+              "referenceId": "tool:114",
+              "title": "问题解决",
               "satisfiesActionIds": [
                 "S2-A1",
                 "S2-A3"
@@ -8127,7 +8127,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S2-C18",
               "column": "tool_technique",
-              "referenceId": "tool.expert_judgment",
+              "referenceId": "tool:126",
               "title": "专家判断",
               "evaluationRole": "useful_optional",
               "managementLoad": 1
@@ -8912,8 +8912,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S3-C04",
               "column": "tool_technique",
-              "referenceId": "tool.vulnerability_reproduction_and_security_validation",
-              "title": "漏洞复现与安全验证",
+              "referenceId": "tool:133",
+              "title": "测试/产品评估",
               "satisfiesActionIds": [
                 "S3-A1"
               ]
@@ -8921,8 +8921,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S3-C05",
               "column": "tool_technique",
-              "referenceId": "tool.integrated_impact_and_alternative_analysis",
-              "title": "综合影响与备选方案分析",
+              "referenceId": "tool:010",
+              "title": "备选方案分析",
               "satisfiesActionIds": [
                 "S3-A3",
                 "S3-A4"
@@ -8931,8 +8931,8 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
             {
               "id": "S3-C06",
               "column": "tool_technique",
-              "referenceId": "tool.ccb_and_release_gate_review",
-              "title": "CCB及上线阶段门审查",
+              "referenceId": "tool:053",
+              "title": "多标准决策分析",
               "satisfiesActionIds": [
                 "S3-A5"
               ]
@@ -9217,13 +9217,13 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
     "baselineWorkload": {
       "schemaVersion": 1,
       "generatedFrom": [
-        "content/lab-cases/car-control/v2/workload-plan.json",
-        "content/lab-cases/car-control/v2/schedule-plan.json",
-        "content/lab-cases/car-control/v2/stakeholder-plan.json",
-        "content/lab-cases/car-control/v2/document-plan.json"
+        "content/lab-cases/car-control/v3/workload-plan.json",
+        "content/lab-cases/car-control/v3/schedule-plan.json",
+        "content/lab-cases/car-control/v3/stakeholder-plan.json",
+        "content/lab-cases/car-control/v3/document-plan.json"
       ],
       "caseId": "car-control",
-      "caseVersion": "v2",
+      "caseVersion": "v3",
       "totalPlannedPersonDays": 1024,
       "totalActivities": 35,
       "budgetAtCompletionCny": 2600000,
