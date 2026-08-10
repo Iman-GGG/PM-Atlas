@@ -477,11 +477,57 @@ export function settleRound(input: SettleRoundInput): SettledRound {
   state.outcomeClassification = pathClassification;
 
   const missingConsequences = input.scenario.missingActionConsequences.filter((consequence) => !completedActionIds.has(consequence.actionId));
-  const gaps = missingConsequences.map((consequence) => ({
-    categories: consequence.gapCategories,
-    objectiveEffects: consequence.effects,
-    relatedActionIds: [],
-  }));
+  const gaps = missingConsequences.map((consequence) => {
+    const action = input.scenario.necessaryManagementActions.find((candidate) => candidate.id === consequence.actionId);
+    const supportingCards = input.scenario.cards.filter((card) => (
+      card.column !== "execution_action" && card.satisfiesActionIds?.includes(consequence.actionId)
+    ));
+    const recognizedCards = supportingCards
+      .filter((card) => selectedCardIds.has(card.id))
+      .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
+    const missingCards = supportingCards
+      .filter((card) => !selectedCardIds.has(card.id))
+      .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
+    const supportingCardIds = new Set(supportingCards.map((card) => card.id));
+    const cardsCompleteInOneChain = input.actionChains?.some((chain) => {
+      const chainCardIds = new Set([
+        ...chain.documentCardIds,
+        ...chain.toolTechniqueCardIds,
+        ...chain.stakeholderCardIds,
+      ]);
+      return [...supportingCardIds].every((cardId) => chainCardIds.has(cardId));
+    }) ?? false;
+    const cardsSplitAcrossChains = Boolean(
+      input.actionChains
+      && supportingCards.length > 0
+      && missingCards.length === 0
+      && !cardsCompleteInOneChain,
+    );
+    const missingPrerequisites = (action?.prerequisiteActionIds ?? [])
+      .filter((actionId) => !completedActionIds.has(actionId))
+      .map((actionId) => {
+        const prerequisite = input.scenario.necessaryManagementActions.find((candidate) => candidate.id === actionId);
+        return { actionId, title: prerequisite?.title ?? actionId };
+      });
+    const diagnosis = missingCards.length > 0
+      ? "missing_cards" as const
+      : cardsSplitAcrossChains
+        ? "split_across_chains" as const
+        : missingPrerequisites.length > 0
+          ? "prerequisite_incomplete" as const
+          : "connection_incomplete" as const;
+    return {
+      categories: consequence.gapCategories,
+      objectiveEffects: consequence.effects,
+      relatedActionIds: [consequence.actionId],
+      actionTitle: action?.title,
+      recognizedCards,
+      missingCards,
+      cardsSplitAcrossChains,
+      missingPrerequisites,
+      diagnosis,
+    };
+  });
   if (allActionsComplete && !allConnectionsComplete) {
     gaps.push({
       categories: ["connection"],

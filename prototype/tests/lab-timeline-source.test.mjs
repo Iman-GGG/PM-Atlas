@@ -37,6 +37,10 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /提交行动链并推进一周/);
   assert.match(timeline, /lab-v2-round-result/);
   assert.match(timeline, /仍需处理的管理缺口/);
+  assert.match(timeline, /根据本回合行动链判定/);
+  assert.match(timeline, /已识别/);
+  assert.match(timeline, /尚缺/);
+  assert.match(timeline, /分散在不同的行动链中/);
   assert.match(timeline, /setBranchState\(result\.stateSnapshot\)/);
 });
 

@@ -72,9 +72,43 @@ test("keeps an incomplete action chain open and applies weekly degradation", () 
   });
   assert.equal(settled.result.scenarioState, "open");
   assert.equal(settled.result.gaps.length, 6);
+  assert.equal(settled.result.gaps[0].actionTitle, "澄清共享需求、使用场景与安全边界");
+  assert.deepEqual(settled.result.gaps[0].recognizedCards.map((card) => card.referenceId), ["D21", "tool:002"]);
+  assert.deepEqual(
+    settled.result.gaps[0].missingCards.map((card) => card.referenceId),
+    ["pilot_owner_representative", "product_ba", "devsecops"],
+  );
+  assert.equal(settled.result.gaps[0].diagnosis, "missing_cards");
+  assert.deepEqual(settled.result.gaps[0].relatedActionIds, ["S1-A1"]);
   assert.equal(settled.result.stateDiff.additionalActualCostCny, 3300);
   assert.equal(settled.internalState.totals.incrementalActualCostCny, 3300);
   assert.equal(settled.internalState.totals.requirementsTraceabilityCoveragePercent, 97);
+});
+
+test("explains when complete supporting cards are split across action chains", () => {
+  const settled = settle({
+    actionChains: [
+      {
+        id: "chain-one",
+        title: "先访谈试点车主",
+        documentCardIds: ["S1-C02"],
+        toolTechniqueCardIds: ["S1-C03"],
+        stakeholderCardIds: ["S1-C10"],
+      },
+      {
+        id: "chain-two",
+        title: "再与产品和安全确认",
+        documentCardIds: ["S1-C02"],
+        toolTechniqueCardIds: ["S1-C03"],
+        stakeholderCardIds: ["S1-C11", "S1-C13"],
+      },
+    ],
+  });
+  const clarificationGap = settled.result.gaps.find((gap) => gap.relatedActionIds.includes("S1-A1"));
+  assert.ok(clarificationGap);
+  assert.deepEqual(clarificationGap.missingCards, []);
+  assert.equal(clarificationGap.cardsSplitAcrossChains, true);
+  assert.equal(clarificationGap.diagnosis, "split_across_chains");
 });
 
 test("stacks harmful effects once while uncontrolled behavior remains consecutive", () => {

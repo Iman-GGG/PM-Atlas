@@ -8058,9 +8058,23 @@ select {
 .lab-v2-no-gaps { margin: 12px 0 0; padding: 11px 13px; background: var(--soft); font-size: 11px; }
 .lab-v2-round-gaps { display: grid; gap: 6px; margin-top: 14px; }
 .lab-v2-round-gaps > span { font-size: 10px; font-weight: 800; }
-.lab-v2-round-gaps article { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; min-height: 0; padding: 10px 12px; background: var(--soft); border: 0; }
-.lab-v2-round-gaps article b { font-size: 10px; }
-.lab-v2-round-gaps article p { margin: 0; color: var(--body); font-size: 10px; }
+.lab-v2-round-gaps article { display: grid; grid-template-columns: minmax(190px, .75fr) minmax(0, 2fr); gap: 18px; min-height: 0; padding: 13px 14px; background: var(--soft); border: 0; }
+.lab-v2-gap-summary { display: grid; align-content: start; gap: 5px; }
+.lab-v2-gap-summary > small { color: var(--muted); font-size: 9px; font-weight: 800; }
+.lab-v2-gap-summary > b { font-size: 11px; line-height: 1.45; }
+.lab-v2-round-gaps article p { margin: 0; color: var(--body); font-size: 10px; line-height: 1.55; }
+.lab-v2-gap-diagnosis { display: grid; gap: 8px; }
+.lab-v2-gap-diagnosis > section { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 9px; align-items: start; }
+.lab-v2-gap-diagnosis > section > strong { padding-top: 3px; font-size: 9px; }
+.lab-v2-gap-diagnosis > section.missing > strong { color: #a22; }
+.lab-v2-gap-diagnosis > section.notice { padding-top: 7px; border-top: 1px solid var(--line); }
+.lab-v2-gap-card-groups { display: grid; gap: 5px; }
+.lab-v2-gap-card-groups > section { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 7px; align-items: start; }
+.lab-v2-gap-card-groups > section > small { padding-top: 4px; color: var(--muted); font-size: 8px; }
+.lab-v2-gap-card-groups > section > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab-v2-gap-card-groups span { display: inline-flex; align-items: center; gap: 5px; width: fit-content; max-width: 100%; padding: 4px 7px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; font-size: 9px; }
+.lab-v2-gap-card-groups span b { color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 8px; }
+.lab-v2-gap-diagnosis > section.missing .lab-v2-gap-card-groups span { border-color: #c7a4a4; }
 .lab-v2-round-result > footer { margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 10px; font-weight: 700; }
 
 .lab-v2-draft-readiness { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 18px; margin-top: 12px; padding: 16px 18px; color: var(--paper); background: #777; }
@@ -8317,6 +8331,8 @@ select {
   .lab-v2-connections { grid-template-columns: 1fr; }
   .lab-v2-round-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-v2-round-gaps article { grid-template-columns: 1fr; }
+  .lab-v2-gap-diagnosis > section,
+  .lab-v2-gap-card-groups > section { grid-template-columns: 1fr; gap: 4px; }
   .lab-v2-document-drawer { width: 100%; padding: 18px; }
   .lab-v2-document-layout { grid-template-columns: 1fr; overflow-y: auto; }
   .lab-v2-document-layout > nav { height: 310px; border-right: 0; border-bottom: 1px solid var(--line); }

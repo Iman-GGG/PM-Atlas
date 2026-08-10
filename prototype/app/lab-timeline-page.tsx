@@ -339,6 +339,13 @@ type BranchState = {
 type RoundGap = {
   categories: string[];
   objectiveEffects: string[];
+  relatedActionIds?: string[];
+  actionTitle?: string;
+  recognizedCards?: PublicCard[];
+  missingCards?: PublicCard[];
+  cardsSplitAcrossChains?: boolean;
+  missingPrerequisites?: Array<{ actionId: string; title: string }>;
+  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete" | "connection_incomplete";
 };
 
 type RoundResult = {
@@ -494,6 +501,23 @@ function actionChainCardIds(chain: ManagementActionChain, column: PublicCard["co
 function cardDisplayId(card: PublicCard): string {
   const toolMatch = /^tool:(\d{3})$/.exec(card.referenceId);
   return toolMatch ? `T${toolMatch[1]}` : card.referenceId;
+}
+
+function GapCardGroups({ cards }: { cards: PublicCard[] }) {
+  return (
+    <div className="lab-v2-gap-card-groups">
+      {cardColumnOrder.map((column) => {
+        const columnCards = cards.filter((card) => card.column === column);
+        if (!columnCards.length) return null;
+        return (
+          <section key={column}>
+            <small>{cardColumnLabels[column]}</small>
+            <div>{columnCards.map((card) => <span key={card.id}><b>{cardDisplayId(card)}</b>{card.title}</span>)}</div>
+          </section>
+        );
+      })}
+    </div>
+  );
 }
 const engagementScores: Record<string, number> = {
   unaware: 1,
@@ -1778,13 +1802,37 @@ export function LabTimelinePage() {
                     {roundResult.pathClassification && <p className="lab-v2-path-result">路径结果：<b>{pathClassificationLabels[roundResult.pathClassification] ?? roundResult.pathClassification}</b></p>}
                     {roundResult.gaps.length ? (
                       <div className="lab-v2-round-gaps">
-                        <span>仍需处理的管理缺口</span>
-                        {roundResult.gaps.map((gap, gapIndex) => (
-                          <article key={`${gap.categories.join("-")}-${gapIndex}`}>
-                            <b>{gap.categories.map((category) => gapCategoryLabels[category] ?? category).join(" / ")}</b>
-                            <p>{gap.objectiveEffects.map((effect) => objectiveEffectLabels[effect] ?? effect.replaceAll("_", " ")).join("；")}</p>
-                          </article>
-                        ))}
+                        <span>仍需处理的管理缺口 · 根据本回合行动链判定</span>
+                        {roundResult.gaps.map((gap, gapIndex) => {
+                          const recognizedCards = gap.recognizedCards ?? [];
+                          const missingCards = gap.missingCards ?? [];
+                          const missingPrerequisites = gap.missingPrerequisites ?? [];
+                          const hasDetailedDiagnosis = Boolean(
+                            gap.actionTitle
+                            || recognizedCards.length
+                            || missingCards.length
+                            || gap.cardsSplitAcrossChains
+                            || missingPrerequisites.length,
+                          );
+                          return (
+                            <article key={`${gap.categories.join("-")}-${gapIndex}`}>
+                              <div className="lab-v2-gap-summary">
+                                <small>{gap.categories.map((category) => gapCategoryLabels[category] ?? category).join(" / ")}</small>
+                                <b>{gap.actionTitle ?? "行动链尚未形成完整闭环"}</b>
+                                <p>{gap.objectiveEffects.map((effect) => objectiveEffectLabels[effect] ?? effect.replaceAll("_", " ")).join("；")}</p>
+                              </div>
+                              {hasDetailedDiagnosis ? (
+                                <div className="lab-v2-gap-diagnosis">
+                                  <section><strong>已识别</strong>{recognizedCards.length ? <GapCardGroups cards={recognizedCards} /> : <p>本回合尚未识别到支持该动作的卡片。</p>}</section>
+                                  {missingCards.length > 0 && <section className="missing"><strong>尚缺</strong><GapCardGroups cards={missingCards} /></section>}
+                                  {gap.cardsSplitAcrossChains && <section className="notice"><strong>组合问题</strong><p>所需卡片已经选齐，但分散在不同的行动链中；请将它们放入同一条行动链。</p></section>}
+                                  {missingPrerequisites.length > 0 && <section className="notice"><strong>前置动作</strong><p>需要先完成：{missingPrerequisites.map((item) => item.title).join("；")}</p></section>}
+                                  {gap.diagnosis === "connection_incomplete" && !missingCards.length && !missingPrerequisites.length && !gap.cardsSplitAcrossChains && <section className="notice"><strong>判定状态</strong><p>所需卡片已选齐，但尚未形成有效连接；如果它们已位于同一条行动链，这是系统判定异常，不是漏选。</p></section>}
+                                </div>
+                              ) : null}
+                            </article>
+                          );
+                        })}
                       </div>
                     ) : <p className="lab-v2-no-gaps">本回合未留下管理缺口。</p>}
                     {roundResult.documentDiffs.length > 0 && <footer>分支文件已更新：{roundResult.documentDiffs.map((diff) => diff.documentId).join("、")}</footer>}

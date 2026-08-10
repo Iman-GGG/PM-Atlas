@@ -226,10 +226,20 @@ export type RoundSubmissionRequest = {
   actionChains: ManagementActionChain[];
 };
 
+export type RuleGapSupportCard = Pick<ScenarioCard, "id" | "referenceId" | "title"> & {
+  column: VisibleCardColumn;
+};
+
 export type RuleGap = {
   categories: string[];
   objectiveEffects: string[];
   relatedActionIds: string[];
+  actionTitle?: string;
+  recognizedCards?: RuleGapSupportCard[];
+  missingCards?: RuleGapSupportCard[];
+  cardsSplitAcrossChains?: boolean;
+  missingPrerequisites?: Array<{ actionId: string; title: string }>;
+  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete" | "connection_incomplete";
 };
 
 export type RoundResult = {
