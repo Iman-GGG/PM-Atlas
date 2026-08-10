@@ -1,5 +1,4 @@
 import type {
-  CardConnection,
   ManagementActionChain,
   PathClassification,
   RoundResult,
@@ -11,11 +10,9 @@ type InternalScenarioState = {
   id: string;
   status: "open" | "closed" | "failed";
   completedActionIds: string[];
-  satisfiedConnectionKeys: string[];
   appliedHarmfulCardIds: string[];
   appliedOptionalCardIds: string[];
   appliedThresholdWeeks: number[];
-  consecutiveUncontrolledDevelopmentRounds: number;
 };
 
 export type InternalBranchState = {
@@ -60,9 +57,7 @@ type SettleRoundInput = {
   roundNumber: number;
   scenario: ScenarioDefinition;
   previousState: Record<string, unknown>;
-  actionChains?: ManagementActionChain[];
-  selectedCardIds?: string[];
-  connections?: CardConnection[];
+  actionChains: ManagementActionChain[];
   nextBaseline: StateEffect;
   budgetAtCompletionCny: number;
 };
@@ -80,58 +75,22 @@ const additiveFields = [
   "coordinationAndWaitingPersonDays",
 ] as const;
 
-function connectionKey(connection: CardConnection): string {
-  return `${connection.fromCardId}>${connection.toCardId}`;
+function selectedCardsFromActionChains(actionChains: ManagementActionChain[]): Set<string> {
+  const selectedCardIds = new Set<string>();
+  for (const chain of actionChains) {
+    for (const cardId of chain.documentCardIds) selectedCardIds.add(cardId);
+    for (const cardId of chain.toolTechniqueCardIds) selectedCardIds.add(cardId);
+    for (const cardId of chain.stakeholderCardIds) selectedCardIds.add(cardId);
+  }
+  return selectedCardIds;
 }
 
-function cardsAndConnectionsFromActionChains(
-  scenario: ScenarioDefinition,
-  actionChains: ManagementActionChain[],
-): { selectedCardIds: string[]; connections: CardConnection[] } {
-  const selectedCardIds = new Set<string>();
-  const connections = new Map<string, CardConnection>();
-
-  for (const chain of actionChains) {
-    const visibleCardIds = new Set([
-      ...chain.documentCardIds,
-      ...chain.toolTechniqueCardIds,
-      ...chain.stakeholderCardIds,
-    ]);
-    const chainCardIds = new Set(visibleCardIds);
-
-    for (const action of scenario.necessaryManagementActions) {
-      const visibleSupportingCards = scenario.cards.filter((card) => (
-        card.column !== "execution_action" && card.satisfiesActionIds?.includes(action.id)
-      ));
-      if (
-        visibleSupportingCards.length > 0
-        && visibleSupportingCards.every((card) => visibleCardIds.has(card.id))
-      ) {
-        for (const card of scenario.cards) {
-          if (card.column === "execution_action" && card.satisfiesActionIds?.includes(action.id)) {
-            chainCardIds.add(card.id);
-          }
-        }
-      }
-    }
-
-    const chainCards = scenario.cards.filter((card) => chainCardIds.has(card.id));
-    for (const card of chainCards) selectedCardIds.add(card.id);
-    for (const fromCard of chainCards) {
-      for (const toCard of chainCards) {
-        const adjacentColumns = (
-          (fromCard.column === "evidence_document" && toCard.column === "tool_technique")
-          || (fromCard.column === "tool_technique" && toCard.column === "execution_action")
-          || (fromCard.column === "execution_action" && toCard.column === "stakeholder")
-        );
-        if (!adjacentColumns) continue;
-        const connection = { fromCardId: fromCard.id, toCardId: toCard.id };
-        connections.set(connectionKey(connection), connection);
-      }
-    }
-  }
-
-  return { selectedCardIds: [...selectedCardIds], connections: [...connections.values()] };
+function chainCardIds(chain: ManagementActionChain): Set<string> {
+  return new Set([
+    ...chain.documentCardIds,
+    ...chain.toolTechniqueCardIds,
+    ...chain.stakeholderCardIds,
+  ]);
 }
 
 function numericValue(value: unknown): number {
@@ -208,11 +167,9 @@ function normalizeState(
       id: scenario.id,
       status: previousScenario.status === "closed" || previousScenario.status === "failed" ? previousScenario.status : "open",
       completedActionIds: Array.isArray(previousScenario.completedActionIds) ? previousScenario.completedActionIds.filter((id): id is string => typeof id === "string") : [],
-      satisfiedConnectionKeys: Array.isArray(previousScenario.satisfiedConnectionKeys) ? previousScenario.satisfiedConnectionKeys.filter((id): id is string => typeof id === "string") : [],
       appliedHarmfulCardIds: Array.isArray(previousScenario.appliedHarmfulCardIds) ? previousScenario.appliedHarmfulCardIds.filter((id): id is string => typeof id === "string") : [],
       appliedOptionalCardIds: Array.isArray(previousScenario.appliedOptionalCardIds) ? previousScenario.appliedOptionalCardIds.filter((id): id is string => typeof id === "string") : [],
       appliedThresholdWeeks: Array.isArray(previousScenario.appliedThresholdWeeks) ? previousScenario.appliedThresholdWeeks.filter((week): week is number => typeof week === "number") : [],
-      consecutiveUncontrolledDevelopmentRounds: numericValue(previousScenario.consecutiveUncontrolledDevelopmentRounds),
     },
     performance: {
       spi: numericValue(previousPerformance.spi) || numericValue(baseline.spi) || 1,
@@ -311,20 +268,19 @@ export function projectStoredBranchState(state: Record<string, unknown>): Record
 
 export function settleRound(input: SettleRoundInput): SettledRound {
   const state = normalizeState(input.previousState, input.scenario, input.budgetAtCompletionCny);
-  const resolvedInput = input.actionChains
-    ? cardsAndConnectionsFromActionChains(input.scenario, input.actionChains)
-    : { selectedCardIds: input.selectedCardIds ?? [], connections: input.connections ?? [] };
-  const selectedCardIds = new Set(resolvedInput.selectedCardIds);
-  const connectedCardIds = new Set(resolvedInput.connections.flatMap((connection) => [connection.fromCardId, connection.toCardId]));
-  const currentConnectionKeys = new Set(resolvedInput.connections.map(connectionKey));
-  const satisfiedConnectionKeys = new Set([...state.scenario.satisfiedConnectionKeys, ...currentConnectionKeys]);
+  const selectedCardIds = selectedCardsFromActionChains(input.actionChains);
   const completedActionIds = new Set(state.scenario.completedActionIds);
   const newlyCompletedEffects: StateEffect[] = [];
 
   for (const action of input.scenario.necessaryManagementActions) {
     if (completedActionIds.has(action.id)) continue;
-    const actionCards = input.scenario.cards.filter((card) => card.satisfiesActionIds?.includes(action.id));
-    const cardsComplete = actionCards.length > 0 && actionCards.every((card) => selectedCardIds.has(card.id) && connectedCardIds.has(card.id));
+    const supportingCardIds = input.scenario.cards
+      .filter((card) => card.column !== "execution_action" && card.satisfiesActionIds?.includes(action.id))
+      .map((card) => card.id);
+    const cardsComplete = supportingCardIds.length > 0 && input.actionChains.some((chain) => {
+      const cardIds = chainCardIds(chain);
+      return supportingCardIds.every((cardId) => cardIds.has(cardId));
+    });
     const prerequisitesComplete = (action.prerequisiteActionIds ?? []).every((actionId) => completedActionIds.has(actionId));
     if (cardsComplete && prerequisitesComplete) {
       completedActionIds.add(action.id);
@@ -339,21 +295,18 @@ export function settleRound(input: SettleRoundInput): SettledRound {
     if (
       card.evaluationRole !== "useful_optional"
       || !selectedCardIds.has(card.id)
-      || !connectedCardIds.has(card.id)
       || appliedOptionalCardIds.has(card.id)
     ) continue;
     appliedOptionalCardIds.add(card.id);
     optionalManagementLoad += card.managementLoad ?? 0;
   }
   const newlyAppliedHarmfulEffects = input.scenario.harmfulConsequences.flatMap((consequence) => {
-    if (!selectedCardIds.has(consequence.cardId) || !connectedCardIds.has(consequence.cardId) || appliedHarmfulCardIds.has(consequence.cardId)) return [];
+    if (!selectedCardIds.has(consequence.cardId) || appliedHarmfulCardIds.has(consequence.cardId)) return [];
     appliedHarmfulCardIds.add(consequence.cardId);
     return [consequence.effects];
   });
-  const requiredConnectionKeys = new Set(input.scenario.minimumCorrectConnections.map(connectionKey));
-  const allConnectionsComplete = [...requiredConnectionKeys].every((key) => satisfiedConnectionKeys.has(key));
   const allActionsComplete = input.scenario.necessaryManagementActions.every((action) => completedActionIds.has(action.id));
-  const allManagementComplete = allActionsComplete && allConnectionsComplete;
+  const allManagementComplete = allActionsComplete;
   const nextWeek = state.week + 1;
 
   for (const effect of newlyCompletedEffects) addEffectTotals(state, effect);
@@ -373,11 +326,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
     const delayWeeks = sumNamedField(effect, "forecastCompletionDelayWeeks");
     if (delayWeeks) state.performance.forecastCompletionWeek = Math.max(state.performance.forecastCompletionWeek, 32 + delayWeeks);
   }
-
-  const selectedUncontrolledDevelopment = selectedCardIds.has("S1-C21") && connectedCardIds.has("S1-C21");
-  state.scenario.consecutiveUncontrolledDevelopmentRounds = selectedUncontrolledDevelopment
-    ? state.scenario.consecutiveUncontrolledDevelopmentRounds + 1
-    : 0;
 
   const appliedThresholdWeeks = new Set(state.scenario.appliedThresholdWeeks);
   let thresholdTerminalCondition: string | null = null;
@@ -427,7 +375,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
   const failure = Boolean(
     thresholdTerminalCondition
     || state.totals.unauthorizedScopeWorkPersonDays >= 36
-    || state.scenario.consecutiveUncontrolledDevelopmentRounds >= 3
     || state.performance.forecastCompletionWeek > 38
     || estimatedFinalCost >= 2_860_000
   );
@@ -469,7 +416,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
   state.week = nextWeek;
   state.baseline = input.nextBaseline;
   state.scenario.completedActionIds = [...completedActionIds];
-  state.scenario.satisfiedConnectionKeys = [...satisfiedConnectionKeys];
   state.scenario.appliedHarmfulCardIds = [...appliedHarmfulCardIds];
   state.scenario.appliedOptionalCardIds = [...appliedOptionalCardIds];
   state.scenario.appliedThresholdWeeks = [...appliedThresholdWeeks];
@@ -515,7 +461,7 @@ export function settleRound(input: SettleRoundInput): SettledRound {
         ? "split_across_chains" as const
         : missingPrerequisites.length > 0
           ? "prerequisite_incomplete" as const
-          : "connection_incomplete" as const;
+          : undefined;
     return {
       categories: consequence.gapCategories,
       objectiveEffects: consequence.effects,
@@ -528,14 +474,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
       diagnosis,
     };
   });
-  if (allActionsComplete && !allConnectionsComplete) {
-    gaps.push({
-      categories: ["connection"],
-      objectiveEffects: ["selected_management_actions_not_connected_into_a_complete_chain"],
-      relatedActionIds: [],
-    });
-  }
-
   const documentDiffs = [...revisedDocuments]
     .filter((documentId) => !previousDocumentRevisions.has(documentId))
     .map((documentId) => ({ documentId, operation: "update", reason: "round_settlement" }));

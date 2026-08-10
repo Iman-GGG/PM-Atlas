@@ -13496,12 +13496,6 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
         "recommended_decision"
       ],
       "trackMaterialViewsForAiReview": true
-    },
-    "decisionReasoning": {
-      "enabled": false,
-      "fields": [],
-      "submissionRequirement": "at_least_one_complete_action_chain",
-      "autosaveDraft": true
     }
   },
   "takeoverPoints": [

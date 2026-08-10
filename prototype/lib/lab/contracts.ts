@@ -81,6 +81,7 @@ export type ScenarioCard = {
   consequenceId?: string;
 };
 
+/** @deprecated Immutable-case compatibility only; the current UI does not submit manual connections. */
 export type CardConnection = {
   fromCardId: string;
   toCardId: string;
@@ -137,16 +138,10 @@ export type ScenarioDefinition = {
   harmfulEffectsStack: boolean;
   terminalRules: TerminalRule[];
   cards: ScenarioCard[];
-  minimumCorrectCardIds: string[];
-  minimumCorrectConnections: CardConnection[];
-};
-
-export type DecisionReasoningFieldPolicy = {
-  id: "observed_signals" | "risk_or_root_cause" | "action_rationale";
-  label: string;
-  required: true;
-  minimumCharacters: number;
-  maximumCharacters: number;
+  /** @deprecated Immutable-case compatibility only; current settlement derives actions from visible cards. */
+  minimumCorrectCardIds?: string[];
+  /** @deprecated Immutable-case compatibility only; current settlement has no global connection gate. */
+  minimumCorrectConnections?: CardConnection[];
 };
 
 export type ScenarioPlan = {
@@ -154,7 +149,8 @@ export type ScenarioPlan = {
   caseId: string;
   caseVersion: string;
   eventDiscoveryPolicy: StateEffect;
-  decisionReasoningPolicy: StateEffect & { fields: DecisionReasoningFieldPolicy[] };
+  /** @deprecated Immutable-case compatibility only; the current submission has no separate reasoning fields. */
+  decisionReasoningPolicy: StateEffect & { enabled: false; fields: [] };
   aiReviewPolicy: StateEffect;
   engineSettlementPolicy: StateEffect;
   branchComparisonPolicy: StateEffect;
@@ -202,7 +198,6 @@ export type PublicLabCaseBaseline = LabCasePackageIdentity & {
   };
   learningPolicies: {
     eventDiscovery: StateEffect;
-    decisionReasoning: StateEffect;
   };
   takeoverPoints: PublicTakeoverPoint[];
 };
@@ -239,7 +234,7 @@ export type RuleGap = {
   missingCards?: RuleGapSupportCard[];
   cardsSplitAcrossChains?: boolean;
   missingPrerequisites?: Array<{ actionId: string; title: string }>;
-  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete" | "connection_incomplete";
+  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete";
 };
 
 export type RoundResult = {

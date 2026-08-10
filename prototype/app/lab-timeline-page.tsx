@@ -345,7 +345,7 @@ type RoundGap = {
   missingCards?: PublicCard[];
   cardsSplitAcrossChains?: boolean;
   missingPrerequisites?: Array<{ actionId: string; title: string }>;
-  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete" | "connection_incomplete";
+  diagnosis?: "missing_cards" | "split_across_chains" | "prerequisite_incomplete";
 };
 
 type RoundResult = {
@@ -459,7 +459,6 @@ const gapCategoryLabels: Record<string, string> = {
   approval: "审批",
   execution_decision: "执行决策",
   documentation: "文件更新",
-  connection: "行动连接",
   procurement: "采购管理",
   resource: "资源安排",
   quality: "质量控制",
@@ -480,7 +479,6 @@ const objectiveEffectLabels: Record<string, string> = {
   scope_conflict_forecast: "范围冲突预测仍存在",
   risk_reduced_not_closed: "风险有所降低但尚未关闭",
   pilot_engagement_gap_open: "试点车主参与差距仍存在",
-  selected_management_actions_not_connected_into_a_complete_chain: "所选管理动作尚未连接为完整闭环",
 };
 const pathClassificationLabels: Record<string, string> = {
   near_mainline_success: "近主线成功",
@@ -1827,7 +1825,6 @@ export function LabTimelinePage() {
                                   {missingCards.length > 0 && <section className="missing"><strong>尚缺</strong><GapCardGroups cards={missingCards} /></section>}
                                   {gap.cardsSplitAcrossChains && <section className="notice"><strong>组合问题</strong><p>所需卡片已经选齐，但分散在不同的行动链中；请将它们放入同一条行动链。</p></section>}
                                   {missingPrerequisites.length > 0 && <section className="notice"><strong>前置动作</strong><p>需要先完成：{missingPrerequisites.map((item) => item.title).join("；")}</p></section>}
-                                  {gap.diagnosis === "connection_incomplete" && !missingCards.length && !missingPrerequisites.length && !gap.cardsSplitAcrossChains && <section className="notice"><strong>判定状态</strong><p>所需卡片已选齐，但尚未形成有效连接；如果它们已位于同一条行动链，这是系统判定异常，不是漏选。</p></section>}
                                 </div>
                               ) : null}
                             </article>

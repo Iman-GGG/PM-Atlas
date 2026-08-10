@@ -8036,13 +8036,6 @@ select {
 .lab-v2-selected-chain article button { min-width: 28px; height: 28px; padding: 0 7px; background: var(--paper); border: 1px solid var(--line); cursor: pointer; font-size: 10px; font-weight: 800; }
 .lab-v2-selected-chain article button.link { min-width: 68px; }
 .lab-v2-selected-chain article button:disabled { opacity: 0.28; cursor: default; }
-.lab-v2-connections { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-.lab-v2-connections > span { padding-top: 8px; font-size: 10px; font-weight: 800; }
-.lab-v2-connections > div { display: flex; flex-wrap: wrap; gap: 5px; }
-.lab-v2-connections button { display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 7px 9px; background: var(--soft); border: 0; cursor: pointer; font-size: 9px; }
-.lab-v2-connections button b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lab-v2-connections button i { font-style: normal; }
-.lab-v2-connections button em { color: var(--muted); font-style: normal; }
 .lab-v2-action-message { margin: 10px 0 0; padding: 9px 11px; color: var(--paper); background: var(--ink); font-size: 10px; }
 
 .lab-v2-round-result { margin-top: 18px; padding: 20px; background: var(--paper); border: 2px solid var(--ink); }
@@ -8328,7 +8321,6 @@ select {
   .lab-v2-action-chain-list nav { grid-column: 2; flex-wrap: wrap; margin-top: 5px; }
   .lab-v2-selected-chain article { grid-template-columns: 30px 1fr; }
   .lab-v2-selected-chain article > div { grid-column: 2; margin-top: 7px; }
-  .lab-v2-connections { grid-template-columns: 1fr; }
   .lab-v2-round-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-v2-round-gaps article { grid-template-columns: 1fr; }
   .lab-v2-gap-diagnosis > section,

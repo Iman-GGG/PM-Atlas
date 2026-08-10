@@ -66,7 +66,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const lifecycleStates = new Set(risks.lifecycle.states);
   const controlStates = new Set(risks.controlStatusModel.states);
   const allowedColumns = ["evidence_document", "tool_technique", "execution_action", "stakeholder"];
-  const columnIndex = new Map(allowedColumns.map((column, index) => [column, index]));
+  const visibleColumns = ["evidence_document", "tool_technique", "stakeholder"];
 
   assert(documentById.size === 32, `Expected 32 documents; found ${documentById.size}`);
   assert(requirementById.size === 30, `Expected 30 requirements; found ${requirementById.size}`);
@@ -183,43 +183,23 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
     assert(scenario.necessaryManagementActions.length >= 5 && scenario.necessaryManagementActions.length <= 7, `${prefix} must contain 5-7 necessary actions`);
 
     const actionById = uniqueMap(scenario.necessaryManagementActions, `${prefix} action`);
-    const cardById = uniqueMap(scenario.cards, `${prefix} card`);
+    uniqueMap(scenario.cards, `${prefix} card`);
+    const visibleCards = scenario.cards.filter((card) => card.column !== "execution_action");
     assert([...actionById.values()].every((action) => action.completedEffect), `${prefix} has an action without completedEffect`);
-    assert(cardById.size >= 18 && cardById.size <= 24, `${prefix} must contain 18-24 cards`);
-    assert(new Set(scenario.cards.map((card) => card.column)).size === 4, `${prefix} must cover all four card columns`);
-
-    const minimumCardIds = new Set(scenario.minimumCorrectCardIds);
-    assert(minimumCardIds.size === scenario.minimumCorrectCardIds.length, `${prefix} has duplicate minimum card ids`);
-    assert(minimumCardIds.size >= 8 && minimumCardIds.size <= 14, `${prefix} must contain 8-14 minimum cards`);
-    for (const cardId of minimumCardIds) assert(cardById.has(cardId), `${prefix} references unknown minimum card ${cardId}`);
+    assert(visibleCards.length >= 14 && visibleCards.length <= 18, `${prefix} must expose 14-18 three-pool cards`);
+    assert(visibleColumns.every((column) => visibleCards.some((card) => card.column === column)), `${prefix} must cover all three visible card pools`);
 
     for (const card of scenario.cards) {
-      assert(columnIndex.has(card.column), `${prefix}/${card.id} has invalid column ${card.column}`);
+      assert(allowedColumns.includes(card.column), `${prefix}/${card.id} has invalid column ${card.column}`);
       if (card.column === "evidence_document") assert(documentById.has(card.referenceId), `${prefix}/${card.id} references unknown document ${card.referenceId}`);
       if (card.column === "stakeholder") assert(stakeholderById.has(card.referenceId), `${prefix}/${card.id} references unknown stakeholder ${card.referenceId}`);
       for (const actionId of card.satisfiesActionIds ?? []) assert(actionById.has(actionId), `${prefix}/${card.id} references unknown action ${actionId}`);
     }
 
     for (const actionId of actionById.keys()) {
-      const covered = scenario.cards.some((card) => minimumCardIds.has(card.id) && card.satisfiesActionIds?.includes(actionId));
-      assert(covered, `${prefix}/${actionId} is not covered by a minimum card`);
+      const covered = visibleCards.some((card) => card.satisfiesActionIds?.includes(actionId));
+      assert(covered, `${prefix}/${actionId} is not covered by a visible three-pool card`);
     }
-
-    const connectedMinimumCards = new Set();
-    const connectionKeys = new Set();
-    for (const connection of scenario.minimumCorrectConnections) {
-      const from = cardById.get(connection.fromCardId);
-      const to = cardById.get(connection.toCardId);
-      assert(from && to, `${prefix} connection has an unknown endpoint`);
-      assert(minimumCardIds.has(from.id) && minimumCardIds.has(to.id), `${prefix} connection uses a non-minimum card`);
-      assert(columnIndex.get(to.column) === columnIndex.get(from.column) + 1, `${prefix} connection ${from.id}->${to.id} skips or reverses columns`);
-      const key = `${from.id}->${to.id}`;
-      assert(!connectionKeys.has(key), `${prefix} has duplicate connection ${key}`);
-      connectionKeys.add(key);
-      connectedMinimumCards.add(from.id);
-      connectedMinimumCards.add(to.id);
-    }
-    for (const cardId of minimumCardIds) assert(connectedMinimumCards.has(cardId), `${prefix}/${cardId} is isolated in the minimum chain`);
 
     const missingActionIds = new Set(scenario.missingActionConsequences.map((item) => item.actionId));
     assert(missingActionIds.size === actionById.size, `${prefix} missing-action rules do not match action count`);

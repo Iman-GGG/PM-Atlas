@@ -41,6 +41,7 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /已识别/);
   assert.match(timeline, /尚缺/);
   assert.match(timeline, /分散在不同的行动链中/);
+  assert.doesNotMatch(timeline, /所选管理动作尚未连接为完整闭环|connection_incomplete/);
   assert.match(timeline, /setBranchState\(result\.stateSnapshot\)/);
 });
 
@@ -95,6 +96,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(styles, /\.lab-v2-chain-pools/);
   assert.match(styles, /\.lab-v2-chain-pool > div > button[^}]*width: fit-content[^}]*border-radius: 999px/);
   assert.match(styles, /\.lab-v2-action-chain-list/);
+  assert.doesNotMatch(styles, /\.lab-v2-connections/);
   assert.doesNotMatch(styles, /\.lab-v2-reasoning-fields|\.lab-v2-reference-editor|\.lab-v2-auto-references/);
   assert.match(styles, /\.lab-v2-draft-readiness/);
   assert.match(styles, /\.lab-v2-round-result/);

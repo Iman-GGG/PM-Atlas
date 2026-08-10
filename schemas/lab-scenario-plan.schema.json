@@ -29,9 +29,9 @@
           "properties": {
             "fields": {
               "type": "array",
-              "minItems": 3,
-              "maxItems": 3,
-              "items": { "$ref": "#/$defs/reasoningField" }
+              "maxItems": 0,
+              "description": "当前交互已移除单独的决策依据输入区，必须为空数组。",
+              "items": false
             }
           }
         }
@@ -55,18 +55,6 @@
     "stateEffect": {
       "type": "object",
       "additionalProperties": true
-    },
-    "reasoningField": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "label", "required", "minimumCharacters", "maximumCharacters"],
-      "properties": {
-        "id": { "enum": ["observed_signals", "risk_or_root_cause", "action_rationale"] },
-        "label": { "type": "string", "minLength": 1 },
-        "required": { "const": true },
-        "minimumCharacters": { "type": "integer", "minimum": 1 },
-        "maximumCharacters": { "type": "integer", "minimum": 1 }
-      }
     },
     "material": {
       "type": "object",
@@ -143,7 +131,10 @@
       "required": ["id", "column", "referenceId", "title"],
       "properties": {
         "id": { "type": "string", "pattern": "^S[1-9]-C[0-9]+$" },
-        "column": { "enum": ["evidence_document", "tool_technique", "execution_action", "stakeholder"] },
+        "column": {
+          "enum": ["evidence_document", "tool_technique", "execution_action", "stakeholder"],
+          "description": "当前客户端只展示 evidence_document、tool_technique、stakeholder 三个池；execution_action 仅用于不可变旧案例兼容，不参与结算。"
+        },
         "referenceId": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 },
         "satisfiesActionIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
@@ -197,9 +188,7 @@
         "harmfulConsequences",
         "harmfulEffectsStack",
         "terminalRules",
-        "cards",
-        "minimumCorrectCardIds",
-        "minimumCorrectConnections"
+        "cards"
       ],
       "properties": {
         "id": { "type": "string", "pattern": "^scenario-[1-9][0-9]*$" },
@@ -217,9 +206,29 @@
         "harmfulConsequences": { "type": "array", "items": { "$ref": "#/$defs/harmfulConsequence" } },
         "harmfulEffectsStack": { "type": "boolean" },
         "terminalRules": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/terminalRule" } },
-        "cards": { "type": "array", "minItems": 18, "maxItems": 24, "items": { "$ref": "#/$defs/card" } },
-        "minimumCorrectCardIds": { "type": "array", "minItems": 8, "maxItems": 14, "uniqueItems": true, "items": { "type": "string" } },
-        "minimumCorrectConnections": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/connection" } }
+        "cards": {
+          "type": "array",
+          "minItems": 18,
+          "maxItems": 24,
+          "description": "私有案例卡片全集；当前可交互的三个池由非 execution_action 卡组成，并由内容校验器约束为 14–18 张。",
+          "items": { "$ref": "#/$defs/card" }
+        },
+        "minimumCorrectCardIds": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 14,
+          "uniqueItems": true,
+          "deprecated": true,
+          "description": "不可变旧案例兼容字段；当前结算不读取。",
+          "items": { "type": "string" }
+        },
+        "minimumCorrectConnections": {
+          "type": "array",
+          "minItems": 1,
+          "deprecated": true,
+          "description": "不可变旧案例兼容字段；当前三池行动链结算不读取。",
+          "items": { "$ref": "#/$defs/connection" }
+        }
       }
     }
   }

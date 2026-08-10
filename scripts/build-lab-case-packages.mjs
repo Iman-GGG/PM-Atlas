@@ -108,7 +108,6 @@ export async function buildLabCasePackages(caseDirectory = defaultCaseDirectory)
     },
     learningPolicies: {
       eventDiscovery: source.scenarioPlan.eventDiscoveryPolicy,
-      decisionReasoning: source.scenarioPlan.decisionReasoningPolicy,
     },
     takeoverPoints: source.scenarioPlan.scenarios.map((scenario) => ({
       scenarioId: scenario.id,

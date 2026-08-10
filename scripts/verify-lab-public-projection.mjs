@@ -7,10 +7,11 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
 const publicOutputPath = path.join(projectRoot, "prototype", "lib", "lab", "lab-case-public.generated.ts");
 const privateOutputPath = path.join(projectRoot, "prototype", "worker", "generated", "lab-case-private.generated.ts");
-const scenarioPlanPath = path.join(projectRoot, "content", "lab-cases", "car-control", "v1", "scenario-plan.json");
+const scenarioPlanPath = path.join(projectRoot, "content", "lab-cases", "car-control", "v4", "scenario-plan.json");
 const forbiddenTokens = [
   "minimumCorrectCardIds",
   "minimumCorrectConnections",
+  "decisionReasoning",
   "necessaryManagementActions",
   "satisfiesActionIds",
   "evaluationRole",
@@ -39,7 +40,7 @@ for (const scenario of scenarioPlan.scenarios) {
 for (const token of forbiddenTokens) {
   if (publicSource.includes(token)) throw new Error(`Public package contains private token: ${token}`);
 }
-if (!privateSource.includes("minimumCorrectCardIds") || !privateSource.includes("necessaryManagementActions")) {
+if (!privateSource.includes("necessaryManagementActions") || !privateSource.includes("satisfiesActionIds")) {
   throw new Error("Private package is missing rule-engine fields");
 }
 if (!publicSource.includes('"label": "从这里接手"')) throw new Error("Public package is missing takeover points");
