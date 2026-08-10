@@ -273,6 +273,7 @@ type MaterialSummary = {
   channel: string | null;
   title: string;
   opened: boolean;
+  content?: OpenedMaterial;
 };
 
 type MaterialList = {
@@ -349,6 +350,7 @@ type RoundGap = {
 };
 
 type RoundResult = {
+  rulesetVersion?: number;
   branchId: string;
   roundNumber: number;
   advancedToWeek: number;
@@ -1002,7 +1004,8 @@ export function LabTimelinePage() {
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [scenarioTitle, setScenarioTitle] = useState<string | null>(null);
   const [materials, setMaterials] = useState<MaterialList | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<OpenedMaterial | null>(null);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [openedMaterialCache, setOpenedMaterialCache] = useState<Record<string, OpenedMaterial>>({});
   const [cards, setCards] = useState<PublicCard[]>([]);
   const [actionChains, setActionChains] = useState<ManagementActionChain[]>([]);
   const [actionTarget, setActionTarget] = useState("");
@@ -1015,7 +1018,7 @@ export function LabTimelinePage() {
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
   const [submittingRound, setSubmittingRound] = useState(false);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
-  const [openingMaterialId, setOpeningMaterialId] = useState<string | null>(null);
+  const [openingMaterialIds, setOpeningMaterialIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [compactTimelineVisible, setCompactTimelineVisible] = useState(false);
   const idempotencyKeys = useRef(new Map<string, string>());
@@ -1028,6 +1031,12 @@ export function LabTimelinePage() {
       `/api/lab/branches/${encodeURIComponent(branchId)}/scenarios/${encodeURIComponent(nextScenarioId)}/materials`,
     );
     setMaterials(list);
+    const restoredContents = Object.fromEntries(list.materials.flatMap((material) => (
+      material.content ? [[material.id, material.content] as const] : []
+    )));
+    if (Object.keys(restoredContents).length > 0) {
+      setOpenedMaterialCache((current) => ({ ...current, ...restoredContents }));
+    }
     if (list.cardsUnlocked) {
       const projection = await apiJson<{ branch: BranchContext; scenario: { cards: PublicCard[]; title: string }; state: BranchState | null; lastRoundResult: RoundResult | null }>(
         `/api/lab/branches/${encodeURIComponent(branchId)}/scenarios/${encodeURIComponent(nextScenarioId)}/projection`,
@@ -1128,7 +1137,8 @@ export function LabTimelinePage() {
       setBranchState(null);
       setScenarioId(created.scenario.id);
       setScenarioTitle(created.scenario.title);
-      setSelectedMaterial(null);
+      setSelectedMaterialId(null);
+      setOpenedMaterialCache({});
       setCards([]);
       setActionChains([]);
       setActionTarget("");
@@ -1155,7 +1165,9 @@ export function LabTimelinePage() {
 
   const openMaterial = async (material: MaterialSummary) => {
     if (!branch || !scenarioId) return;
-    setOpeningMaterialId(material.id);
+    setSelectedMaterialId(material.id);
+    if (openedMaterialCache[material.id]) return;
+    setOpeningMaterialIds((current) => current.includes(material.id) ? current : [...current, material.id]);
     setError(null);
     try {
       const opened = await apiJson<{
@@ -1168,7 +1180,7 @@ export function LabTimelinePage() {
         `/api/lab/branches/${encodeURIComponent(branch.id)}/scenarios/${encodeURIComponent(scenarioId)}/materials/${encodeURIComponent(material.id)}/view`,
         { method: "POST" },
       );
-      setSelectedMaterial(opened.material);
+      setOpenedMaterialCache((current) => ({ ...current, [material.id]: opened.material }));
       setMaterials((current) => current ? {
         ...current,
         openedCount: opened.openedCount,
@@ -1180,9 +1192,23 @@ export function LabTimelinePage() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "无法打开材料");
     } finally {
-      setOpeningMaterialId(null);
+      setOpeningMaterialIds((current) => current.filter((materialId) => materialId !== material.id));
     }
   };
+
+  const selectedMaterialSummary = selectedMaterialId
+    ? materials?.materials.find((material) => material.id === selectedMaterialId) ?? null
+    : null;
+  const selectedMaterial = selectedMaterialId
+    ? openedMaterialCache[selectedMaterialId] ?? (selectedMaterialSummary ? {
+      id: selectedMaterialSummary.id,
+      subject: selectedMaterialSummary.title,
+      ...(selectedMaterialSummary.channel ? { channel: selectedMaterialSummary.channel } : {}),
+    } : null)
+    : null;
+  const selectedMaterialLoading = Boolean(
+    selectedMaterialId && openingMaterialIds.includes(selectedMaterialId) && !openedMaterialCache[selectedMaterialId],
+  );
 
   const weekState = useMemo(() => {
     const baselineWeek = mainline?.baselineWorkload.weeks.find((item) => item.week === selectedWeek) ?? null;
@@ -1757,22 +1783,23 @@ export function LabTimelinePage() {
               {materials?.materials.map((material) => (
                 <button
                   key={material.id}
-                  className={`${material.opened ? "opened" : ""} ${selectedMaterial?.id === material.id ? "active" : ""}`}
-                  disabled={openingMaterialId !== null}
+                  className={`${material.opened ? "opened" : ""} ${selectedMaterialId === material.id ? "active" : ""}`}
+                  disabled={openingMaterialIds.includes(material.id)}
                   onClick={() => void openMaterial(material)}
                 >
-                  <i>{material.opened ? "✓" : "·"}</i><span><small>{materialGroupLabels[material.group] ?? material.type}</small><strong>{material.title}</strong><em>{material.channel ?? "项目仪表盘"}</em></span><b>{openingMaterialId === material.id ? "读取中" : "打开"}</b>
+                  <i>{material.opened ? "✓" : "·"}</i><span><small>{materialGroupLabels[material.group] ?? material.type}</small><strong>{material.title}</strong><em>{material.channel ?? "项目仪表盘"}</em></span><b>{openingMaterialIds.includes(material.id) ? "读取中" : material.opened ? "查看" : "打开"}</b>
                 </button>
               ))}
             </aside>
             <article>
               {selectedMaterial ? (
                 <>
-                  <span>{selectedMaterial.id} / 已记录查看</span>
+                  <span>{selectedMaterial.id} / {selectedMaterialLoading ? "正在记录查看" : "已记录查看"}</span>
                   <h3>{selectedMaterial.subject ?? selectedMaterial.displayLabel ?? "项目状态信号"}</h3>
                   <small>{selectedMaterial.channel ? `来源：${selectedMaterial.channel}` : "来源：项目仪表盘"}</small>
-                  {selectedMaterial.facts?.length ? <ul>{selectedMaterial.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul> : null}
-                  {selectedMaterial.documentIds?.length ? <div className="lab-v2-material-docs">{selectedMaterial.documentIds.map((documentId) => <button key={documentId} onClick={() => { setSelectedDocumentId(documentId); setManagementFilter(null); setDocumentDrawerOpen(true); }}>{documentId} 查看关联文件</button>)}</div> : null}
+                  {selectedMaterialLoading ? <div className="lab-v2-material-loading"><i /><i /><i /></div> : null}
+                  {!selectedMaterialLoading && selectedMaterial.facts?.length ? <ul>{selectedMaterial.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul> : null}
+                  {!selectedMaterialLoading && selectedMaterial.documentIds?.length ? <div className="lab-v2-material-docs">{selectedMaterial.documentIds.map((documentId) => <button key={documentId} onClick={() => { setSelectedDocumentId(documentId); setManagementFilter(null); setDocumentDrawerOpen(true); }}>{documentId} 查看关联文件</button>)}</div> : null}
                 </>
               ) : <div className="lab-v2-empty-material"><b>01</b><h3>打开第一条工作材料</h3><p>从邮件、消息、报告和异常数据中识别项目发生了什么。</p></div>}
             </article>
@@ -1798,7 +1825,9 @@ export function LabTimelinePage() {
                       <span><small>需求追踪覆盖</small><b>{roundResult.stateSnapshot.totals.requirementsTraceabilityCoveragePercent}%</b></span>
                     </div>
                     {roundResult.pathClassification && <p className="lab-v2-path-result">路径结果：<b>{pathClassificationLabels[roundResult.pathClassification] ?? roundResult.pathClassification}</b></p>}
-                    {roundResult.gaps.length ? (
+                    {roundResult.rulesetVersion !== 2 ? (
+                      <div className="lab-v2-legacy-result"><strong>历史判定正在升级</strong><p>这条结果由旧版规则保存。你已经提交的行动链不会丢失；下一次提交时，系统会把历史行动链一起重新识别，不再把已完成的前置动作判成遗漏。</p></div>
+                    ) : roundResult.gaps.length ? (
                       <div className="lab-v2-round-gaps">
                         <span>仍需处理的管理缺口 · 根据本回合行动链判定</span>
                         {roundResult.gaps.map((gap, gapIndex) => {

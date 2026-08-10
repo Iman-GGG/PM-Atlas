@@ -58,6 +58,7 @@ type SettleRoundInput = {
   scenario: ScenarioDefinition;
   previousState: Record<string, unknown>;
   actionChains: ManagementActionChain[];
+  historicalActionChains?: ManagementActionChain[];
   nextBaseline: StateEffect;
   budgetAtCompletionCny: number;
 };
@@ -269,22 +270,29 @@ export function projectStoredBranchState(state: Record<string, unknown>): Record
 export function settleRound(input: SettleRoundInput): SettledRound {
   const state = normalizeState(input.previousState, input.scenario, input.budgetAtCompletionCny);
   const selectedCardIds = selectedCardsFromActionChains(input.actionChains);
+  const completionActionChains = [...(input.historicalActionChains ?? []), ...input.actionChains];
+  const completionSelectedCardIds = selectedCardsFromActionChains(completionActionChains);
   const completedActionIds = new Set(state.scenario.completedActionIds);
   const newlyCompletedEffects: StateEffect[] = [];
 
-  for (const action of input.scenario.necessaryManagementActions) {
-    if (completedActionIds.has(action.id)) continue;
-    const supportingCardIds = input.scenario.cards
-      .filter((card) => card.column !== "execution_action" && card.satisfiesActionIds?.includes(action.id))
-      .map((card) => card.id);
-    const cardsComplete = supportingCardIds.length > 0 && input.actionChains.some((chain) => {
-      const cardIds = chainCardIds(chain);
-      return supportingCardIds.every((cardId) => cardIds.has(cardId));
-    });
-    const prerequisitesComplete = (action.prerequisiteActionIds ?? []).every((actionId) => completedActionIds.has(actionId));
-    if (cardsComplete && prerequisitesComplete) {
-      completedActionIds.add(action.id);
-      newlyCompletedEffects.push(action.completedEffect);
+  let completedAnotherAction = true;
+  while (completedAnotherAction) {
+    completedAnotherAction = false;
+    for (const action of input.scenario.necessaryManagementActions) {
+      if (completedActionIds.has(action.id)) continue;
+      const supportingCardIds = input.scenario.cards
+        .filter((card) => card.column !== "execution_action" && card.satisfiesActionIds?.includes(action.id))
+        .map((card) => card.id);
+      const cardsComplete = supportingCardIds.length > 0 && completionActionChains.some((chain) => {
+        const cardIds = chainCardIds(chain);
+        return supportingCardIds.every((cardId) => cardIds.has(cardId));
+      });
+      const prerequisitesComplete = (action.prerequisiteActionIds ?? []).every((actionId) => completedActionIds.has(actionId));
+      if (cardsComplete && prerequisitesComplete) {
+        completedActionIds.add(action.id);
+        newlyCompletedEffects.push(action.completedEffect);
+        completedAnotherAction = true;
+      }
     }
   }
 
@@ -429,13 +437,13 @@ export function settleRound(input: SettleRoundInput): SettledRound {
       card.column !== "execution_action" && card.satisfiesActionIds?.includes(consequence.actionId)
     ));
     const recognizedCards = supportingCards
-      .filter((card) => selectedCardIds.has(card.id))
+      .filter((card) => completionSelectedCardIds.has(card.id))
       .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
     const missingCards = supportingCards
-      .filter((card) => !selectedCardIds.has(card.id))
+      .filter((card) => !completionSelectedCardIds.has(card.id))
       .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
     const supportingCardIds = new Set(supportingCards.map((card) => card.id));
-    const cardsCompleteInOneChain = input.actionChains?.some((chain) => {
+    const cardsCompleteInOneChain = completionActionChains.some((chain) => {
       const chainCardIds = new Set([
         ...chain.documentCardIds,
         ...chain.toolTechniqueCardIds,
@@ -444,8 +452,7 @@ export function settleRound(input: SettleRoundInput): SettledRound {
       return [...supportingCardIds].every((cardId) => chainCardIds.has(cardId));
     }) ?? false;
     const cardsSplitAcrossChains = Boolean(
-      input.actionChains
-      && supportingCards.length > 0
+      supportingCards.length > 0
       && missingCards.length === 0
       && !cardsCompleteInOneChain,
     );
@@ -482,6 +489,7 @@ export function settleRound(input: SettleRoundInput): SettledRound {
     + (!allManagementComplete ? sumNamedField(input.scenario.unresolvedIssueDegradation.perOpenRound, "incrementalActualCostCny") : 0);
 
   const result: RoundResult = {
+    rulesetVersion: 2,
     branchId: input.branchId,
     roundNumber: input.roundNumber,
     advancedToWeek: nextWeek,

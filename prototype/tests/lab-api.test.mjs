@@ -71,6 +71,16 @@ function createEnv({
         return null;
       },
       async all() {
+        if (query.includes("LEFT JOIN lab_events")) {
+          const storedBranch = state.branches.get(bindings[0]);
+          if (!storedBranch || storedBranch.identityKey !== bindings[1]) return { results: [] };
+          const matchingEvents = state.events.filter((event) => event.branchId === undefined || event.branchId === storedBranch.id);
+          return {
+            results: matchingEvents.length > 0
+              ? matchingEvents.map(({ eventType, payloadJson }) => ({ ...storedBranch, eventType, payloadJson }))
+              : [{ ...storedBranch, eventType: null, payloadJson: null }],
+          };
+        }
         if (!query.includes("FROM lab_events")) return { results: [] };
         return {
           results: state.events
@@ -304,6 +314,20 @@ test("creates an idempotent branch from a configured takeover point", async () =
   const openedBody = await openedResponse.json();
   assert.deepEqual(openedBody.material.facts, ["配偶临时用车时无法查看车辆状态", "希望允许家庭成员共享车辆"]);
   assert.equal(openedBody.cardsUnlocked, false);
+
+  const refreshedMaterialsResponse = await request(
+    `/api/lab/branches/${body.branch.id}/scenarios/scenario-1/materials`,
+    {
+      headers: {
+        "oai-authenticated-user-id": "user-123",
+        "oai-authenticated-user-email": "iman@example.com",
+      },
+    },
+    env,
+  );
+  const refreshedMaterials = await refreshedMaterialsResponse.json();
+  assert.deepEqual(refreshedMaterials.materials[0].content.facts, openedBody.material.facts);
+  assert.equal("content" in refreshedMaterials.materials[1], false);
 });
 
 test("creates a v4 branch when an immutable v3 case record already exists", async () => {

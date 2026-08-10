@@ -122,6 +122,47 @@ test("closes when all necessary actions are completed across multiple rounds wit
   assert.deepEqual(second.result.gaps, []);
 });
 
+test("reuses previously submitted action chains when repairing a prerequisite completed under an older engine", () => {
+  const first = settle({
+    actionChains: [actionChain(
+      "chain-old-engine-discovery",
+      "完成需求澄清和影响评估",
+      ["S1-C02", "S1-C03", "S1-C04", "S1-C10", "S1-C11", "S1-C12", "S1-C13"],
+    )],
+  });
+  assert.deepEqual(new Set(first.internalState.scenario.completedActionIds), new Set(["S1-A1", "S1-A3", "S1-A6"]));
+
+  const historicalBaselineChain = actionChain(
+    "chain-old-engine-baseline",
+    "对照批准基线并识别范围外变更",
+    ["S1-C01", "S1-C02", "S1-C03", "S1-C11"],
+  );
+  const second = settle({
+    roundNumber: 2,
+    previousState: first.internalState,
+    historicalActionChains: [historicalBaselineChain],
+    actionChains: [actionChain(
+      "chain-current-ccb",
+      "形成正式变更请求并提交 CCB 审查",
+      ["S1-C05", "S1-C11", "S1-C12", "S1-C13", "S1-C14", "S1-C15"],
+    )],
+    nextBaseline: baselineWeeks.find(({ week }) => week === 11),
+  });
+
+  assert.equal(second.result.scenarioState, "closed");
+  assert.deepEqual(second.result.gaps, []);
+  assert.deepEqual(
+    new Set(second.internalState.scenario.completedActionIds),
+    new Set(scenario.necessaryManagementActions.map((action) => action.id)),
+  );
+});
+
+test("resolves same-round prerequisites independently of action configuration order", () => {
+  const settled = settle({ scenario: { ...scenario, necessaryManagementActions: [...scenario.necessaryManagementActions].reverse() } });
+  assert.equal(settled.result.scenarioState, "closed");
+  assert.deepEqual(settled.result.gaps, []);
+});
+
 test("explains when complete supporting cards are split across action chains", () => {
   const settled = settle({
     actionChains: [

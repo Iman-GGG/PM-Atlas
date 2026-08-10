@@ -238,6 +238,7 @@ export type RuleGap = {
 };
 
 export type RoundResult = {
+  rulesetVersion: 2;
   branchId: string;
   roundNumber: number;
   advancedToWeek: number;

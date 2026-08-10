@@ -38,6 +38,11 @@ export type BranchEvent = {
   payloadJson: string;
 };
 
+export type OwnedBranchContext = {
+  branch: OwnedBranch;
+  events: BranchEvent[];
+};
+
 export type StoredRoundDraft = {
   id: string;
   branchId: string;
@@ -63,6 +68,11 @@ export type StoredRoundSubmission = {
   ruleResultJson: string;
 };
 
+export type StoredActionChainSubmission = {
+  roundNumber: number;
+  submissionJson: string;
+};
+
 export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: string): Promise<OwnedBranch | null> {
   return db.prepare(`
     SELECT
@@ -83,14 +93,53 @@ export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: 
   `).bind(branchId, identityKey).first<OwnedBranch>();
 }
 
-export async function readBranchEvents(db: LabD1, branchId: string, currentWeek: number): Promise<BranchEvent[]> {
+export async function readOwnedBranchContext(
+  db: LabD1,
+  branchId: string,
+  identityKey: string,
+): Promise<OwnedBranchContext | null> {
   const result = await db.prepare(`
-    SELECT event_type AS eventType, payload_json AS payloadJson
-    FROM lab_events
-    WHERE branch_id = ? AND week <= ? AND visibility = 'user'
-    ORDER BY week ASC, created_at ASC
-  `).bind(branchId, currentWeek).all<BranchEvent>();
-  return result.results ?? [];
+    SELECT
+      b.id,
+      b.case_id AS caseId,
+      b.case_version AS caseVersion,
+      cv.content_hash AS contentHash,
+      b.current_week AS currentWeek,
+      b.current_round_number AS currentRoundNumber,
+      b.lock_version AS lockVersion,
+      b.status,
+      e.event_type AS eventType,
+      e.payload_json AS payloadJson
+    FROM lab_branches b
+    INNER JOIN lab_users u ON u.id = b.user_id
+    INNER JOIN lab_case_versions cv
+      ON cv.case_id = b.case_id AND cv.case_version = b.case_version
+    LEFT JOIN lab_events e
+      ON e.branch_id = b.id
+      AND e.week <= b.current_week
+      AND e.visibility = 'user'
+      AND e.event_type IN ('scenario_started', 'scenario_material_viewed', 'scenario_cards_unlocked')
+    WHERE b.id = ? AND u.identity_key = ?
+    ORDER BY e.week ASC, e.created_at ASC
+  `).bind(branchId, identityKey).all<OwnedBranch & { eventType: string | null; payloadJson: string | null }>();
+  const rows = result.results ?? [];
+  const first = rows[0];
+  if (!first) return null;
+  return {
+    branch: {
+      id: first.id,
+      caseId: first.caseId,
+      caseVersion: first.caseVersion,
+      contentHash: first.contentHash,
+      currentWeek: first.currentWeek,
+      currentRoundNumber: first.currentRoundNumber,
+      lockVersion: first.lockVersion,
+      status: first.status,
+    },
+    events: rows.flatMap((row) => row.eventType && row.payloadJson
+      ? [{ eventType: row.eventType, payloadJson: row.payloadJson }]
+      : []),
+  };
 }
 
 export async function findStoredCaseVersion(
@@ -333,6 +382,22 @@ export async function readRoundSubmission(
     WHERE branch_id = ? AND round_number = ?
     LIMIT 1
   `).bind(branchId, roundNumber).first<StoredRoundSubmission>();
+}
+
+export async function readScenarioActionChainSubmissions(
+  db: LabD1,
+  branchId: string,
+  scenarioId: string,
+): Promise<StoredActionChainSubmission[]> {
+  const result = await db.prepare(`
+    SELECT
+      round_number AS roundNumber,
+      submission_json AS submissionJson
+    FROM lab_round_submissions
+    WHERE branch_id = ? AND scenario_id = ?
+    ORDER BY round_number ASC
+  `).bind(branchId, scenarioId).all<StoredActionChainSubmission>();
+  return result.results ?? [];
 }
 
 export type CommitRoundRecords = {

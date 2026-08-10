@@ -16,10 +16,11 @@ import {
   findLabUser,
   findOwnedBranch,
   findStoredCaseVersion,
-  readBranchEvents,
   readCurrentStateSnapshot,
   readRoundSubmission,
   readRoundDraft,
+  readOwnedBranchContext,
+  readScenarioActionChainSubmissions,
   recordMaterialView,
   saveRoundDraft,
   type BranchEvent,
@@ -187,6 +188,7 @@ function materialSummary(group: string, material: Record<string, unknown>, opene
     channel: material.channel ?? null,
     title: material.subject ?? material.displayLabel ?? "项目状态出现新信号",
     opened,
+    ...(opened ? { content: material } : {}),
   };
 }
 
@@ -504,12 +506,12 @@ async function readOwnedScenarioContext(
     return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
   }
   if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
-  const branch = await findOwnedBranch(env.DB, branchId, identity.identityKey);
-  if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+  const ownedContext = await readOwnedBranchContext(env.DB, branchId, identity.identityKey);
+  if (!ownedContext) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+  const { branch, events } = ownedContext;
   if (!caseMatches(branch.caseId, branch.caseVersion) || branch.contentHash !== publicLabCaseBaseline.contentHash) {
     return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
   }
-  const events = await readBranchEvents(env.DB, branch.id, branch.currentWeek);
   return { branch, events, visibility: parseEventVisibility(events, scenarioId) };
 }
 
@@ -557,16 +559,19 @@ async function openScenarioMaterial(
     return withPrivateCache(errorResponse(403, "MATERIAL_LOCKED", "This material is not available at the branch's current week."));
   }
   const openedMaterialIds = new Set(context.visibility.visibleMaterialIds);
+  const alreadyOpened = openedMaterialIds.has(materialId);
   openedMaterialIds.add(materialId);
   const unlockCards = context.visibility.availableMaterialIds.every((id) => openedMaterialIds.has(id));
-  await recordMaterialView(env.DB!, {
-    branchId,
-    roundNumber: context.branch.currentRoundNumber,
-    week: context.branch.currentWeek,
-    scenarioId,
-    materialId,
-    unlockCards,
-  });
+  if (!alreadyOpened) {
+    await recordMaterialView(env.DB!, {
+      branchId,
+      roundNumber: context.branch.currentRoundNumber,
+      week: context.branch.currentWeek,
+      scenarioId,
+      materialId,
+      unlockCards,
+    });
+  }
   const projection = projectScenarioForClient({
     scenarioId,
     currentWeek: context.branch.currentWeek,
@@ -696,7 +701,10 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
     return withPrivateCache(errorResponse(validationIssue.status, validationIssue.code, validationIssue.message));
   }
 
-  const snapshot = await readCurrentStateSnapshot(env.DB!, branchId, context.branch.currentRoundNumber);
+  const [snapshot, historicalSubmissions] = await Promise.all([
+    readCurrentStateSnapshot(env.DB!, branchId, context.branch.currentRoundNumber),
+    readScenarioActionChainSubmissions(env.DB!, branchId, body.scenarioId),
+  ]);
   if (!snapshot || snapshot.scenarioId !== body.scenarioId) {
     return withPrivateCache(errorResponse(409, "BRANCH_STATE_MISSING", "The current branch state is unavailable for this scenario."));
   }
@@ -708,12 +716,20 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
     return withPrivateCache(errorResponse(500, "BASELINE_STATE_MISSING", "The next weekly baseline is unavailable."));
   }
   const budgetAtCompletionCny = Number(publicLabCaseBaseline.plans.workload.budgetAtCompletionCny);
+  const historicalActionChains = historicalSubmissions.flatMap((submission) => {
+    const stored = parseStoredJson<{ actionChains?: unknown[] }>(submission.submissionJson, {});
+    return (stored.actionChains ?? []).flatMap((value) => {
+      const chain = parseActionChainValue(value);
+      return chain ? [chain] : [];
+    });
+  });
   const settled = settleRound({
     branchId,
     roundNumber: nextRoundNumber,
     scenario,
     previousState,
     actionChains: body.actionChains,
+    historicalActionChains,
     nextBaseline,
     budgetAtCompletionCny,
   });

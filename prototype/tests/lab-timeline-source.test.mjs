@@ -20,6 +20,9 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /JSON\.stringify\(\{ scenarioId: point\.scenarioId, idempotencyKey \}\)/);
   assert.match(timeline, /\/materials\/\$\{encodeURIComponent\(material\.id\)\}\/view/);
   assert.match(timeline, /materials\?\.materials\.map/);
+  assert.match(timeline, /openedMaterialCache\[material\.id\]/);
+  assert.match(timeline, /lab-v2-material-loading/);
+  assert.match(timeline, /历史判定正在升级/);
   assert.match(timeline, /selectedMaterial\.facts/);
   assert.match(timeline, /materials\?\.cardsUnlocked/);
   assert.match(timeline, /\/scenarios\/\$\{encodeURIComponent\(scenarioId\)\}\/draft/);
