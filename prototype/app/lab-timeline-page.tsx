@@ -266,6 +266,13 @@ type BranchContext = {
   status: string;
 };
 
+type BranchSummary = BranchContext & {
+  forkWeek: number;
+  scenarioId: string;
+  outcomeClassification: string | null;
+  createdAt: string;
+};
+
 type MaterialSummary = {
   id: string;
   group: string;
@@ -1007,6 +1014,7 @@ export function LabTimelinePage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState("D14");
   const [managementFilter, setManagementFilter] = useState<string | null>(null);
   const [branch, setBranch] = useState<BranchContext | null>(null);
+  const [branches, setBranches] = useState<BranchSummary[]>([]);
   const [branchState, setBranchState] = useState<BranchState | null>(null);
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [scenarioTitle, setScenarioTitle] = useState<string | null>(null);
@@ -1061,6 +1069,15 @@ export function LabTimelinePage() {
     }
   };
 
+  const refreshBranches = async () => {
+    try {
+      const response = await apiJson<{ branches: BranchSummary[] }>(`/api/lab/cases/${caseId}/${caseVersion}/branches`);
+      setBranches(response.branches);
+    } catch {
+      setBranches([]);
+    }
+  };
+
   useEffect(() => {
     if (!branch || !selectedDocumentId) { setDocumentPatches([]); setBranchComparison(null); return; }
     void Promise.all([
@@ -1080,6 +1097,7 @@ export function LabTimelinePage() {
         if (cancelled) return;
         setManifest(nextManifest);
         setMainline(mainlineResponse.sections);
+        void refreshBranches();
         const restored = branchFromHash();
         if (!restored) return;
         const projection = await apiJson<{ branch: BranchContext; scenario: { title: string; cards: PublicCard[] }; state: BranchState | null; lastRoundResult: RoundResult | null }>(
@@ -1169,17 +1187,43 @@ export function LabTimelinePage() {
       setDraftUpdatedAt(null);
       setActionMessage(null);
       setRoundResult(null);
+      setAiReview(null);
       window.history.replaceState(
         null,
         "",
         `${window.location.pathname}${window.location.search}#lab-schedule?branch=${encodeURIComponent(created.branch.id)}&scenario=${encodeURIComponent(created.scenario.id)}`,
       );
       await loadMaterials(created.branch.id, created.scenario.id);
+      await refreshBranches();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "无法创建个人分支");
     } finally {
       setLoadingScenarioId(null);
     }
+  };
+
+  const leaveBranch = (targetWeek?: number) => {
+    setBranch(null);
+    setBranchState(null);
+    setScenarioId(null);
+    setScenarioTitle(null);
+    setMaterials(null);
+    setSelectedMaterialId(null);
+    setOpenedMaterialCache({});
+    setCards([]);
+    setActionChains([]);
+    setRoundResult(null);
+    setBranchComparison(null);
+    setDocumentPatches([]);
+    setAiReview(null);
+    setActionMessage(null);
+    setSelectedWeek(targetWeek ?? selectedWeek);
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#lab-schedule`);
+  };
+
+  const switchBranch = (summary: BranchSummary) => {
+    window.location.hash = `lab-schedule?branch=${encodeURIComponent(summary.id)}&scenario=${encodeURIComponent(summary.scenarioId)}`;
+    window.location.reload();
   };
 
   const openMaterial = async (material: MaterialSummary) => {
@@ -1245,6 +1289,9 @@ export function LabTimelinePage() {
   const activeWorkPackages = useMemo(() => mainline?.workload.workPackages.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
   const activeActivities = useMemo(() => mainline?.schedule.activities.filter((item) => item.startWeek <= selectedWeek && item.endWeek >= selectedWeek) ?? [], [mainline, selectedWeek]);
   const currentTakeoverPoint = manifest?.takeoverPoints.find((point) => point.week === selectedWeek) ?? null;
+  const nextTakeoverPoint = branch
+    ? manifest?.takeoverPoints.find((point) => point.week > branch.currentWeek) ?? null
+    : null;
   const currentWeekHasLabel = milestones.some((milestone) => milestone.week === selectedWeek)
     || manifest?.takeoverPoints.some((point) => point.week === selectedWeek);
 
@@ -1669,6 +1716,11 @@ export function LabTimelinePage() {
         )}
       </section>
 
+      {branches.length > 0 && <section className="lab-v2-branch-switcher">
+        <header><div><span>MY BRANCHES</span><h2>我的情景分支</h2></div>{branch && <button type="button" onClick={() => leaveBranch(branch.currentWeek)}>返回主线</button>}</header>
+        <div>{branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><span>W{summary.forkWeek} 接手</span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></button>)}</div>
+      </section>}
+
       {compactTimelineVisible && (
         <section className="lab-v2-compact-timeline" aria-label={`吸顶项目时间轴，当前第 ${selectedWeek} 周`}>
           <span>W01</span>
@@ -1977,7 +2029,7 @@ export function LabTimelinePage() {
       {branch && branchComparison && <section className="lab-v2-branch-workspace">
         <header><div><span>PATH COMPARISON / Git 式路径比较</span><h2>主线与个人分支</h2><p>从 W{branchComparison.forkWeek} 分叉；项目状态仍仅由服务端确定性规则结算。</p></div><div><strong>{branchComparison.outcomeClassification ?? "进行中"}</strong><span>路径结论</span></div></header>
         <div className="lab-v2-detail-metrics"><span><b>{branchComparison.mainline.spi.toFixed(2)}</b>主线 SPI</span><span><b>{branchComparison.branch?.spi?.toFixed(2) ?? "—"}</b>分支 SPI</span><span><b>W{branchComparison.mainline.forecastCompletionWeek}</b>主线完工</span><span><b>W{branchComparison.branch?.forecastCompletionWeek ?? "—"}</b>分支预测</span></div>
-        {branch.status !== "active" && <div className="lab-v2-gap"><strong>情景结局与规则复盘</strong><p>{branch.status === "failed" ? "路径未满足终局约束；请依据本回合缺口、文件差异和客观指标复盘。" : "情景已闭环；比较进度、成本、治理和文件更新，识别绕路或延误来源。"}</p><button type="button" disabled={aiReviewLoading} onClick={() => void requestAiReview()}>{aiReviewLoading ? "正在生成 AI 复盘…" : "生成 AI 结构化复盘"}</button>{aiReview && <div><p>{String(aiReview.summary ?? "")}</p><small>{String(aiReview.retrySuggestion ?? "")}</small></div>}</div>}
+        {branch.status !== "active" && <div className="lab-v2-gap"><strong>情景结局与规则复盘</strong><p>{branch.status === "failed" ? "路径未满足终局约束；请依据本回合缺口、文件差异和客观指标复盘。" : "情景已闭环；比较进度、成本、治理和文件更新，识别绕路或延误来源。"}</p><button type="button" disabled={aiReviewLoading} onClick={() => void requestAiReview()}>{aiReviewLoading ? "正在生成 AI 复盘…" : "生成 AI 结构化复盘"}</button>{aiReview && <div><p>{String(aiReview.summary ?? "")}</p><small>{String(aiReview.retrySuggestion ?? "")}</small></div>}<nav className="lab-v2-branch-next-actions"><button type="button" onClick={() => leaveBranch(branch.currentWeek)}>返回主线</button>{nextTakeoverPoint && <button type="button" className="primary" onClick={() => leaveBranch(nextTakeoverPoint.week)}>开始下一情景 · W{nextTakeoverPoint.week}</button>}</nav></div>}
       </section>}
 
       <button className={`lab-v2-drawer-tab ${documentDrawerOpen ? "open" : ""}`} onClick={() => setDocumentDrawerOpen((current) => !current)}>

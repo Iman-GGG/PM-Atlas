@@ -19,6 +19,10 @@ function createEnv({
     currentWeek,
     currentRoundNumber: 1,
     status: "active",
+    forkWeek: 9,
+    scenarioId: "scenario-1",
+    outcomeClassification: null,
+    createdAt: "2026-08-04 12:00:00",
   };
   const events = [
     {
@@ -80,6 +84,9 @@ function createEnv({
               ? matchingEvents.map(({ eventType, payloadJson }) => ({ ...storedBranch, eventType, payloadJson }))
               : [{ ...storedBranch, eventType: null, payloadJson: null }],
           };
+        }
+        if (query.includes("FROM lab_branches b") && query.includes("INNER JOIN lab_state_snapshots initial")) {
+          return { results: [...state.branches.values()].filter((item) => item.identityKey === bindings[0] && item.caseId === bindings[1] && item.caseVersion === bindings[2]) };
         }
         if (!query.includes("FROM lab_events")) return { results: [] };
         return {
@@ -198,6 +205,18 @@ test("filters public mainline data by section and week", async () => {
   assert.deepEqual(body.sections.baselineWorkload.weeks.map((item) => item.week), [9]);
   assert.ok(body.sections.documents.documents.every((document) => document.createdWeek <= 9));
   assert.ok(body.sections.documents.mainlineEvents.every((event) => event.week <= 9));
+});
+
+test("lists the signed-in user's scenario branches for switching", async () => {
+  const env = createEnv();
+  const response = await request("/api/lab/cases/car-control/v4/branches", {
+    headers: { "oai-authenticated-user-id": "user-123", "oai-authenticated-user-email": "iman@example.com" },
+  }, env);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.branches.length, 1);
+  assert.equal(body.branches[0].scenarioId, "scenario-1");
+  assert.equal(body.branches[0].forkWeek, 9);
 });
 
 test("reports platform session state without exposing the identity key", async () => {

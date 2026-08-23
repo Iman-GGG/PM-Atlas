@@ -15,6 +15,7 @@ import {
   findRoundSubmissionByIdempotency,
   findLabUser,
   findOwnedBranch,
+  listOwnedBranches,
   findStoredCaseVersion,
   readCurrentStateSnapshot,
   readRoundSubmission,
@@ -810,8 +811,17 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     return errorResponse(400, "INVALID_PATH", "The request path is not valid UTF-8.");
   }
   if (parts.length === 6 && parts[2] === "cases" && parts[5] === "branches") {
+    if (request.method === "GET" || request.method === "HEAD") {
+      const identity = await getPlatformIdentity(request);
+      if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to list project branches."));
+      if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
+      if (!caseMatches(parts[3], parts[4])) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
+      const branches = await listOwnedBranches(env.DB, identity.identityKey, parts[3], parts[4]);
+      const response = withPrivateCache(jsonResponse({ branches }));
+      return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
+    }
     if (request.method !== "POST") {
-      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET, HEAD, and POST are supported.", { allow: "GET, HEAD, POST" });
     }
     return createBranch(request, env, parts[3], parts[4]);
   }
