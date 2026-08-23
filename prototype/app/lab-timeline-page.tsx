@@ -573,11 +573,6 @@ const dashboardTitles: Record<DashboardId, string> = {
 };
 
 const publicSampleDocumentIds = new Set(["D05", "D26"]);
-const scenarioDescriptions: Record<string, string> = {
-  "scenario-1": "处理新增需求，完成澄清、影响分析、变更控制与预期管理。",
-  "scenario-2": "面对供应商延期和资源抽调，恢复关键路径并协调交付承诺。",
-  "scenario-3": "处理高危安全缺陷，在质量门、范围裁剪和发布决策之间取舍。",
-};
 
 function branchFromHash(): { branchId: string; scenarioId: string } | null {
   if (typeof window === "undefined") return null;
@@ -1738,11 +1733,6 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
             </button>
           </div>
         )}
-      </section>
-
-      <section className="lab-v2-scenario-preview">
-        <header><div><span>3 TAKEOVER SCENARIOS</span><h2>关键情景练习</h2></div><p>先沿主线了解项目，再选择一个节点登录接手。</p></header>
-        <div>{manifest.takeoverPoints.map((point) => <button key={point.scenarioId} type="button" onClick={() => setSelectedWeek(point.week)}><i>W{point.week}</i><span><strong>{scenarioLabels[point.scenarioId]}</strong><small>{scenarioDescriptions[point.scenarioId]}</small></span><b>查看接手点 →</b></button>)}</div>
       </section>
 
       {compactTimelineVisible && (

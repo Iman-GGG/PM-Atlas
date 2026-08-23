@@ -7948,19 +7948,6 @@ select {
 .lab-v2-takeover-callout small { color: #bbb; }
 .lab-v2-takeover-callout button { min-height: 42px; padding: 0 18px; color: var(--ink); background: var(--paper); border: 0; border-radius: var(--radius-control); cursor: pointer; font-weight: 800; }
 
-.lab-v2-scenario-preview { margin-top: 14px; padding: 24px; background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius-card); }
-.lab-v2-scenario-preview > header { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 16px; }
-.lab-v2-scenario-preview > header span { font-family: var(--font-geist-mono), monospace; font-size: 9px; }
-.lab-v2-scenario-preview h2 { margin: 5px 0 0; font-size: 24px; }
-.lab-v2-scenario-preview > header p { max-width: 420px; margin: 0; color: var(--body); text-align: right; }
-.lab-v2-scenario-preview > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.lab-v2-scenario-preview > div > button { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; min-height: 124px; padding: 16px; text-align: left; background: var(--soft); border: 1px solid var(--line); border-radius: 9px; cursor: pointer; }
-.lab-v2-scenario-preview > div > button > i { display: grid; width: 42px; height: 42px; place-items: center; color: var(--paper); background: var(--ink); border-radius: 50%; font-size: 9px; font-style: normal; font-weight: 800; }
-.lab-v2-scenario-preview > div > button > span { display: grid; gap: 6px; }
-.lab-v2-scenario-preview > div strong { font-size: 13px; }
-.lab-v2-scenario-preview > div small { color: var(--body); font-size: 10px; line-height: 1.5; }
-.lab-v2-scenario-preview > div b { grid-column: 2; font-size: 9px; }
-
 .lab-v2-branch-next-actions button { min-height: 38px; padding: 0 15px; color: var(--paper); background: transparent; border: 1px solid #777; border-radius: var(--radius-control); cursor: pointer; font-weight: 800; }
 .lab-v2-branch-next-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .lab-v2-branch-next-actions button { color: var(--ink); border-color: var(--ink); }
@@ -8552,7 +8539,6 @@ select {
   .lab-v2-project-head { grid-template-columns: 1fr; }
   .lab-v2-head-status { border-left: 0; }
   .lab-v2-dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lab-v2-scenario-preview > div { grid-template-columns: 1fr; }
   .lab-v2-widget.wide { grid-column: span 2; }
   .lab-v2-material-layout { grid-template-columns: 1fr; }
   .lab-v2-material-layout > aside { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -8575,12 +8561,10 @@ select {
   .lab-v2-range-wrap { margin-right: 36px; margin-left: 36px; }
   .lab-v2-takeover-marker { display: none; }
   .lab-v2-dashboard-heading,
-  .lab-v2-scenario-preview > header,
   .lab-v2-management > header,
   .lab-v2-branch-workspace > header,
   .lab-v2-takeover-callout { align-items: start; flex-direction: column; }
   .lab-v2-dashboard-heading p,
-  .lab-v2-scenario-preview > header p,
   .lab-v2-management > header p,
   .lab-v2-branch-workspace > header p { text-align: left; }
   .lab-v2-dashboard-grid { grid-template-columns: 1fr; }
