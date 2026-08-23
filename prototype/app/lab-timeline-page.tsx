@@ -1920,7 +1920,6 @@ export function LabTimelinePage() {
                             gap.actionTitle
                             || recognizedCards.length
                             || missingCards.length
-                            || gap.cardsSplitAcrossChains
                             || missingPrerequisites.length,
                           );
                           return (
@@ -1934,7 +1933,6 @@ export function LabTimelinePage() {
                                 <div className="lab-v2-gap-diagnosis">
                                   <section><strong>已识别</strong>{recognizedCards.length ? <GapCardGroups cards={recognizedCards} /> : <p>本回合尚未识别到支持该动作的卡片。</p>}</section>
                                   {missingCards.length > 0 && <section className="missing"><strong>尚缺</strong><GapCardGroups cards={missingCards} /></section>}
-                                  {gap.cardsSplitAcrossChains && <section className="notice"><strong>组合问题</strong><p>所需卡片已经选齐，但分散在不同的行动链中；请将它们放入同一条行动链。</p></section>}
                                   {missingPrerequisites.length > 0 && <section className="notice"><strong>前置动作</strong><p>需要先完成：{missingPrerequisites.map((item) => item.title).join("；")}</p></section>}
                                 </div>
                               ) : null}

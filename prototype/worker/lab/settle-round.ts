@@ -271,7 +271,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
   const state = normalizeState(input.previousState, input.scenario, input.budgetAtCompletionCny);
   const selectedCardIds = selectedCardsFromActionChains(input.actionChains);
   const completionActionChains = [...(input.historicalActionChains ?? []), ...input.actionChains];
-  const completionSelectedCardIds = selectedCardsFromActionChains(completionActionChains);
   const completedActionIds = new Set(state.scenario.completedActionIds);
   const newlyCompletedEffects: StateEffect[] = [];
 
@@ -436,26 +435,21 @@ export function settleRound(input: SettleRoundInput): SettledRound {
     const supportingCards = input.scenario.cards.filter((card) => (
       card.column !== "execution_action" && card.satisfiesActionIds?.includes(consequence.actionId)
     ));
+    const supportingCardIds = new Set(supportingCards.map((card) => card.id));
+    const bestCurrentChain = input.actionChains.reduce<ManagementActionChain | null>((best, chain) => {
+      const matchingCount = [...chainCardIds(chain)].filter((cardId) => supportingCardIds.has(cardId)).length;
+      const bestMatchingCount = best
+        ? [...chainCardIds(best)].filter((cardId) => supportingCardIds.has(cardId)).length
+        : -1;
+      return matchingCount > bestMatchingCount ? chain : best;
+    }, null);
+    const currentChainCardIds = bestCurrentChain ? chainCardIds(bestCurrentChain) : new Set<string>();
     const recognizedCards = supportingCards
-      .filter((card) => completionSelectedCardIds.has(card.id))
+      .filter((card) => currentChainCardIds.has(card.id))
       .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
     const missingCards = supportingCards
-      .filter((card) => !completionSelectedCardIds.has(card.id))
+      .filter((card) => !currentChainCardIds.has(card.id))
       .map((card) => ({ id: card.id, column: card.column, referenceId: card.referenceId, title: card.title }));
-    const supportingCardIds = new Set(supportingCards.map((card) => card.id));
-    const cardsCompleteInOneChain = completionActionChains.some((chain) => {
-      const chainCardIds = new Set([
-        ...chain.documentCardIds,
-        ...chain.toolTechniqueCardIds,
-        ...chain.stakeholderCardIds,
-      ]);
-      return [...supportingCardIds].every((cardId) => chainCardIds.has(cardId));
-    }) ?? false;
-    const cardsSplitAcrossChains = Boolean(
-      supportingCards.length > 0
-      && missingCards.length === 0
-      && !cardsCompleteInOneChain,
-    );
     const missingPrerequisites = (action?.prerequisiteActionIds ?? [])
       .filter((actionId) => !completedActionIds.has(actionId))
       .map((actionId) => {
@@ -464,11 +458,9 @@ export function settleRound(input: SettleRoundInput): SettledRound {
       });
     const diagnosis = missingCards.length > 0
       ? "missing_cards" as const
-      : cardsSplitAcrossChains
-        ? "split_across_chains" as const
-        : missingPrerequisites.length > 0
-          ? "prerequisite_incomplete" as const
-          : undefined;
+      : missingPrerequisites.length > 0
+        ? "prerequisite_incomplete" as const
+        : undefined;
     return {
       categories: consequence.gapCategories,
       objectiveEffects: consequence.effects,
@@ -476,7 +468,6 @@ export function settleRound(input: SettleRoundInput): SettledRound {
       actionTitle: action?.title,
       recognizedCards,
       missingCards,
-      cardsSplitAcrossChains,
       missingPrerequisites,
       diagnosis,
     };

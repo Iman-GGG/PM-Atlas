@@ -163,7 +163,7 @@ test("resolves same-round prerequisites independently of action configuration or
   assert.deepEqual(settled.result.gaps, []);
 });
 
-test("explains when complete supporting cards are split across action chains", () => {
+test("diagnoses each action from one current chain without aggregating other chains", () => {
   const settled = settle({
     actionChains: [
       {
@@ -184,9 +184,9 @@ test("explains when complete supporting cards are split across action chains", (
   });
   const clarificationGap = settled.result.gaps.find((gap) => gap.relatedActionIds.includes("S1-A1"));
   assert.ok(clarificationGap);
-  assert.deepEqual(clarificationGap.missingCards, []);
-  assert.equal(clarificationGap.cardsSplitAcrossChains, true);
-  assert.equal(clarificationGap.diagnosis, "split_across_chains");
+  assert.deepEqual(clarificationGap.missingCards.map((card) => card.id), ["S1-C10"]);
+  assert.equal(clarificationGap.cardsSplitAcrossChains, undefined);
+  assert.equal(clarificationGap.diagnosis, "missing_cards");
 });
 
 test("applies a selected harmful three-pool card only once", () => {

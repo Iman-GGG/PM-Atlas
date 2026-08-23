@@ -43,7 +43,7 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /根据本回合行动链判定/);
   assert.match(timeline, /已识别/);
   assert.match(timeline, /尚缺/);
-  assert.match(timeline, /分散在不同的行动链中/);
+  assert.doesNotMatch(timeline, /分散在不同的行动链中/);
   assert.doesNotMatch(timeline, /所选管理动作尚未连接为完整闭环|connection_incomplete/);
   assert.match(timeline, /setBranchState\(result\.stateSnapshot\)/);
 });
