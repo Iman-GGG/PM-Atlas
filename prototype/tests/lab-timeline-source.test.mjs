@@ -5,6 +5,9 @@ import test from "node:test";
 const appSource = new URL("../app/prototype-app.tsx", import.meta.url);
 const timelineSource = new URL("../app/lab-timeline-page.tsx", import.meta.url);
 const stylesSource = new URL("../app/globals.css", import.meta.url);
+const statsPageSource = new URL("../app/stats/stats-dashboard.tsx", import.meta.url);
+const analyticsApiSource = new URL("../worker/analytics/api.ts", import.meta.url);
+const labApiSource = new URL("../worker/lab/case-api.ts", import.meta.url);
 
 test("wires the project lab schedule page to mainline, takeover, and material APIs", async () => {
   const [app, timeline] = await Promise.all([
@@ -17,6 +20,10 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(app, /\/api\/lab\/session/);
   assert.match(app, /\/signout-with-chatgpt\?return_to=/);
   assert.match(app, /onOpenTakeoverHistory/);
+  assert.match(app, /session\.analyticsAdmin/);
+  assert.match(app, /href="\/stats"/);
+  assert.match(app, /隐私与统计说明/);
+  assert.match(app, /不记录页面输入、行动链具体内容或原始 IP/);
   assert.match(app, /if \(nextSection === "lab"\)[\s\S]*switchPage\("schedule"\)/);
   assert.match(app, /section === "lab" && page !== "schedule"/);
   assert.match(timeline, /\/mainline\?sections=\$\{mainlineSections\}/);
@@ -50,6 +57,24 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.doesNotMatch(timeline, /分散在不同的行动链中/);
   assert.doesNotMatch(timeline, /所选管理动作尚未连接为完整闭环|connection_incomplete/);
   assert.match(timeline, /setBranchState\(result\.stateSnapshot\)/);
+});
+
+test("keeps the analytics dashboard private and records the requested aggregates", async () => {
+  const [statsPage, analyticsApi, labApi] = await Promise.all([
+    readFile(statsPageSource, "utf8"),
+    readFile(analyticsApiSource, "utf8"),
+    readFile(labApiSource, "utf8"),
+  ]);
+
+  assert.match(statsPage, /\/api\/analytics\/summary\?days=/);
+  assert.match(statsPage, /已识别用户/);
+  assert.match(statsPage, /今日活跃登录用户/);
+  assert.match(statsPage, /AI 复盘使用/);
+  assert.match(statsPage, /情景材料查看/);
+  assert.match(analyticsApi, /isAnalyticsAdmin/);
+  assert.match(analyticsApi, /ANALYTICS_ACCESS_DENIED/);
+  assert.match(labApi, /recordAuthenticatedVisit/);
+  assert.match(labApi, /recordAnalyticsEvent/);
 });
 
 test("renders the complete monochrome project control center", async () => {

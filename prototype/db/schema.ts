@@ -25,6 +25,24 @@ export const labUsers = sqliteTable(
   (table) => [uniqueIndex("lab_users_identity_key_uq").on(table.identityKey)],
 );
 
+export const labUserActivityDays = sqliteTable(
+  "lab_user_activity_days",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => labUsers.id, { onDelete: "cascade" }),
+    activityDate: text("activity_date").notNull(),
+    visitCount: integer("visit_count").notNull().default(1),
+    firstSeenAt: timestamp("first_seen_at"),
+    lastSeenAt: timestamp("last_seen_at"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.activityDate], name: "lab_user_activity_days_pk" }),
+    index("lab_user_activity_days_date_idx").on(table.activityDate),
+    check("lab_user_activity_days_visit_count_ck", sql`${table.visitCount} >= 1`),
+  ],
+);
+
 export const labCaseVersions = sqliteTable(
   "lab_case_versions",
   {
@@ -252,5 +270,26 @@ export const labAiReviews = sqliteTable(
     check("lab_ai_reviews_kind_scope_ck", sql`(${table.reviewKind} = 'project' AND ${table.scenarioId} = '__project__') OR (${table.reviewKind} = 'scenario' AND ${table.scenarioId} <> '__project__')`),
     check("lab_ai_reviews_status_ck", sql`${table.status} IN ('pending', 'completed', 'failed', 'budget_blocked')`),
     check("lab_ai_reviews_retry_ck", sql`${table.retryCount} BETWEEN 0 AND 1`),
+  ],
+);
+
+export const labAnalyticsEvents = sqliteTable(
+  "lab_analytics_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => labUsers.id, { onDelete: "cascade" }),
+    eventType: text("event_type", { enum: ["ai_review_requested"] }).notNull(),
+    eventDate: text("event_date").notNull(),
+    branchId: text("branch_id"),
+    scenarioId: text("scenario_id"),
+    metadataJson: text("metadata_json").notNull().default("{}"),
+    createdAt: timestamp("created_at"),
+  },
+  (table) => [
+    index("lab_analytics_events_type_date_idx").on(table.eventType, table.eventDate),
+    index("lab_analytics_events_user_date_idx").on(table.userId, table.eventDate),
+    check("lab_analytics_events_type_ck", sql`${table.eventType} IN ('ai_review_requested')`),
   ],
 );

@@ -29,6 +29,7 @@ type AccountSession = {
   authenticated: boolean;
   displayName?: string;
   email?: string;
+  analyticsAdmin?: boolean;
 };
 
 const statusLabels: Record<EvidenceStatus, string> = {
@@ -152,6 +153,11 @@ function AccountMenu({ onOpenTakeoverHistory }: { onOpenTakeoverHistory: () => v
             <button type="button" role="menuitem" onClick={() => { setOpen(false); onOpenTakeoverHistory(); }}>
               <span><strong>接手记录</strong><small>查看和切换个人项目分支</small></span><b aria-hidden="true">→</b>
             </button>
+            {session.analyticsAdmin && (
+              <a role="menuitem" href="/stats">
+                <span><strong>数据统计</strong><small>查看登录、分支、材料与 AI 使用</small></span><b aria-hidden="true">→</b>
+              </a>
+            )}
             <a role="menuitem" href={`/signout-with-chatgpt?return_to=${encodeURIComponent(currentReturnPath())}`}>
               <span><strong>退出登录</strong><small>返回当前页面的公开浏览状态</small></span><b aria-hidden="true">→</b>
             </a>
@@ -925,8 +931,14 @@ export function PrototypeApp() {
         <ManagementAreaPage area={managementAreaById[page]} />
       )}
       <footer className="app-footer">
-        <span>PM Atlas · 信息系统项目管理知识实验室</span>
-        <span>{section === "knowledge" ? "知识库 · 教材分类与关系模型" : page === "schedule" ? "样本：车主远程控车应用项目 · 学习模式" : `样本：${CASE_PROJECT_NAME} · 本地原型`}</span>
+        <div>
+          <span>PM Atlas · 信息系统项目管理知识实验室</span>
+          <span>{section === "knowledge" ? "知识库 · 教材分类与关系模型" : page === "schedule" ? "样本：车主远程控车应用项目 · 学习模式" : `样本：${CASE_PROJECT_NAME} · 本地原型`}</span>
+        </div>
+        <details className="privacy-statistics-note">
+          <summary>隐私与统计说明</summary>
+          <p>未登录浏览不建立分析身份。登录后，本站使用平台提供的账号标识记录访问日期、分支创建、情景材料首次查看和 AI 复盘使用，仅用于汇总产品分析；不记录页面输入、行动链具体内容或原始 IP。</p>
+        </details>
       </footer>
       {toast && <div className="toast" role="status"><i>✓</i>{toast}</div>}
     </div>

@@ -7,6 +7,8 @@ import type {
   StateEffect,
 } from "../../lib/lab/contracts";
 import { getPlatformIdentity } from "../auth/platform-identity";
+import { isAnalyticsAdmin } from "../analytics/api";
+import { recordAnalyticsEvent, recordAuthenticatedVisit } from "../analytics/repository";
 import { privateLabCasePackage } from "../generated/lab-case-private.generated";
 import { projectScenarioForClient } from "./project-case-for-client";
 import {
@@ -36,6 +38,7 @@ import { buildDocumentPatch } from "./document-diff";
 export type LabApiEnv = {
   DB?: LabD1;
   DEEPSEEK_API_KEY?: string;
+  ANALYTICS_ADMIN_EMAILS?: string;
 };
 
 const sectionNames = [
@@ -871,6 +874,16 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
     if (!snapshot?.scenarioId) return withPrivateCache(errorResponse(409, "REVIEW_CONTEXT_MISSING", "The settled scenario context is unavailable."));
     const cached = await readAiReview(env.DB!, branch.id, snapshot.stateHash);
+    try {
+      await recordAnalyticsEvent(env.DB!, identity, {
+        type: "ai_review_requested",
+        branchId: branch.id,
+        scenarioId: snapshot.scenarioId,
+        metadata: { cache: cached?.status === "completed" ? "hit" : "miss" },
+      });
+    } catch {
+      // Product analytics must never block the review workflow.
+    }
     if (cached?.status === "completed" && cached.reviewJson) return withPrivateCache(jsonResponse({ status: "completed", review: parseStoredJson(cached.reviewJson, {}) }));
     if (!env.DEEPSEEK_API_KEY) return withPrivateCache(errorResponse(503, "AI_NOT_CONFIGURED", "The AI review provider is not configured."));
     const submission = await readRoundSubmission(env.DB!, branch.id, branch.currentRoundNumber);
@@ -934,11 +947,19 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
 
   if (parts.length === 3 && parts[2] === "session") {
     const identity = await getPlatformIdentity(request);
+    if (identity && env.DB) {
+      try {
+        await recordAuthenticatedVisit(env.DB, identity);
+      } catch {
+        // A metrics write failure must not prevent account-state rendering.
+      }
+    }
     response = withPrivateCache(jsonResponse(identity ? {
       authenticated: true,
       displayName: identity.displayName,
       email: identity.email,
       identitySource: identity.source,
+      ...(isAnalyticsAdmin(identity.email, env.ANALYTICS_ADMIN_EMAILS) ? { analyticsAdmin: true } : {}),
     } : { authenticated: false }));
   } else if (parts.length === 5 && parts[2] === "cases") {
     const [, , , caseId, caseVersion] = parts;

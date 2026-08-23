@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { handleAnalyticsApi } from "./analytics/api";
 import { handleLabApi } from "./lab/case-api";
 import type { LabD1 } from "./lab/repository";
 
@@ -9,6 +10,8 @@ interface Env {
     fetch(request: Request): Promise<Response>;
   };
   DB: LabD1;
+  ANALYTICS_ADMIN_EMAILS?: string;
+  DEEPSEEK_API_KEY?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -32,6 +35,9 @@ interface ExecutionContext {
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    const analyticsApiResponse = await handleAnalyticsApi(request, env);
+    if (analyticsApiResponse) return analyticsApiResponse;
 
     const labApiResponse = await handleLabApi(request, env);
     if (labApiResponse) return labApiResponse;

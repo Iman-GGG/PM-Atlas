@@ -1759,13 +1759,34 @@ select {
 }
 
 .app-footer {
-  display: flex;
-  justify-content: space-between;
   max-width: var(--max-page);
   margin: 0 auto;
   padding: 28px 24px 40px;
   color: var(--muted);
   font-size: 10px;
+}
+
+.app-footer > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.privacy-statistics-note {
+  max-width: 760px;
+  margin-top: 12px;
+}
+
+.privacy-statistics-note summary {
+  width: max-content;
+  color: var(--body);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.privacy-statistics-note p {
+  margin: 8px 0 0;
+  line-height: 1.7;
 }
 
 .toast {
@@ -2026,6 +2047,11 @@ select {
   }
 
   .app-footer {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .app-footer > div {
     flex-direction: column;
     gap: 5px;
   }
@@ -8602,4 +8628,114 @@ select {
   .lab-v2-loading i,
   .lab-v2-material-loading i { animation: none; }
   .lab-v2-widget { transition: none; }
+}
+
+/* Owner analytics dashboard */
+.stats-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(0, 0, 0, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, .025) 1px, transparent 1px),
+    #f4f4f1;
+  background-size: 28px 28px;
+  color: #111;
+}
+
+.stats-shell {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.stats-header,
+.stats-intro,
+.stats-panel-heading,
+.stats-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.stats-header {
+  padding-bottom: 22px;
+  border-bottom: 1px solid #1b1b1b;
+}
+
+.stats-header > div { display: flex; align-items: baseline; gap: 14px; }
+.stats-brand { color: #111; font-size: 17px; font-weight: 900; text-decoration: none; }
+.stats-header p { margin: 0; color: #70706b; font-size: 11px; }
+.stats-header nav { display: flex; align-items: center; gap: 14px; font-size: 11px; }
+.stats-header nav span { color: #70706b; }
+.stats-header nav a { color: #111; font-weight: 700; text-underline-offset: 3px; }
+
+.stats-intro { padding: 54px 0 34px; align-items: end; }
+.stats-eyebrow,
+.stats-panel-heading p { margin: 0 0 8px; color: #777770; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.stats-intro h1 { margin: 0; font-size: clamp(38px, 6vw, 68px); letter-spacing: -.06em; line-height: .95; }
+.stats-intro > div:first-child > p:last-child { max-width: 620px; margin: 16px 0 0; color: #63635f; font-size: 12px; line-height: 1.7; }
+
+.stats-range { display: inline-flex; padding: 3px; border: 1px solid #c9c9c4; border-radius: 9px; background: #fff; }
+.stats-range button { min-width: 66px; padding: 9px 12px; border: 0; border-radius: 6px; background: transparent; color: #565652; cursor: pointer; font: inherit; font-size: 11px; font-weight: 750; }
+.stats-range button.active { background: #111; color: #fff; }
+
+.stats-state { display: grid; min-height: 240px; place-items: center; border: 1px solid #c9c9c4; border-radius: 16px; background: #fff; color: #666; font-size: 12px; }
+.stats-state.error { align-content: center; gap: 6px; color: #111; }
+.stats-state.error span { color: #777; }
+
+.stats-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.stats-metrics article { min-height: 162px; padding: 20px; border: 1px solid #c9c9c4; border-radius: 14px; background: rgba(255, 255, 255, .92); }
+.stats-metrics span { display: block; min-height: 28px; color: #5f5f5a; font-size: 10px; font-weight: 750; }
+.stats-metrics strong { display: block; margin: 18px 0 10px; font-size: 43px; letter-spacing: -.05em; line-height: 1; }
+.stats-metrics small { color: #84847e; font-size: 9px; line-height: 1.5; }
+
+.stats-panel { margin-top: 12px; padding: 26px; border: 1px solid #c9c9c4; border-radius: 14px; background: rgba(255, 255, 255, .92); }
+.stats-panel-heading { padding-bottom: 22px; }
+.stats-panel-heading h2 { margin: 0; font-size: 20px; }
+.stats-panel-heading > span { color: #777770; font-size: 9px; }
+
+.stats-chart { display: flex; height: 230px; align-items: stretch; gap: 3px; padding: 15px 4px 0; border-top: 1px solid #e1e1dd; }
+.stats-chart-day { position: relative; display: flex; min-width: 0; flex: 1 1 0; flex-direction: column; justify-content: end; }
+.stats-bars { display: flex; min-height: 180px; align-items: end; justify-content: center; gap: 1px; }
+.stats-bars i { display: block; width: min(8px, 42%); min-height: 0; border-radius: 3px 3px 0 0; }
+.stats-bars i.visits { background: #c7c7c1; }
+.stats-bars i.users { background: #171717; }
+.stats-chart-day small { position: absolute; top: 190px; left: 50%; color: #898982; font-size: 8px; white-space: nowrap; transform: translateX(-50%); }
+
+.stats-table-wrap { overflow-x: auto; border-top: 1px solid #e1e1dd; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.stats-table th { padding: 11px 8px; color: #777770; font-size: 9px; text-align: left; }
+.stats-table td { padding: 13px 8px; border-top: 1px solid #ecece8; vertical-align: top; }
+.stats-table th:nth-child(n+3),
+.stats-table td:nth-child(n+3) { width: 105px; text-align: right; }
+.stats-table td strong,
+.stats-table td small { display: block; }
+.stats-table td strong { font-size: 10px; }
+.stats-table td small { margin-top: 3px; color: #8c8c85; font-size: 8px; }
+.stats-empty { padding: 54px 0; border-top: 1px solid #e1e1dd; color: #777770; font-size: 11px; text-align: center; }
+
+.stats-footer { padding: 22px 2px 0; color: #777770; font-size: 9px; }
+
+@media (max-width: 900px) {
+  .stats-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-metrics article:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .stats-shell { width: min(100% - 24px, 1180px); padding-top: 14px; }
+  .stats-header,
+  .stats-intro,
+  .stats-panel-heading,
+  .stats-footer { align-items: flex-start; flex-direction: column; }
+  .stats-header nav { flex-wrap: wrap; }
+  .stats-header nav span { width: 100%; }
+  .stats-intro { padding-top: 38px; }
+  .stats-range { width: 100%; }
+  .stats-range button { flex: 1; }
+  .stats-metrics { grid-template-columns: 1fr; }
+  .stats-metrics article:last-child { grid-column: auto; }
+  .stats-metrics article { min-height: 135px; }
+  .stats-chart { gap: 1px; }
+  .stats-bars i { width: 48%; }
+  .stats-panel { padding: 20px 16px; }
 }
