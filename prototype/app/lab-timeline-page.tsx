@@ -372,6 +372,13 @@ type RoundResult = {
   idempotentReplay: boolean;
 };
 
+type DocumentPatch = { roundNumber: number; week: number; reason: string; operations: Array<{ op: string; path: string; value: string | number | boolean }> };
+type BranchComparison = {
+  forkWeek: number; currentWeek: number; outcomeClassification: string | null;
+  mainline: { spi: number; cpi: number; forecastCompletionWeek: number };
+  branch: { spi: number; cpi: number; forecastCompletionWeek: number; status: string } | null;
+};
+
 type OpenedMaterial = {
   id: string;
   subject?: string;
@@ -1016,6 +1023,10 @@ export function LabTimelinePage() {
   const [draftLoadedKey, setDraftLoadedKey] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
+  const [documentPatches, setDocumentPatches] = useState<DocumentPatch[]>([]);
+  const [branchComparison, setBranchComparison] = useState<BranchComparison | null>(null);
+  const [aiReview, setAiReview] = useState<Record<string, unknown> | null>(null);
+  const [aiReviewLoading, setAiReviewLoading] = useState(false);
   const [submittingRound, setSubmittingRound] = useState(false);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialIds, setOpeningMaterialIds] = useState<string[]>([]);
@@ -1049,6 +1060,14 @@ export function LabTimelinePage() {
       setScenarioTitle(projection.scenario.title);
     }
   };
+
+  useEffect(() => {
+    if (!branch || !selectedDocumentId) { setDocumentPatches([]); setBranchComparison(null); return; }
+    void Promise.all([
+      apiJson<{ patches: DocumentPatch[] }>(`/api/lab/branches/${encodeURIComponent(branch.id)}/documents/${encodeURIComponent(selectedDocumentId)}`),
+      apiJson<BranchComparison>(`/api/lab/branches/${encodeURIComponent(branch.id)}/comparison`),
+    ]).then(([diff, comparison]) => { setDocumentPatches(diff.patches); setBranchComparison(comparison); }).catch(() => {});
+  }, [branch, selectedDocumentId, branch?.currentRoundNumber]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1505,6 +1524,17 @@ export function LabTimelinePage() {
     }
   };
 
+  const requestAiReview = async () => {
+    if (!branch || branch.status === "active" || aiReviewLoading) return;
+    setAiReviewLoading(true);
+    try {
+      const response = await apiJson<{ review: Record<string, unknown> }>(`/api/lab/branches/${encodeURIComponent(branch.id)}/reviews/scenario`, { method: "POST" });
+      setAiReview(response.review);
+    } catch (caught) {
+      setActionMessage(caught instanceof Error ? caught.message : "AI 复盘暂时不可用");
+    } finally { setAiReviewLoading(false); }
+  };
+
   if (!mainline || !manifest || !weekState) {
     return <main className="lab-v2-page"><div className="lab-v2-loading"><i /><strong>正在装载 32 周项目主线</strong><span>读取绩效、风险、干系人与项目文件状态…</span></div></main>;
   }
@@ -1944,6 +1974,12 @@ export function LabTimelinePage() {
         </section>
       )}
 
+      {branch && branchComparison && <section className="lab-v2-branch-workspace">
+        <header><div><span>PATH COMPARISON / Git 式路径比较</span><h2>主线与个人分支</h2><p>从 W{branchComparison.forkWeek} 分叉；项目状态仍仅由服务端确定性规则结算。</p></div><div><strong>{branchComparison.outcomeClassification ?? "进行中"}</strong><span>路径结论</span></div></header>
+        <div className="lab-v2-detail-metrics"><span><b>{branchComparison.mainline.spi.toFixed(2)}</b>主线 SPI</span><span><b>{branchComparison.branch?.spi?.toFixed(2) ?? "—"}</b>分支 SPI</span><span><b>W{branchComparison.mainline.forecastCompletionWeek}</b>主线完工</span><span><b>W{branchComparison.branch?.forecastCompletionWeek ?? "—"}</b>分支预测</span></div>
+        {branch.status !== "active" && <div className="lab-v2-gap"><strong>情景结局与规则复盘</strong><p>{branch.status === "failed" ? "路径未满足终局约束；请依据本回合缺口、文件差异和客观指标复盘。" : "情景已闭环；比较进度、成本、治理和文件更新，识别绕路或延误来源。"}</p><button type="button" disabled={aiReviewLoading} onClick={() => void requestAiReview()}>{aiReviewLoading ? "正在生成 AI 复盘…" : "生成 AI 结构化复盘"}</button>{aiReview && <div><p>{String(aiReview.summary ?? "")}</p><small>{String(aiReview.retrySuggestion ?? "")}</small></div>}</div>}
+      </section>}
+
       <button className={`lab-v2-drawer-tab ${documentDrawerOpen ? "open" : ""}`} onClick={() => setDocumentDrawerOpen((current) => !current)}>
         <i>32</i><span>项目文件</span><b>{documentState.filter((document) => document.createdWeek <= selectedWeek).length}</b>
       </button>
@@ -1976,6 +2012,7 @@ export function LabTimelinePage() {
                     <div className="lab-v2-document-title"><span>{selectedDocument.id} / W{selectedWeek} 主线版本</span><h3>{selectedDocument.title}</h3><div><b>{selectedDocument.status}</b><i>v{selectedDocument.version}</i><small>创建于 W{selectedDocument.createdWeek}</small></div></div>
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
+                      {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
                       {selectedDocument.id === "D05" && (
                         <section className="lab-v2-document-data">
                           <span>变更日志 · W{selectedWeek}</span>

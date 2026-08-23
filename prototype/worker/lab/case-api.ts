@@ -21,15 +21,20 @@ import {
   readRoundDraft,
   readOwnedBranchContext,
   readScenarioActionChainSubmissions,
+  readDocumentDeltas,
+  readAiReview,
+  saveAiReview,
   recordMaterialView,
   saveRoundDraft,
   type BranchEvent,
   type LabD1,
 } from "./repository";
 import { projectStoredBranchState, settleRound } from "./settle-round";
+import { buildDocumentPatch } from "./document-diff";
 
 export type LabApiEnv = {
   DB?: LabD1;
+  DEEPSEEK_API_KEY?: string;
 };
 
 const sectionNames = [
@@ -775,7 +780,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
         return {
           id: `${branchId}:document-delta:${nextRoundNumber}:${documentId}`,
           documentId,
-          patchJson: JSON.stringify([{ op: "add", path: "/branchRevisions/-", value: { week: settled.result.advancedToWeek, roundNumber: nextRoundNumber } }]),
+          patchJson: JSON.stringify(buildDocumentPatch(documentId, settled.internalState)),
           reason: "round_settlement",
         };
       }),
@@ -845,6 +850,72 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
     }
     return submitRound(request, env, parts[3]);
+  }
+  if (parts.length === 6 && parts[2] === "branches" && parts[4] === "reviews" && parts[5] === "scenario") {
+    if (request.method !== "POST") return errorResponse(405, "METHOD_NOT_ALLOWED", "Only POST is supported.", { allow: "POST" });
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to request a review."));
+    const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
+    if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    if (branch.status === "active") return withPrivateCache(errorResponse(409, "SCENARIO_NOT_SETTLED", "Finish the scenario before requesting its review."));
+    const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
+    if (!snapshot?.scenarioId) return withPrivateCache(errorResponse(409, "REVIEW_CONTEXT_MISSING", "The settled scenario context is unavailable."));
+    const cached = await readAiReview(env.DB!, branch.id, snapshot.stateHash);
+    if (cached?.status === "completed" && cached.reviewJson) return withPrivateCache(jsonResponse({ status: "completed", review: parseStoredJson(cached.reviewJson, {}) }));
+    if (!env.DEEPSEEK_API_KEY) return withPrivateCache(errorResponse(503, "AI_NOT_CONFIGURED", "The AI review provider is not configured."));
+    const submission = await readRoundSubmission(env.DB!, branch.id, branch.currentRoundNumber);
+    const deltas = await readDocumentDeltas(env.DB!, branch.id);
+    const context = {
+      outcome: branch.outcomeClassification ?? branch.status,
+      state: projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})),
+      actionChains: submission ? parseStoredJson<Record<string, unknown>>(submission.ruleResultJson, {}) : {},
+      documentPatches: deltas.map((delta) => ({ documentId: delta.documentId, operations: parseStoredJson(delta.patchJson, []) })),
+    };
+    const system = "你是项目管理学习复盘助手。只依据提供的用户可见事实；不得猜测隐藏规则，不得改变结算结果。返回严格 JSON，字段为 summary, strengths, improvements, mainlineDifferences, capabilityProfile, recommendedKnowledgeIds, retrySuggestion。三个 finding 数组的元素为 {claim,evidenceRefs,impact}；capabilityProfile 五项值只能是 mature/developing/needs-practice。中文、简洁、可行动。";
+    try {
+      const upstream = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", temperature: 0.2, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: JSON.stringify(context) }] }) });
+      if (!upstream.ok) throw new Error(`upstream_${upstream.status}`);
+      const payload = await upstream.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const reviewJson = payload.choices?.[0]?.message?.content;
+      const review = reviewJson ? parseStoredJson<Record<string, unknown>>(reviewJson, {}) : {};
+      if (typeof review.summary !== "string" || !review.capabilityProfile || typeof review.capabilityProfile !== "object") throw new Error("invalid_review_shape");
+      await saveAiReview(env.DB!, { id: await stableId("ai-review", `${branch.id}\u0000${snapshot.stateHash}`), branchId: branch.id, scenarioId: snapshot.scenarioId, stateHash: snapshot.stateHash, status: "completed", reviewJson: JSON.stringify(review), errorCode: null });
+      return withPrivateCache(jsonResponse({ status: "completed", review }));
+    } catch (caught) {
+      const errorCode = caught instanceof Error ? caught.message.slice(0, 80) : "ai_review_failed";
+      await saveAiReview(env.DB!, { id: await stableId("ai-review", `${branch.id}\u0000${snapshot.stateHash}`), branchId: branch.id, scenarioId: snapshot.scenarioId, stateHash: snapshot.stateHash, status: "failed", reviewJson: null, errorCode });
+      return withPrivateCache(errorResponse(502, "AI_REVIEW_FAILED", "The AI review could not be generated. Please retry once later."));
+    }
+  }
+  if (parts.length === 6 && parts[2] === "branches" && parts[4] === "documents" && request.method === "GET") {
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
+    const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
+    if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    const deltas = await readDocumentDeltas(env.DB!, branch.id, parts[5]);
+    return withPrivateCache(jsonResponse({
+      documentId: parts[5],
+      mainlineWeek: branch.currentWeek,
+      branchWeek: branch.currentWeek,
+      patches: deltas.map((delta) => ({ ...delta, operations: parseStoredJson<unknown[]>(delta.patchJson, []) })),
+    }));
+  }
+  if (parts.length === 5 && parts[2] === "branches" && parts[4] === "comparison" && request.method === "GET") {
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
+    const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
+    if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
+    const state = snapshot ? projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})) : null;
+    const baseline = projectSection("baselineWorkload", branch.currentWeek) as { weeks?: Array<Record<string, unknown>> };
+    const mainlineWeek = baseline.weeks?.[0] ?? {};
+    return withPrivateCache(jsonResponse({
+      forkWeek: branch.currentWeek - branch.currentRoundNumber,
+      currentWeek: branch.currentWeek,
+      outcomeClassification: branch.status === "active" ? null : state?.outcomeClassification ?? null,
+      mainline: { spi: mainlineWeek.spi ?? 1, cpi: mainlineWeek.cpi ?? 1, forecastCompletionWeek: 32 },
+      branch: state ? { spi: (state.performance as Record<string, unknown>).spi, cpi: (state.performance as Record<string, unknown>).cpi, forecastCompletionWeek: (state.performance as Record<string, unknown>).forecastCompletionWeek, status: (state.scenario as Record<string, unknown>).status } : null,
+    }));
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });

@@ -23,6 +23,7 @@ export type OwnedBranch = {
   currentRoundNumber: number;
   lockVersion: number;
   status: string;
+  outcomeClassification?: string | null;
 };
 
 export type StoredCaseVersion = {
@@ -73,6 +74,16 @@ export type StoredActionChainSubmission = {
   submissionJson: string;
 };
 
+export type StoredDocumentDelta = {
+  documentId: string;
+  roundNumber: number;
+  week: number;
+  patchJson: string;
+  reason: string;
+};
+
+export type StoredAiReview = { status: string; reviewJson: string | null; stateHash: string; errorCode: string | null };
+
 export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: string): Promise<OwnedBranch | null> {
   return db.prepare(`
     SELECT
@@ -84,6 +95,7 @@ export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: 
       b.current_round_number AS currentRoundNumber,
       b.lock_version AS lockVersion,
       b.status
+      , b.outcome_classification AS outcomeClassification
     FROM lab_branches b
     INNER JOIN lab_users u ON u.id = b.user_id
     INNER JOIN lab_case_versions cv
@@ -108,6 +120,7 @@ export async function readOwnedBranchContext(
       b.current_round_number AS currentRoundNumber,
       b.lock_version AS lockVersion,
       b.status,
+      b.outcome_classification AS outcomeClassification,
       e.event_type AS eventType,
       e.payload_json AS payloadJson
     FROM lab_branches b
@@ -135,6 +148,7 @@ export async function readOwnedBranchContext(
       currentRoundNumber: first.currentRoundNumber,
       lockVersion: first.lockVersion,
       status: first.status,
+      outcomeClassification: first.outcomeClassification,
     },
     events: rows.flatMap((row) => row.eventType && row.payloadJson
       ? [{ eventType: row.eventType, payloadJson: row.payloadJson }]
@@ -398,6 +412,27 @@ export async function readScenarioActionChainSubmissions(
     ORDER BY round_number ASC
   `).bind(branchId, scenarioId).all<StoredActionChainSubmission>();
   return result.results ?? [];
+}
+
+export async function readDocumentDeltas(db: LabD1, branchId: string, documentId?: string): Promise<StoredDocumentDelta[]> {
+  const clause = documentId ? "AND document_id = ?" : "";
+  const statement = db.prepare(`
+    SELECT document_id AS documentId, round_number AS roundNumber, week, patch_json AS patchJson, reason
+    FROM lab_document_deltas WHERE branch_id = ? ${clause}
+    ORDER BY round_number ASC, document_id ASC
+  `);
+  const result = documentId
+    ? await statement.bind(branchId, documentId).all<StoredDocumentDelta>()
+    : await statement.bind(branchId).all<StoredDocumentDelta>();
+  return result.results ?? [];
+}
+
+export async function readAiReview(db: LabD1, branchId: string, stateHash: string): Promise<StoredAiReview | null> {
+  return db.prepare(`SELECT status, review_json AS reviewJson, state_hash AS stateHash, error_code AS errorCode FROM lab_ai_reviews WHERE branch_id = ? AND review_kind = 'scenario' AND state_hash = ? AND prompt_version = 'v1' LIMIT 1`).bind(branchId, stateHash).first<StoredAiReview>();
+}
+
+export async function saveAiReview(db: LabD1, record: { id: string; branchId: string; scenarioId: string; stateHash: string; status: "completed" | "failed"; reviewJson: string | null; errorCode: string | null }): Promise<void> {
+  await db.prepare(`INSERT INTO lab_ai_reviews (id, branch_id, scenario_id, review_kind, status, state_hash, review_json, model_ref, prompt_version, error_code) VALUES (?, ?, ?, 'scenario', ?, ?, ?, 'deepseek-chat', 'v1', ?) ON CONFLICT(branch_id, review_kind, scenario_id, state_hash, prompt_version) DO UPDATE SET status = excluded.status, review_json = excluded.review_json, error_code = excluded.error_code, updated_at = CURRENT_TIMESTAMP`).bind(record.id, record.branchId, record.scenarioId, record.status, record.stateHash, record.reviewJson, record.errorCode).run();
 }
 
 export type CommitRoundRecords = {
