@@ -15,6 +15,8 @@ type CaseManifest = {
   takeoverPoints: TakeoverPoint[];
 };
 
+type LabSession = { authenticated: boolean };
+
 type BaselineWeek = {
   week: number;
   sprint: string | null;
@@ -570,6 +572,13 @@ const dashboardTitles: Record<DashboardId, string> = {
   "risk-status": "风险状态统计",
 };
 
+const publicSampleDocumentIds = new Set(["D05", "D26"]);
+const scenarioDescriptions: Record<string, string> = {
+  "scenario-1": "处理新增需求，完成澄清、影响分析、变更控制与预期管理。",
+  "scenario-2": "面对供应商延期和资源抽调，恢复关键路径并协调交付承诺。",
+  "scenario-3": "处理高危安全缺陷，在质量门、范围裁剪和发布决策之间取舍。",
+};
+
 function branchFromHash(): { branchId: string; scenarioId: string } | null {
   if (typeof window === "undefined") return null;
   const query = window.location.hash.split("?", 2)[1];
@@ -584,10 +593,10 @@ function signIn() {
   window.location.href = `/signin-with-chatgpt?return_to=${encodeURIComponent(window.location.pathname + window.location.search + window.location.hash)}`;
 }
 
-async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit, redirectOnUnauthorized = true): Promise<T> {
   const response = await fetch(input, init);
   if (response.status === 401) {
-    signIn();
+    if (redirectOnUnauthorized) signIn();
     throw new Error("需要登录后继续");
   }
   const body = await response.json() as T & { error?: { message?: string } };
@@ -1005,12 +1014,14 @@ function DashboardCard({
 
 export function LabTimelinePage() {
   const [manifest, setManifest] = useState<CaseManifest | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [mainline, setMainline] = useState<MainlineData | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedWidget, setSelectedWidget] = useState<DashboardId | null>(null);
   const [requirementPriorityFilter, setRequirementPriorityFilter] = useState<"ALL" | RequirementItem["priority"]>("ALL");
   const [riskDetailFilter, setRiskDetailFilter] = useState<"ALL" | "OPEN" | "HIGH" | "CLOSED">("ALL");
   const [documentDrawerOpen, setDocumentDrawerOpen] = useState(false);
+  const [branchHistoryOpen, setBranchHistoryOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState("D14");
   const [managementFilter, setManagementFilter] = useState<string | null>(null);
   const [branch, setBranch] = useState<BranchContext | null>(null);
@@ -1071,7 +1082,7 @@ export function LabTimelinePage() {
 
   const refreshBranches = async () => {
     try {
-      const response = await apiJson<{ branches: BranchSummary[] }>(`/api/lab/cases/${caseId}/${caseVersion}/branches`);
+      const response = await apiJson<{ branches: BranchSummary[] }>(`/api/lab/cases/${caseId}/${caseVersion}/branches`, undefined, false);
       setBranches(response.branches);
     } catch {
       setBranches([]);
@@ -1090,14 +1101,16 @@ export function LabTimelinePage() {
     let cancelled = false;
     const initialize = async () => {
       try {
-        const [nextManifest, mainlineResponse] = await Promise.all([
+        const [nextManifest, mainlineResponse, session] = await Promise.all([
           apiJson<CaseManifest>(`/api/lab/cases/${caseId}/${caseVersion}`),
           apiJson<MainlineResponse>(`/api/lab/cases/${caseId}/${caseVersion}/mainline?sections=${mainlineSections}`),
+          apiJson<LabSession>("/api/lab/session", undefined, false),
         ]);
         if (cancelled) return;
         setManifest(nextManifest);
         setMainline(mainlineResponse.sections);
-        void refreshBranches();
+        setAuthenticated(session.authenticated);
+        if (session.authenticated) void refreshBranches();
         const restored = branchFromHash();
         if (!restored) return;
         const projection = await apiJson<{ branch: BranchContext; scenario: { title: string; cards: PublicCard[] }; state: BranchState | null; lastRoundResult: RoundResult | null }>(
@@ -1157,6 +1170,10 @@ export function LabTimelinePage() {
 
   const takeover = async (point: TakeoverPoint) => {
     setSelectedWeek(point.week);
+    if (!authenticated) {
+      signIn();
+      return;
+    }
     setLoadingScenarioId(point.scenarioId);
     setError(null);
     try {
@@ -1367,6 +1384,7 @@ export function LabTimelinePage() {
   }, [allDocumentEvents, branch, branchState, mainline, selectedWeek]);
 
   const selectedDocument = documentState.find((document) => document.id === selectedDocumentId) ?? documentState[0];
+  const selectedDocumentContentLocked = authenticated === false && !publicSampleDocumentIds.has(selectedDocument?.id ?? "");
   const relatedDocumentIds = useMemo(() => {
     if (!mainline || !selectedDocument) return new Set<string>();
     return new Set(mainline.documents.relations
@@ -1710,16 +1728,16 @@ export function LabTimelinePage() {
           <div className="lab-v2-takeover-callout">
             <div><span>SCENARIO AVAILABLE</span><strong>{scenarioLabels[currentTakeoverPoint.scenarioId]}</strong><small>在 W{currentTakeoverPoint.week} 复制主线状态，建立你的个人分支。</small></div>
             <button disabled={loadingScenarioId !== null} onClick={() => void takeover(currentTakeoverPoint)}>
-              {loadingScenarioId === currentTakeoverPoint.scenarioId ? "正在创建分支…" : "从这里接手 →"}
+              {loadingScenarioId === currentTakeoverPoint.scenarioId ? "正在创建分支…" : authenticated ? "从这里接手 →" : "登录并从这里接手 →"}
             </button>
           </div>
         )}
       </section>
 
-      {branches.length > 0 && <section className="lab-v2-branch-switcher">
-        <header><div><span>MY BRANCHES</span><h2>我的情景分支</h2></div>{branch && <button type="button" onClick={() => leaveBranch(branch.currentWeek)}>返回主线</button>}</header>
-        <div>{branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><span>W{summary.forkWeek} 接手</span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></button>)}</div>
-      </section>}
+      <section className="lab-v2-scenario-preview">
+        <header><div><span>3 TAKEOVER SCENARIOS</span><h2>关键情景练习</h2></div><p>先沿主线了解项目，再选择一个节点登录接手。</p></header>
+        <div>{manifest.takeoverPoints.map((point) => <button key={point.scenarioId} type="button" onClick={() => setSelectedWeek(point.week)}><i>W{point.week}</i><span><strong>{scenarioLabels[point.scenarioId]}</strong><small>{scenarioDescriptions[point.scenarioId]}</small></span><b>查看接手点 →</b></button>)}</div>
+      </section>
 
       {compactTimelineVisible && (
         <section className="lab-v2-compact-timeline" aria-label={`吸顶项目时间轴，当前第 ${selectedWeek} 周`}>
@@ -2030,7 +2048,19 @@ export function LabTimelinePage() {
         {branch.status !== "active" && <div className="lab-v2-gap"><strong>情景结局与规则复盘</strong><p>{branch.status === "failed" ? "路径未满足终局约束；请依据本回合缺口、文件差异和客观指标复盘。" : "情景已闭环；比较进度、成本、治理和文件更新，识别绕路或延误来源。"}</p><button type="button" disabled={aiReviewLoading} onClick={() => void requestAiReview()}>{aiReviewLoading ? "正在生成 AI 复盘…" : "生成 AI 结构化复盘"}</button>{aiReview && <div><p>{String(aiReview.summary ?? "")}</p><small>{String(aiReview.retrySuggestion ?? "")}</small></div>}<nav className="lab-v2-branch-next-actions"><button type="button" onClick={() => leaveBranch(branch.currentWeek)}>返回主线</button>{nextTakeoverPoint && <button type="button" className="primary" onClick={() => leaveBranch(nextTakeoverPoint.week)}>开始下一情景 · W{nextTakeoverPoint.week}</button>}</nav></div>}
       </section>}
 
-      <button className={`lab-v2-drawer-tab ${documentDrawerOpen ? "open" : ""}`} onClick={() => setDocumentDrawerOpen((current) => !current)}>
+      <button className={`lab-v2-drawer-tab history ${branchHistoryOpen ? "open" : ""}`} onClick={() => { setDocumentDrawerOpen(false); setBranchHistoryOpen((current) => !current); }}>
+        <i>↗</i><span>接手记录</span><b>{branches.length}</b>
+      </button>
+
+      {branchHistoryOpen && <div className="lab-v2-drawer-backdrop" onClick={() => setBranchHistoryOpen(false)}>
+        <aside className="lab-v2-branch-history-drawer" onClick={(event) => event.stopPropagation()}>
+          <header><div><span>TAKEOVER HISTORY</span><h2>接手记录</h2><p>每次接手形成独立分支；点击记录可切换并回看当时的行动和结局。</p></div><button type="button" onClick={() => setBranchHistoryOpen(false)}>关闭</button></header>
+          {branch && <button className="lab-v2-history-mainline" type="button" onClick={() => { setBranchHistoryOpen(false); leaveBranch(branch.currentWeek); }}>返回项目主线</button>}
+          <div className="lab-v2-branch-history-list">{branches.length ? branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><i>W{summary.forkWeek}</i><span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></span><b>{branch?.id === summary.id ? "当前" : "打开"}</b></button>) : <p>还没有接手记录。请先在 W9、W17 或 W25 从主线创建分支。</p>}</div>
+        </aside>
+      </div>}
+
+      <button className={`lab-v2-drawer-tab ${documentDrawerOpen ? "open" : ""}`} onClick={() => { setBranchHistoryOpen(false); setDocumentDrawerOpen((current) => !current); }}>
         <i>32</i><span>项目文件</span><b>{documentState.filter((document) => document.createdWeek <= selectedWeek).length}</b>
       </button>
 
@@ -2048,10 +2078,10 @@ export function LabTimelinePage() {
                   {filteredDocuments.map((document) => (
                     <button
                       key={document.id}
-                      className={`${selectedDocument?.id === document.id ? "active" : ""} ${relatedDocumentIds.has(document.id) ? "related" : ""} ${document.status === "未创建" ? "locked" : ""}`}
+                      className={`${selectedDocument?.id === document.id ? "active" : ""} ${relatedDocumentIds.has(document.id) ? "related" : ""} ${document.status === "未创建" ? "locked" : ""} ${authenticated === false && !publicSampleDocumentIds.has(document.id) ? "content-locked" : ""}`}
                       onClick={() => setSelectedDocumentId(document.id)}
                     >
-                      <b>{document.id}</b><span><strong>{document.title}</strong><small>v{document.version} · {document.status}</small></span><i />
+                      <b>{document.id}</b><span><strong>{document.title}</strong><small>{authenticated === false && !publicSampleDocumentIds.has(document.id) ? "登录查看内容" : `v${document.version} · ${document.status}`}</small></span><i>{authenticated === false && !publicSampleDocumentIds.has(document.id) ? "锁" : ""}</i>
                     </button>
                   ))}
                 </div>
@@ -2060,7 +2090,7 @@ export function LabTimelinePage() {
                 {selectedDocument && (
                   <>
                     <div className="lab-v2-document-title"><span>{selectedDocument.id} / W{selectedWeek} 主线版本</span><h3>{selectedDocument.title}</h3><div><b>{selectedDocument.status}</b><i>v{selectedDocument.version}</i><small>创建于 W{selectedDocument.createdWeek}</small></div></div>
-                    {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : <>
+                    {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : selectedDocumentContentLocked ? <div className="lab-v2-document-locked"><strong>登录查看具体内容</strong><p>项目文件目录保持开放；登录后可查看当前内容、版本历史、关联文件和个人分支差异。</p><button type="button" onClick={signIn}>登录并解锁项目文件</button></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
                       {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
                       {selectedDocument.id === "D05" && (

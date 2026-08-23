@@ -56,6 +56,14 @@ test("renders the complete monochrome project control center", async () => {
 
   assert.match(timeline, /type="range"/);
   assert.match(timeline, /从这里接手/);
+  assert.match(timeline, /登录并从这里接手/);
+  assert.match(timeline, /3 TAKEOVER SCENARIOS/);
+  assert.match(timeline, /publicSampleDocumentIds = new Set\(\["D05", "D26"\]\)/);
+  assert.match(timeline, /登录查看具体内容/);
+  assert.match(timeline, /apiJson<LabSession>\("\/api\/lab\/session"/);
+  assert.match(timeline, /接手记录/);
+  assert.match(timeline, /lab-v2-branch-history-drawer/);
+  assert.doesNotMatch(timeline, /lab-v2-branch-switcher/);
   assert.match(timeline, /const managementAreas:[\s\S]*项目干系人管理/);
   assert.match(timeline, /className="lab-v2-document-drawer"/);
   assert.match(timeline, /32 份项目文件/);
