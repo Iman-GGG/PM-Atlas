@@ -1012,7 +1012,7 @@ function DashboardCard({
   );
 }
 
-export function LabTimelinePage() {
+export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHistoryRequest?: number }) {
   const [manifest, setManifest] = useState<CaseManifest | null>(null);
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [mainline, setMainline] = useState<MainlineData | null>(null);
@@ -1055,6 +1055,12 @@ export function LabTimelinePage() {
   const roundIdempotencyKeys = useRef(new Map<string, string>());
   const draftLoadingKeyRef = useRef<string | null>(null);
   const timelinePanelRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (openBranchHistoryRequest < 1) return;
+    setDocumentDrawerOpen(false);
+    setBranchHistoryOpen(true);
+  }, [openBranchHistoryRequest]);
 
   const loadMaterials = async (branchId: string, nextScenarioId: string) => {
     const list = await apiJson<MaterialList>(
@@ -2049,7 +2055,7 @@ export function LabTimelinePage() {
       </section>}
 
       <button className={`lab-v2-drawer-tab history ${branchHistoryOpen ? "open" : ""}`} onClick={() => { setDocumentDrawerOpen(false); setBranchHistoryOpen((current) => !current); }}>
-        <i>↗</i><span>接手记录</span><b>{branches.length}</b>
+        <i className="lab-v2-branch-glyph" aria-hidden="true"><em className="trunk" /><em className="fork" /><em className="node top" /><em className="node middle" /><em className="node bottom" /></i><span>接手记录</span><b>{branches.length}</b>
       </button>
 
       {branchHistoryOpen && <div className="lab-v2-drawer-backdrop" onClick={() => setBranchHistoryOpen(false)}>

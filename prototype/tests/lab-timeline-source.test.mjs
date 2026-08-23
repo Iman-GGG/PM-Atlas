@@ -12,7 +12,11 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
     readFile(timelineSource, "utf8"),
   ]);
 
-  assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage \/>/);
+  assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage openBranchHistoryRequest=\{branchHistoryRequest\} \/>/);
+  assert.match(app, /function AccountMenu/);
+  assert.match(app, /\/api\/lab\/session/);
+  assert.match(app, /\/signout-with-chatgpt\?return_to=/);
+  assert.match(app, /onOpenTakeoverHistory/);
   assert.match(app, /if \(nextSection === "lab"\)[\s\S]*switchPage\("schedule"\)/);
   assert.match(app, /section === "lab" && page !== "schedule"/);
   assert.match(timeline, /\/mainline\?sections=\$\{mainlineSections\}/);
@@ -63,6 +67,8 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /apiJson<LabSession>\("\/api\/lab\/session"/);
   assert.match(timeline, /接手记录/);
   assert.match(timeline, /lab-v2-branch-history-drawer/);
+  assert.match(timeline, /openBranchHistoryRequest/);
+  assert.match(timeline, /lab-v2-branch-glyph/);
   assert.doesNotMatch(timeline, /lab-v2-branch-switcher/);
   assert.match(timeline, /const managementAreas:[\s\S]*项目干系人管理/);
   assert.match(timeline, /className="lab-v2-document-drawer"/);

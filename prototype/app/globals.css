@@ -1908,6 +1908,24 @@ select {
     display: none;
   }
 
+  .header-mode-label {
+    margin-right: auto;
+  }
+
+  .account-trigger > span,
+  .account-trigger > b {
+    display: none;
+  }
+
+  .account-trigger {
+    min-height: 40px;
+    padding: 3px;
+  }
+
+  .account-popover {
+    width: min(310px, calc(100vw - 32px));
+  }
+
   .project-context {
     align-items: flex-start;
     flex-direction: column;
@@ -2061,6 +2079,213 @@ select {
 
 .header-export-hidden {
   visibility: hidden;
+}
+
+.account-status-loading {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--soft);
+}
+
+.account-status-loading i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: account-status-spin .8s linear infinite;
+}
+
+.account-sign-in {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 17px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.account-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.account-trigger {
+  display: flex;
+  min-height: 42px;
+  max-width: 220px;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-trigger:hover,
+.account-trigger[aria-expanded="true"] {
+  border-color: var(--ink);
+  background: var(--soft);
+}
+
+.account-avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.account-trigger > span {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.account-trigger small,
+.account-summary small,
+.account-menu-actions small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.account-trigger strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-trigger > b {
+  width: 7px;
+  height: 7px;
+  margin: 0 2px 3px 3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .16s ease;
+}
+
+.account-trigger[aria-expanded="true"] > b {
+  margin-bottom: -3px;
+  transform: rotate(225deg);
+}
+
+.account-popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 310px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, .18);
+}
+
+.account-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-avatar.large {
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
+}
+
+.account-summary > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.account-summary strong,
+.account-summary em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-summary strong {
+  font-size: 13px;
+}
+
+.account-summary em {
+  color: var(--body);
+  font-size: 10px;
+  font-style: normal;
+}
+
+.account-menu-actions {
+  display: grid;
+  padding: 7px;
+}
+
+.account-menu-actions > button,
+.account-menu-actions > a {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.account-menu-actions > button:hover,
+.account-menu-actions > a:hover {
+  background: var(--soft);
+}
+
+.account-menu-actions > button span,
+.account-menu-actions > a span {
+  display: grid;
+  gap: 2px;
+}
+
+.account-menu-actions strong {
+  font-size: 11px;
+}
+
+.account-menu-actions > button > b,
+.account-menu-actions > a > b {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@keyframes account-status-spin {
+  to { transform: rotate(360deg); }
 }
 
 .lab-subnav {
@@ -8125,6 +8350,14 @@ select {
 }
 
 .lab-v2-drawer-tab i { display: grid; width: 28px; height: 28px; place-items: center; color: var(--ink); background: var(--paper); border-radius: 50%; font-size: 10px; font-style: normal; font-weight: 800; }
+.lab-v2-drawer-tab .lab-v2-branch-glyph { position: relative; display: block; }
+.lab-v2-branch-glyph em { position: absolute; display: block; background: var(--ink); font-style: normal; }
+.lab-v2-branch-glyph .trunk { left: 8px; top: 5px; width: 2px; height: 18px; }
+.lab-v2-branch-glyph .fork { left: 9px; top: 12px; width: 11px; height: 2px; transform: rotate(-31deg); transform-origin: left center; }
+.lab-v2-branch-glyph .node { width: 7px; height: 7px; background: var(--paper); border: 2px solid var(--ink); border-radius: 50%; }
+.lab-v2-branch-glyph .node.top { left: 5px; top: 2px; }
+.lab-v2-branch-glyph .node.middle { right: 3px; top: 5px; }
+.lab-v2-branch-glyph .node.bottom { left: 5px; bottom: 2px; }
 .lab-v2-drawer-tab span { margin-top: 7px; font-size: 10px; font-weight: 800; writing-mode: vertical-rl; }
 .lab-v2-drawer-tab b { margin-top: 6px; color: #aaa; font-size: 9px; }
 .lab-v2-drawer-tab.history { top: calc(44% + 130px); }

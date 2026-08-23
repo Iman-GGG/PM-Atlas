@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CASE_PROJECT_NAME,
   deliverables,
@@ -24,6 +24,12 @@ type ProductPage = LabAreaId;
 type PrimarySection = "knowledge" | "lab";
 type AssessmentMode = "inherent" | "residual";
 type Rating = Risk["rating"];
+
+type AccountSession = {
+  authenticated: boolean;
+  displayName?: string;
+  email?: string;
+};
 
 const statusLabels: Record<EvidenceStatus, string> = {
   confirmed: "已确认",
@@ -61,18 +67,115 @@ function RatingPill({ rating }: { rating: Rating }) {
   return <span className={`rating-pill rating-${rating.toLowerCase()}`}>{ratingLabels[rating]}</span>;
 }
 
+function currentReturnPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function AccountMenu({ onOpenTakeoverHistory }: { onOpenTakeoverHistory: () => void }) {
+  const [session, setSession] = useState<AccountSession | null>(null);
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/lab/session", {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { accept: "application/json" },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("无法读取登录状态");
+        return response.json() as Promise<AccountSession>;
+      })
+      .then((nextSession) => {
+        if (!cancelled) setSession(nextSession);
+      })
+      .catch(() => {
+        if (!cancelled) setSession({ authenticated: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("pointerdown", closeOnOutsidePress);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("pointerdown", closeOnOutsidePress);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  if (!session) {
+    return <span className="account-status-loading" aria-label="正在确认登录状态"><i /></span>;
+  }
+
+  if (!session.authenticated) {
+    return (
+      <a className="account-sign-in" href={`/signin-with-chatgpt?return_to=${encodeURIComponent(currentReturnPath())}`}>
+        登录
+      </a>
+    );
+  }
+
+  const displayName = session.displayName?.trim() || session.email || "已登录用户";
+  const avatarText = displayName.slice(0, 1).toUpperCase();
+
+  return (
+    <div className="account-menu" ref={menuRef}>
+      <button
+        type="button"
+        className="account-trigger"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <i className="account-avatar" aria-hidden="true">{avatarText}</i>
+        <span><small>已登录</small><strong>{displayName}</strong></span>
+        <b aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="account-popover" role="menu">
+          <div className="account-summary">
+            <i className="account-avatar large" aria-hidden="true">{avatarText}</i>
+            <span><small>当前账号</small><strong>{displayName}</strong>{session.email && <em>{session.email}</em>}</span>
+          </div>
+          <div className="account-menu-actions">
+            <button type="button" role="menuitem" onClick={() => { setOpen(false); onOpenTakeoverHistory(); }}>
+              <span><strong>接手记录</strong><small>查看和切换个人项目分支</small></span><b aria-hidden="true">→</b>
+            </button>
+            <a role="menuitem" href={`/signout-with-chatgpt?return_to=${encodeURIComponent(currentReturnPath())}`}>
+              <span><strong>退出登录</strong><small>返回当前页面的公开浏览状态</small></span><b aria-hidden="true">→</b>
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AppHeader({
   section,
   setSection,
   onExport,
   canExport,
   page,
+  onOpenTakeoverHistory,
 }: {
   section: PrimarySection;
   setSection: (section: PrimarySection) => void;
   onExport: () => void;
   canExport: boolean;
   page: ProductPage;
+  onOpenTakeoverHistory: () => void;
 }) {
   return (
     <header className="app-header">
@@ -95,6 +198,7 @@ function AppHeader({
         <button className={`button button-dark button-small ${canExport ? "" : "header-export-hidden"}`} onClick={onExport}>
           导出 Word
         </button>
+        <AccountMenu onOpenTakeoverHistory={onOpenTakeoverHistory} />
       </div>
     </header>
   );
@@ -746,6 +850,7 @@ export function PrototypeApp() {
   const [section, setSection] = useState<PrimarySection>("knowledge");
   const [page, setPage] = useState<ProductPage>("overview");
   const [toast, setToast] = useState<string | null>(null);
+  const [branchHistoryRequest, setBranchHistoryRequest] = useState(0);
 
   useEffect(() => {
     const applyHash = () => {
@@ -782,6 +887,11 @@ export function PrototypeApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const openTakeoverHistory = () => {
+    setBranchHistoryRequest((current) => current + 1);
+    switchPage("schedule");
+  };
+
   return (
     <div className="app-shell">
       <AppHeader
@@ -790,6 +900,7 @@ export function PrototypeApp() {
         onExport={showExportToast}
         canExport={section === "lab" && page !== "overview" && page !== "schedule"}
         page={page}
+        onOpenTakeoverHistory={openTakeoverHistory}
       />
       {section === "lab" && page !== "schedule" && (
         <>
@@ -807,7 +918,7 @@ export function PrototypeApp() {
       ) : page === "risk" ? (
         <RiskPage />
       ) : page === "schedule" ? (
-        <LabTimelinePage />
+        <LabTimelinePage openBranchHistoryRequest={branchHistoryRequest} />
       ) : page === "stakeholder" ? (
         <StakeholderPage />
       ) : (
