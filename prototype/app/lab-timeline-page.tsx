@@ -41,9 +41,26 @@ type ScheduleActivity = {
   id: string;
   parentId: string;
   title: string;
+  type: "discrete" | "level_of_effort" | "recurring";
   startWeek: number;
   endWeek: number;
+  durationWeeks?: { optimistic: number; mostLikely: number; pessimistic: number };
+  occurrenceWeeks?: number[];
   predecessors?: Array<{ activityId: string; type: string; lagWeeks: number }>;
+  plannedPersonDaysByRole: Record<string, number>;
+  acceptanceCriteria: string[];
+};
+
+type ActivityListPolicy = {
+  documentId: "D02";
+  createdWeek: number;
+  approvedWeek: number;
+  sourceDocumentIds: string[];
+  decompositionBasis: string;
+  inclusionRule: string;
+  changeRule: string;
+  statusModel: Array<"not_started" | "in_progress" | "waiting_next_occurrence" | "completed">;
+  typeDefinitions: Array<{ type: ScheduleActivity["type"]; label: string; definition: string }>;
 };
 
 type Stakeholder = {
@@ -219,6 +236,43 @@ type MilestoneList = {
   items: MilestoneItem[];
 };
 
+type ScopeStatusEvent = {
+  week: number;
+  status: "draft_included" | "baselined_included" | "deferred_from_v1_0";
+  evidence: string;
+};
+
+type ProjectScopeStatement = {
+  documentId: "D16";
+  purpose: string;
+  productScopeDescription: string;
+  projectScopeDescription: string;
+  statusModel: ScopeStatusEvent["status"][];
+  baselineEvents: Array<{ week: number; version: string; status: string; decision: string; approvedChangeId: string | null }>;
+  productScopeItems: Array<{
+    id: string;
+    title: string;
+    description: string;
+    relatedRequirementIds: string[];
+    relatedWbsIds: string[];
+    statusEvents: ScopeStatusEvent[];
+  }>;
+  deliverables: Array<{
+    id: string;
+    title: string;
+    definedWeek: number;
+    targetWeek: number;
+    relatedWbsIds: string[];
+    acceptanceSummary: string;
+    evidenceDocumentIds: string[];
+  }>;
+  exclusions: Array<{ id: string; effectiveWeek: number; title: string; reason: string; destination: string }>;
+  constraints: Array<{ id: string; title: string; description: string }>;
+  assumptionIds: string[];
+  acceptanceCriteria: Array<{ id: string; criterion: string; evidenceDocumentIds: string[] }>;
+  changeControlRule: string;
+};
+
 type ChangeItem = {
   id: string;
   title: string;
@@ -335,7 +389,7 @@ type MainlineData = {
     roles: Array<{ id: string; title: string }>;
     workPackages: WorkPackage[];
   };
-  schedule: { activities: ScheduleActivity[] };
+  schedule: { activityList: ActivityListPolicy; activities: ScheduleActivity[] };
   stakeholders: {
     stakeholders: Stakeholder[];
     mainlineEngagementEvents: StakeholderEvent[];
@@ -352,6 +406,7 @@ type MainlineData = {
     assumptionLog: AssumptionLog;
     lessonsLearnedRegister: LessonsLearnedRegister;
     milestoneList: MilestoneList;
+    projectScopeStatement: ProjectScopeStatement;
     changeItems: ChangeItem[];
     issues: IssueItem[];
     testRounds: TestRound[];
@@ -699,6 +754,22 @@ const milestoneStatusLabels: Record<MilestoneStatusEvent["status"], string> = {
   achieved_with_conditions: "有条件达成",
   achieved: "已达成",
 };
+const activityTypeLabels: Record<ScheduleActivity["type"], string> = {
+  discrete: "离散活动",
+  level_of_effort: "人力投入型",
+  recurring: "重复活动",
+};
+const activityStatusLabels = {
+  not_started: "未开始",
+  in_progress: "进行中",
+  waiting_next_occurrence: "等待下次发生",
+  completed: "已完成",
+} as const;
+const scopeStatusLabels: Record<ScopeStatusEvent["status"], string> = {
+  draft_included: "草案纳入",
+  baselined_included: "基线纳入",
+  deferred_from_v1_0: "移出 V1.0",
+};
 const stakeholderGroupLabels: Record<Stakeholder["group"], string> = {
   governance: "治理",
   core_team: "核心团队",
@@ -812,7 +883,17 @@ function documentActions(event: DocumentEvent, documentId: string): string[] {
 }
 
 function documentVersionActions(event: DocumentEvent, documentId: string): string[] {
-  return documentActions(event, documentId).filter((action) => !action.toLowerCase().includes("archived"));
+  return documentActions(event, documentId).filter((action) => {
+    const normalized = action.toLowerCase();
+    return !normalized.includes("archived") && !normalized.includes("unchanged");
+  });
+}
+
+function activityStatus(activity: ScheduleActivity, week: number): keyof typeof activityStatusLabels {
+  if (week > activity.endWeek) return "completed";
+  if (week < activity.startWeek) return "not_started";
+  if (activity.type === "recurring" && !activity.occurrenceWeeks?.includes(week)) return "waiting_next_occurrence";
+  return "in_progress";
 }
 
 function documentStatus(document: ProjectDocument, events: DocumentEvent[], week: number): string {
@@ -1583,6 +1664,34 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     });
   }, [mainline, selectedWeek]);
 
+  const activityListState = useMemo(() => {
+    if (!mainline || selectedWeek < mainline.schedule.activityList.createdWeek) return [];
+    return mainline.schedule.activities.map((activity) => {
+      const roleEntries = Object.entries(activity.plannedPersonDaysByRole).sort((left, right) => right[1] - left[1]);
+      return {
+        ...activity,
+        currentStatus: activityStatus(activity, selectedWeek),
+        leadRoleId: roleEntries[0]?.[0] ?? "",
+        totalPersonDays: roleEntries.reduce((sum, [, personDays]) => sum + personDays, 0),
+      };
+    });
+  }, [mainline, selectedWeek]);
+
+  const scopeState = useMemo(() => {
+    if (!mainline) return null;
+    const statement = mainline.documents.projectScopeStatement;
+    const currentBaseline = [...statement.baselineEvents].reverse().find((event) => event.week <= selectedWeek) ?? statement.baselineEvents[0];
+    return {
+      ...statement,
+      currentBaseline,
+      productScopeItems: statement.productScopeItems.map((item) => ({
+        ...item,
+        currentEvent: [...item.statusEvents].reverse().find((event) => event.week <= selectedWeek) ?? item.statusEvents[0],
+      })),
+      exclusions: statement.exclusions.filter((item) => item.effectiveWeek <= selectedWeek),
+    };
+  }, [mainline, selectedWeek]);
+
   const allDocumentEvents = useMemo(() => {
     if (!mainline) return [];
     return [...mainline.documents.mainlineEvents, ...mainline.documents.contentRevisions].sort((left, right) => left.week - right.week);
@@ -1837,6 +1946,9 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const requirementCandidates = requirementState.filter((requirement) => requirement.traceabilityStatus === "candidate_unplanned").length;
   const nextGate = milestones.find((milestone) => milestone.week > selectedWeek);
   const stakeholderById = new Map(mainline.stakeholders.stakeholders.map((stakeholder) => [stakeholder.id, stakeholder]));
+  const roleById = new Map(mainline.workload.roles.map((role) => [role.id, role]));
+  const workPackageById = new Map(mainline.workload.workPackages.map((workPackage) => [workPackage.id, workPackage]));
+  const activityStatusCounts = Object.fromEntries(Object.keys(activityStatusLabels).map((status) => [status, activityListState.filter((activity) => activity.currentStatus === status).length])) as Record<keyof typeof activityStatusLabels, number>;
   const teamCharter = mainline.documents.teamCharter;
   const stakeholderNames = (stakeholderIds: string[]) => stakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)?.title ?? stakeholderId);
   const ccbMembers = mainline.documents.changeControlBoard.memberStakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)).filter((stakeholder): stakeholder is Stakeholder => Boolean(stakeholder));
@@ -2311,6 +2423,29 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : selectedDocumentContentLocked ? <div className="lab-v2-document-locked"><strong>登录查看具体内容</strong><p>项目文件目录保持开放；登录后可查看当前内容、版本历史、关联文件和个人分支差异。</p><button type="button" onClick={signIn}>登录并解锁项目文件</button></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
                       {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
+                      {selectedDocument.id === "D02" && (
+                        <section className="lab-v2-activity-list">
+                          <div className="lab-v2-activity-list-policy">
+                            <span>ACTIVITY LIST / W{mainline.schedule.activityList.createdWeek} 创建 / W{mainline.schedule.activityList.approvedWeek} 批准</span>
+                            <strong>{mainline.schedule.activityList.decompositionBasis}</strong>
+                            <p>{mainline.schedule.activityList.changeRule}</p>
+                            <div>{mainline.schedule.activityList.typeDefinitions.map((definition) => <i key={definition.type}><b>{definition.label}</b>{definition.definition}</i>)}</div>
+                          </div>
+                          <div className="lab-v2-activity-list-metrics">
+                            <span><b>{activityListState.length}</b>全部活动</span>
+                            <span><b>{activityStatusCounts.in_progress}</b>进行中</span>
+                            <span><b>{activityStatusCounts.waiting_next_occurrence}</b>等待发生</span>
+                            <span><b>{activityStatusCounts.completed}</b>已完成</span>
+                          </div>
+                          <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <table className="lab-v2-activity-list-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>活动 / WBS</th><th>活动名称</th><th>类型</th><th>计划窗口 / 估算</th><th>当前状态</th><th>前置关系</th><th>主责投入</th><th>完成标准</th></tr></thead>
+                              <tbody>{activityListState.map((activity) => <tr key={activity.id}><td><strong>{activity.id}</strong><small>{activity.parentId} · {workPackageById.get(activity.parentId)?.title}</small></td><td>{activity.title}</td><td>{activityTypeLabels[activity.type]}</td><td>W{activity.startWeek}–W{activity.endWeek}<small>{activity.durationWeeks ? `三点估算 ${activity.durationWeeks.optimistic}/${activity.durationWeeks.mostLikely}/${activity.durationWeeks.pessimistic} 周` : activity.occurrenceWeeks ? `发生于 W${activity.occurrenceWeeks.join(" / W")}` : "持续投入"}</small></td><td><strong>{activityStatusLabels[activity.currentStatus]}</strong></td><td>{activity.predecessors?.length ? activity.predecessors.map((predecessor) => `${predecessor.activityId} ${predecessor.type}${predecessor.lagWeeks ? `+${predecessor.lagWeeks}` : ""}`).join("；") : "无"}</td><td>{roleById.get(activity.leadRoleId)?.title ?? activity.leadRoleId}<small>合计 {activity.totalPersonDays} 人日</small></td><td>{activity.acceptanceCriteria.join("；")}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
                       {selectedDocument.id === "D03" && (
                         <section className="lab-v2-document-data">
                           <span>假设日志 · W{selectedWeek} · {assumptionState.length} 项已识别</span>
@@ -2371,6 +2506,43 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{milestoneState.map((milestone) => <tr key={milestone.id}><td><strong>{milestone.id}</strong><small>{milestone.title}</small></td><td>W{milestone.baselineWeek}</td><td>W{milestone.currentEvent.forecastWeek}</td><td>{milestone.currentEvent.actualWeek === null ? "—" : `W${milestone.currentEvent.actualWeek}`}</td><td><strong>{milestoneStatusLabels[milestone.currentEvent.status]}</strong><small>{stakeholderById.get(milestone.ownerStakeholderId)?.title ?? milestone.ownerStakeholderId}</small></td><td>{milestone.acceptanceCriteria}</td><td>{milestone.currentEvent.evidence}<small>{[...milestone.relatedWbsIds, ...milestone.evidenceDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D16" && scopeState && (
+                        <section className="lab-v2-scope-statement">
+                          <div className="lab-v2-scope-hero">
+                            <span>PROJECT SCOPE STATEMENT / v{scopeState.currentBaseline.version} / W{scopeState.currentBaseline.week}</span>
+                            <strong>{scopeState.productScopeDescription}</strong>
+                            <p>{scopeState.projectScopeDescription}</p>
+                            <div><b>{scopeState.currentBaseline.status}</b><i>{scopeState.currentBaseline.decision}</i></div>
+                          </div>
+                          <section className="lab-v2-scope-section">
+                            <span>产品范围组成</span>
+                            <div className="lab-v2-scope-components">{scopeState.productScopeItems.map((item) => <article key={item.id} className={item.currentEvent.status}><b>{item.id}</b><small>{scopeStatusLabels[item.currentEvent.status]}</small><strong>{item.title}</strong><p>{item.description}</p><i>{item.relatedRequirementIds.join(" / ")}</i><em>{item.currentEvent.evidence}</em></article>)}</div>
+                          </section>
+                          <section className="lab-v2-scope-section">
+                            <span>主要可交付成果</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-scope-deliverables-table">
+                                <colgroup><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>编号 / 可交付成果</th><th>目标周</th><th>对应WBS</th><th>验收摘要</th><th>证据文件</th></tr></thead>
+                                <tbody>{scopeState.deliverables.map((deliverable) => <tr key={deliverable.id}><td><strong>{deliverable.id}</strong><small>{deliverable.title}</small></td><td>W{deliverable.targetWeek}</td><td>{deliverable.relatedWbsIds.join(" / ")}</td><td>{deliverable.acceptanceSummary}</td><td>{deliverable.evidenceDocumentIds.join(" / ")}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <div className="lab-v2-scope-boundaries">
+                            <section><span>明确不包含</span>{scopeState.exclusions.map((exclusion) => <article key={exclusion.id}><b>{exclusion.id} · W{exclusion.effectiveWeek}</b><strong>{exclusion.title}</strong><p>{exclusion.reason}</p><small>去向：{exclusion.destination}</small></article>)}</section>
+                            <section><span>项目约束</span>{scopeState.constraints.map((constraint) => <article key={constraint.id}><b>{constraint.id}</b><strong>{constraint.title}</strong><p>{constraint.description}</p></article>)}</section>
+                          </div>
+                          <section className="lab-v2-scope-section">
+                            <span>项目与产品验收条件</span>
+                            <ol className="lab-v2-scope-acceptance">{scopeState.acceptanceCriteria.map((criterion) => <li key={criterion.id}><b>{criterion.id}</b><p>{criterion.criterion}<small>{criterion.evidenceDocumentIds.join(" / ")}</small></p></li>)}</ol>
+                          </section>
+                          <div className="lab-v2-scope-governance"><span>范围变更规则</span><p>{scopeState.changeControlRule}</p><div><small>关键假设</small>{scopeState.assumptionIds.map((assumptionId) => <i key={assumptionId}>{assumptionId}</i>)}</div></div>
+                          <section className="lab-v2-scope-section">
+                            <span>范围基线演进</span>
+                            <ol className="lab-v2-scope-baselines">{scopeState.baselineEvents.filter((event) => event.week <= selectedWeek).map((event) => <li key={event.version}><b>v{event.version}</b><div><strong>W{event.week} · {event.status}</strong><p>{event.decision}</p>{event.approvedChangeId && <small>{event.approvedChangeId}</small>}</div></li>)}</ol>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D21" && (

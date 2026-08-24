@@ -88,6 +88,13 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
     case "D13": return [...common,
       { op: "add", path: "/communication/overdueItems", value: state.totals.overdueCommunicationItems },
     ];
+    case "D16": return [...common,
+      { op: "replace", path: "/scopeBaseline/version", value: state.scenario.id === "scenario-3" ? "1.1-branch" : "1.0" },
+      { op: "replace", path: "/productScope/PSC-03/status", value: state.scenario.id === "scenario-3" ? "deferred_from_v1_0" : "baselined_included" },
+      { op: "replace", path: "/productScope/PSC-02/status", value: "baselined_included" },
+      { op: "add", path: "/scopeExclusions/EX-05/status", value: state.scenario.id === "scenario-3" ? "active" : "not_applicable" },
+      { op: "add", path: "/scopeApproval/status", value: state.scenario.status === "closed" ? "ccb_approved" : "pending_scope_decision" },
+    ];
     case "D21": return [...common,
       { op: "add", path: "/requirements/traceabilityCoveragePercent", value: state.totals.requirementsTraceabilityCoveragePercent },
     ];

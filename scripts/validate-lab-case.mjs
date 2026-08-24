@@ -55,6 +55,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const documentById = uniqueMap(documents.documents, "document");
   const stakeholderById = uniqueMap(stakeholders.stakeholders, "stakeholder");
   const communicationTouchpointById = uniqueMap(stakeholders.communicationTouchpoints, "communication touchpoint");
+  const roleById = uniqueMap(workload.roles, "role");
   const activityById = uniqueMap(schedule.activities, "activity");
   const workPackageById = uniqueMap(workload.workPackages, "work package");
   const deliverableById = new Map([...workPackageById, ...activityById]);
@@ -192,6 +193,89 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(!documents.contentRevisions.some((revision) => Object.values(revision).some((value) => Array.isArray(value) && value.includes("D31"))), "D31 must not have planned content revisions after W1");
   const teamCharterMainlineActions = documents.mainlineEvents.flatMap((event) => Object.entries(event).filter(([, value]) => Array.isArray(value) && value.includes("D31")).map(([key]) => key));
   assert(teamCharterMainlineActions.length === 1 && teamCharterMainlineActions[0] === "archivedDocumentIds", "D31 may only be archived after W1; it must not receive a new content version");
+
+  const activityList = schedule.activityList;
+  assert(activityList.documentId === "D02", "Activity list policy must belong to D02");
+  assert(activityList.createdWeek === documentById.get("D02").createdWeek && activityList.approvedWeek === 8, "D02 creation or approval week is inconsistent");
+  assert(JSON.stringify(activityList.statusModel) === JSON.stringify(["not_started", "in_progress", "waiting_next_occurrence", "completed"]), "D02 has an invalid status model");
+  for (const documentId of activityList.sourceDocumentIds) assert(documentById.has(documentId), `D02 references unknown source document ${documentId}`);
+  const activityTypes = new Set(activityList.typeDefinitions.map((item) => item.type));
+  assert(activityTypes.size === activityList.typeDefinitions.length && activityTypes.size === 3, "D02 activity type definitions are incomplete or duplicated");
+  for (const activity of activityById.values()) {
+    assert(workPackageById.has(activity.parentId), `${activity.id} references unknown parent WBS ${activity.parentId}`);
+    assert(activityTypes.has(activity.type), `${activity.id} has unsupported activity type ${activity.type}`);
+    assert(Number.isInteger(activity.startWeek) && Number.isInteger(activity.endWeek) && activity.startWeek >= 1 && activity.endWeek >= activity.startWeek && activity.endWeek <= workload.totalWeeks, `${activity.id} has invalid planned weeks`);
+    assert(Array.isArray(activity.acceptanceCriteria) && activity.acceptanceCriteria.length >= 1, `${activity.id} has no completion acceptance criteria`);
+    assert(Object.keys(activity.plannedPersonDaysByRole).length >= 1, `${activity.id} has no planned role effort`);
+    for (const [roleId, personDays] of Object.entries(activity.plannedPersonDaysByRole)) {
+      assert(roleById.has(roleId), `${activity.id} references unknown role ${roleId}`);
+      assert(Number.isFinite(personDays) && personDays >= 0, `${activity.id} has invalid planned effort for ${roleId}`);
+    }
+    if (activity.type === "discrete") {
+      assert(activity.durationWeeks && activity.durationWeeks.optimistic <= activity.durationWeeks.mostLikely && activity.durationWeeks.mostLikely <= activity.durationWeeks.pessimistic, `${activity.id} has invalid three-point duration estimates`);
+    }
+    if (activity.type === "recurring") {
+      assert(activity.occurrenceWeeks?.length >= 2, `${activity.id} recurring occurrences are incomplete`);
+      assert(activity.occurrenceWeeks.every((week) => week >= activity.startWeek && week <= activity.endWeek), `${activity.id} has an occurrence outside its planned window`);
+    }
+    for (const predecessor of activity.predecessors ?? []) {
+      assert(activityById.has(predecessor.activityId), `${activity.id} references unknown predecessor ${predecessor.activityId}`);
+      assert(schedule.dependencyPolicy.supportedTypes.includes(predecessor.type), `${activity.id} has unsupported dependency type ${predecessor.type}`);
+      assert(Number.isInteger(predecessor.lagWeeks) && predecessor.lagWeeks >= 0, `${activity.id} has invalid lag for ${predecessor.activityId}`);
+    }
+  }
+  const documentHasVersionAction = (event, documentId) => Object.entries(event).some(([key, value]) => (
+    Array.isArray(value)
+    && value.includes(documentId)
+    && !key.toLowerCase().includes("archived")
+    && !key.toLowerCase().includes("unchanged")
+  ));
+  assert(JSON.stringify(documents.mainlineEvents.filter((event) => documentHasVersionAction(event, "D02")).map((event) => event.week)) === JSON.stringify([8]), "D02 may only receive its W8 approval version after creation");
+  assert(!documents.contentRevisions.some((revision) => documentHasVersionAction(revision, "D02")), "D02 must not receive content revisions when only dates, dependencies or resources change");
+
+  const scopeStatement = documents.projectScopeStatement;
+  assert(scopeStatement.documentId === "D16", "Project scope statement must belong to D16");
+  assert(documentById.get("D16").createdWeek === 3 && documentById.get("D16").coverage === "dynamic_full_history", "D16 metadata is inconsistent");
+  assert(JSON.stringify(scopeStatement.baselineEvents.map((event) => event.week)) === JSON.stringify([3, 8, 28]), "D16 baseline event weeks must be W3, W8 and W28");
+  assert(JSON.stringify(scopeStatement.baselineEvents.map((event) => event.version)) === JSON.stringify(["0.1", "1.0", "1.1"]), "D16 baseline versions are inconsistent");
+  for (const event of scopeStatement.baselineEvents) {
+    if (event.approvedChangeId) assert(changeById.has(event.approvedChangeId), `D16 baseline event W${event.week} references unknown change ${event.approvedChangeId}`);
+  }
+  const scopeStatuses = new Set(scopeStatement.statusModel);
+  const productScopeItemById = uniqueMap(scopeStatement.productScopeItems, "product scope item");
+  assert(productScopeItemById.size === 6, "D16 must define six product scope groups");
+  for (const item of productScopeItemById.values()) {
+    let priorWeek = 0;
+    for (const event of item.statusEvents) {
+      assert(event.week >= priorWeek && event.week >= 3 && event.week <= workload.totalWeeks, `${item.id} scope status events are invalid or out of order`);
+      assert(scopeStatuses.has(event.status), `${item.id} has invalid scope status ${event.status}`);
+      assert(typeof event.evidence === "string" && event.evidence.length > 0, `${item.id} status event W${event.week} has no evidence`);
+      priorWeek = event.week;
+    }
+    assert(item.statusEvents[0]?.week === 3, `${item.id} must be present in the W3 draft`);
+    for (const requirementId of item.relatedRequirementIds) assert(requirementById.has(requirementId), `${item.id} references unknown requirement ${requirementId}`);
+    for (const wbsId of item.relatedWbsIds) assert(deliverableById.has(wbsId), `${item.id} references unknown WBS ${wbsId}`);
+  }
+  const scopeDeliverableById = uniqueMap(scopeStatement.deliverables, "scope deliverable");
+  assert(scopeDeliverableById.size === 8, "D16 must define eight major deliverables");
+  for (const deliverable of scopeDeliverableById.values()) {
+    assert(deliverable.definedWeek === 3 && deliverable.targetWeek >= deliverable.definedWeek && deliverable.targetWeek <= workload.totalWeeks, `${deliverable.id} has invalid definition or target week`);
+    for (const wbsId of deliverable.relatedWbsIds) assert(deliverableById.has(wbsId), `${deliverable.id} references unknown WBS ${wbsId}`);
+    for (const documentId of deliverable.evidenceDocumentIds) assert(documentById.has(documentId), `${deliverable.id} references unknown evidence document ${documentId}`);
+  }
+  uniqueMap(scopeStatement.exclusions, "scope exclusion");
+  for (const exclusion of scopeStatement.exclusions) assert(exclusion.effectiveWeek >= 3 && exclusion.effectiveWeek <= workload.totalWeeks, `${exclusion.id} has invalid effective week`);
+  uniqueMap(scopeStatement.constraints, "scope constraint");
+  for (const assumptionId of scopeStatement.assumptionIds) assert(assumptionById.has(assumptionId), `D16 references unknown assumption ${assumptionId}`);
+  const scopeAcceptanceById = uniqueMap(scopeStatement.acceptanceCriteria, "scope acceptance criterion");
+  assert(scopeAcceptanceById.size === 7, "D16 must define seven acceptance criteria");
+  for (const criterion of scopeAcceptanceById.values()) for (const documentId of criterion.evidenceDocumentIds) assert(documentById.has(documentId), `${criterion.id} references unknown evidence document ${documentId}`);
+  assert(JSON.stringify(documents.mainlineEvents.filter((event) => documentHasVersionAction(event, "D16")).map((event) => event.week)) === JSON.stringify([8, 28]), "D16 must be baselined in W8 and rebaselined in W28 only");
+  assert(!documents.contentRevisions.some((revision) => documentHasVersionAction(revision, "D16")), "D16 changes must be controlled through mainline baseline events");
+  const scenarioOne = scenarioById.get("scenario-1");
+  const scenarioThree = scenarioById.get("scenario-3");
+  assert(scenarioOne.idealOutcome.unchangedBaselines.includes("D16") && !scenarioOne.idealOutcome.documentRevisions.includes("D16"), "Scenario 1 must preserve the D16 baseline");
+  assert(scenarioThree.idealOutcome.documentRevisions.includes("D16"), "Scenario 3 must revise D16 after phased-release approval");
 
   assert(documents.assumptionLog.documentId === "D03", "Assumption log must belong to D03");
   const assumptionStatuses = new Set(documents.assumptionLog.statusModel);

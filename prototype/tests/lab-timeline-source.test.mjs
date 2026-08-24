@@ -108,7 +108,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /TEAM CHARTER \/ v\{teamCharter\.version\}/);
   assert.match(timeline, /质量与安全红线/);
   assert.match(timeline, /章程修订规则/);
-  assert.match(timeline, /function documentVersionActions[\s\S]*!action\.toLowerCase\(\)\.includes\("archived"\)/);
+  assert.match(timeline, /function documentVersionActions[\s\S]*!normalized\.includes\("archived"\)[\s\S]*!normalized\.includes\("unchanged"\)/);
   assert.match(styles, /\.lab-v2-team-charter-hero/);
   assert.match(styles, /\.lab-v2-team-charter-values/);
   assert.match(timeline, /进度绩效指数 SPI/);

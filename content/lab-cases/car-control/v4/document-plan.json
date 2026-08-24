@@ -136,7 +136,8 @@
       "updatedManagementRecordDocumentIds": ["D08", "D09", "D13", "D17", "D30"],
       "updatedRiskAndScheduleDocumentIds": ["D14", "D26", "D27", "D28", "D29"],
       "rollingWaveUpdateWithoutBaselineChangeIds": ["D14"],
-      "unchangedBaselinedDocumentIds": ["D16", "D21"],
+      "rebaselinedDocumentIds": ["D16"],
+      "unchangedBaselinedDocumentIds": ["D21"],
       "deferredImprovementDestination": "next_version_candidates",
       "authorStakeholderId": "pm",
       "approverStakeholderIds": ["sponsor", "product_ba", "tech_lead", "qa", "devsecops", "operations_support", "legal_privacy", "pilot_owner_representative"]
@@ -681,6 +682,124 @@
         ]
       }
     ]
+  },
+  "projectScopeStatement": {
+    "documentId": "D16",
+    "purpose": "明确车主远程控车应用项目的产品范围、项目工作边界、主要可交付成果、验收条件、除外责任、约束和关键假设，作为WBS、活动、需求追踪和变更控制的范围基准。",
+    "productScopeDescription": "建设面向试点车主的移动端应用与配套服务，支持安全登录、本人车辆绑定、车辆状态查询、受控远程操作、通知与审计，并具备试点、发布、监控、回滚和运营支持能力。",
+    "projectScopeDescription": "在32周内由八人核心团队完成需求与范围基线、架构和接口、安全与质量验证、供应商集成、300名车主试点、批准能力上线、运营移交和项目收尾。",
+    "statusModel": ["draft_included", "baselined_included", "deferred_from_v1_0"],
+    "baselineEvents": [
+      { "week": 3, "version": "0.1", "status": "draft", "decision": "形成初始产品与项目边界，进入需求细化和跨职能评审。", "approvedChangeId": null },
+      { "week": 8, "version": "1.0", "status": "baselined", "decision": "24项V1.0需求、11个一级WBS工作包和验收边界获得批准。", "approvedChangeId": null },
+      { "week": 28, "version": "1.1", "status": "rebaselined", "decision": "依据CR-006保留只读车况能力按期发布，远程控制移出V1.0发布范围并转入V1.1安全修复版本。", "approvedChangeId": "CR-006" }
+    ],
+    "productScopeItems": [
+      {
+        "id": "PSC-01",
+        "title": "账号、本人车辆与授权基础",
+        "description": "支持平台账号登录、会话控制、本人车辆绑定解绑、凭证失效和异常恢复。",
+        "relatedRequirementIds": ["REQ-001", "REQ-002", "REQ-003", "REQ-004"],
+        "relatedWbsIds": ["WBS-4.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "初始范围确认账号与本人车辆关系为基础能力。" },
+          { "week": 8, "status": "baselined_included", "evidence": "REQ-001至REQ-004进入V1.0范围基线。" }
+        ]
+      },
+      {
+        "id": "PSC-02",
+        "title": "只读车辆状态与位置",
+        "description": "展示车辆核心状态、门窗、电量、续航、充电和授权范围内的位置，支持刷新、缓存时间和失败反馈。",
+        "relatedRequirementIds": ["REQ-005", "REQ-006", "REQ-007", "REQ-008", "REQ-009"],
+        "relatedWbsIds": ["WBS-5.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "车辆状态查询被确认为试点核心价值。" },
+          { "week": 8, "status": "baselined_included", "evidence": "REQ-005至REQ-009进入V1.0范围基线。" }
+        ]
+      },
+      {
+        "id": "PSC-03",
+        "title": "远程控制能力",
+        "description": "支持锁车、解锁、鸣笛寻车和空调预设，并覆盖二次确认、异步状态、幂等、审计、撤销和凭证过期。",
+        "relatedRequirementIds": ["REQ-010", "REQ-011", "REQ-012", "REQ-013", "REQ-014", "REQ-015", "REQ-016", "REQ-022"],
+        "relatedWbsIds": ["WBS-6.0", "WBS-10.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "远程控制作为高价值、高风险能力进入初始范围。" },
+          { "week": 8, "status": "baselined_included", "evidence": "远程控制及其安全硬门槛进入V1.0范围基线。" },
+          { "week": 28, "status": "deferred_from_v1_0", "evidence": "ISS-007未满足上线安全门；CR-006批准转入V1.1安全修复版本。" }
+        ]
+      },
+      {
+        "id": "PSC-04",
+        "title": "通知、审计与运营后台",
+        "description": "支持通知订阅、审计查询、异常工单、运营权限和日常处理流程。",
+        "relatedRequirementIds": ["REQ-017", "REQ-018"],
+        "relatedWbsIds": ["WBS-7.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "运营和审计能力纳入初始端到端范围。" },
+          { "week": 8, "status": "baselined_included", "evidence": "REQ-017和REQ-018进入V1.0范围基线。" }
+        ]
+      },
+      {
+        "id": "PSC-05",
+        "title": "非功能、隐私与可运营性",
+        "description": "覆盖车型兼容、可用性、监控、恢复、回滚、最小数据采集与保留原则。",
+        "relatedRequirementIds": ["REQ-019", "REQ-020", "REQ-021"],
+        "relatedWbsIds": ["WBS-3.0", "WBS-9.0", "WBS-11.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "初始范围把质量、隐私和运行保障定义为交付组成部分。" },
+          { "week": 8, "status": "baselined_included", "evidence": "REQ-019至REQ-021进入V1.0范围基线。" }
+        ]
+      },
+      {
+        "id": "PSC-06",
+        "title": "试点、上线与运营移交",
+        "description": "完成300名车主试点、上线准备、运营培训、支持与回滚演练，并移交批准发布范围。",
+        "relatedRequirementIds": ["REQ-023", "REQ-024"],
+        "relatedWbsIds": ["WBS-11.0"],
+        "statusEvents": [
+          { "week": 3, "status": "draft_included", "evidence": "试点验证和运营移交被定义为项目完成条件。" },
+          { "week": 8, "status": "baselined_included", "evidence": "REQ-023和REQ-024进入V1.0范围基线。" }
+        ]
+      }
+    ],
+    "deliverables": [
+      { "id": "DLV-01", "title": "需求、范围与追踪基线包", "definedWeek": 3, "targetWeek": 8, "relatedWbsIds": ["WBS-2.0"], "acceptanceSummary": "24项V1.0需求、范围说明书、WBS和需求跟踪矩阵通过阶段门审批。", "evidenceDocumentIds": ["D16", "D21", "D22"] },
+      { "id": "DLV-02", "title": "架构、接口与安全基线包", "definedWeek": 3, "targetWeek": 12, "relatedWbsIds": ["WBS-3.0", "WBS-8.1"], "acceptanceSummary": "架构边界、接口契约、Mock、威胁模型、安全基线和测试策略完成冻结。", "evidenceDocumentIds": ["D15", "D19", "D32"] },
+      { "id": "DLV-03", "title": "账号、身份与车辆绑定能力", "definedWeek": 3, "targetWeek": 14, "relatedWbsIds": ["WBS-4.0"], "acceptanceSummary": "登录、授权、绑定解绑和异常恢复满足功能、安全与审计要求。", "evidenceDocumentIds": ["D20", "D22", "D32"] },
+      { "id": "DLV-04", "title": "车辆状态查询能力", "definedWeek": 3, "targetWeek": 18, "relatedWbsIds": ["WBS-5.0"], "acceptanceSummary": "状态准确率、P95性能、缓存提示和目标车型兼容性达到标准。", "evidenceDocumentIds": ["D20", "D22", "D32"] },
+      { "id": "DLV-05", "title": "受控远程操作候选能力", "definedWeek": 3, "targetWeek": 28, "relatedWbsIds": ["WBS-6.0", "WBS-10.0"], "acceptanceSummary": "实现、审计和安全验证全部完成后方可进入发布范围；未过安全门则阻断。", "evidenceDocumentIds": ["D20", "D22", "D26", "D32"] },
+      { "id": "DLV-06", "title": "通知、审计与运营后台", "definedWeek": 3, "targetWeek": 24, "relatedWbsIds": ["WBS-7.0"], "acceptanceSummary": "通知、审计查询、异常处理和运营权限满足可运营性验收。", "evidenceDocumentIds": ["D20", "D22", "D32"] },
+      { "id": "DLV-07", "title": "系统测试与试点候选版本", "definedWeek": 3, "targetWeek": 28, "relatedWbsIds": ["WBS-9.0", "WBS-10.0"], "acceptanceSummary": "阻断缺陷清零，批准能力通过系统、兼容、性能和独立安全验证。", "evidenceDocumentIds": ["D18", "D20", "D32"] },
+      { "id": "DLV-08", "title": "试点验收、正式上线与运营移交", "definedWeek": 3, "targetWeek": 32, "relatedWbsIds": ["WBS-11.0"], "acceptanceSummary": "300名用户试点完成，批准范围上线，监控、回滚、支持和移交演练通过。", "evidenceDocumentIds": ["D09", "D10", "D13", "D20", "D32"] }
+    ],
+    "exclusions": [
+      { "id": "EX-01", "effectiveWeek": 3, "title": "家庭成员共享车辆", "reason": "V1.0仅支持车主本人；成员身份、授权层级和共享撤销不在初始基线。", "destination": "V1.1候选，W10由CR-002确认" },
+      { "id": "EX-02", "effectiveWeek": 3, "title": "车载硬件与车辆ECU改造", "reason": "项目只集成供应商已提供的车端接口，不修改车辆硬件或嵌入式控制器。", "destination": "车端产品线责任" },
+      { "id": "EX-03", "effectiveWeek": 3, "title": "支付、保险、售后预约与经销商销售流程", "reason": "这些业务域不属于远程控车试点价值链和批准需求。", "destination": "独立业务项目" },
+      { "id": "EX-04", "effectiveWeek": 28, "title": "个性化报告、小组件、语音包与快捷入口", "reason": "试点提出但未纳入V1.0基线，不得占用当前项目交付资源。", "destination": "V1.1/V1.2候选需求" },
+      { "id": "EX-05", "effectiveWeek": 28, "title": "V1.0生产环境远程控制", "reason": "授权链重放漏洞未满足安全门，CR-006批准从V1.0发布范围移除。", "destination": "V1.1安全修复与复测版本" }
+    ],
+    "constraints": [
+      { "id": "CON-01", "title": "固定周期", "description": "项目必须在32周内完成批准范围的上线、移交和收尾。" },
+      { "id": "CON-02", "title": "批准预算", "description": "BAC为260万元，范围决策必须评估成本与风险储备影响。" },
+      { "id": "CON-03", "title": "核心团队", "description": "核心团队固定为八个角色，关键岗位不可用时必须执行备份和交接。" },
+      { "id": "CON-04", "title": "供应商接口", "description": "车辆能力受供应商接口、SLA、车型覆盖和分批交付节奏约束。" },
+      { "id": "CON-05", "title": "安全硬门", "description": "远程控制未通过独立安全验证、审计、撤销和幂等要求时不得发布。" },
+      { "id": "CON-06", "title": "隐私合规", "description": "个人与车辆数据必须遵守最小采集、授权边界、保留期和访问审计要求。" },
+      { "id": "CON-07", "title": "试点规模", "description": "上线决策需基于300名试点车主的主要流程验证和反馈。" }
+    ],
+    "assumptionIds": ["ASM-001", "ASM-002", "ASM-003", "ASM-004", "ASM-005", "ASM-007", "ASM-008", "ASM-009"],
+    "acceptanceCriteria": [
+      { "id": "SAC-01", "criterion": "24项V1.0需求在需求跟踪矩阵中具有WBS、实现和验证证据。", "evidenceDocumentIds": ["D21", "D22", "D32"] },
+      { "id": "SAC-02", "criterion": "账号、绑定、车况、通知和运营流程达到各自功能与异常验收标准。", "evidenceDocumentIds": ["D20", "D32"] },
+      { "id": "SAC-03", "criterion": "只读车况能力达到成功率、P95性能、缓存新鲜度和车型兼容目标。", "evidenceDocumentIds": ["D18", "D20", "D32"] },
+      { "id": "SAC-04", "criterion": "任何进入发布范围的远程控制能力必须通过独立安全门，无严重未关闭缺陷。", "evidenceDocumentIds": ["D20", "D26", "D32"] },
+      { "id": "SAC-05", "criterion": "300名试点车主完成核心流程，反馈和验收决定形成正式记录。", "evidenceDocumentIds": ["D13", "D20", "D30"] },
+      { "id": "SAC-06", "criterion": "生产发布具备监控、告警、经验证回滚和残余风险决定。", "evidenceDocumentIds": ["D20", "D26", "D32"] },
+      { "id": "SAC-07", "criterion": "运营培训、故障分级、支持联系人和移交演练完成并获接收。", "evidenceDocumentIds": ["D05", "D13", "D32"] }
+    ],
+    "changeControlRule": "新增能力或改变V1.0边界时，先澄清需求并对照范围基线，完成范围、进度、成本、质量、安全、风险和干系人影响评估，经CCB批准后同步更新D05、D16、D21、D22及受影响计划。"
   },
   "changeItems": [
     {

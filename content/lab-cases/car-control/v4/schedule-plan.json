@@ -14,6 +14,21 @@
     "defaultType": "FS",
     "levelOfEffortAndRecurringExcludedFromCriticalPath": true
   },
+  "activityList": {
+    "documentId": "D02",
+    "createdWeek": 6,
+    "approvedWeek": 8,
+    "sourceDocumentIds": ["D01", "D16", "D21", "D23", "D25"],
+    "decompositionBasis": "以批准的项目范围、24项V1.0需求和11个一级WBS工作包为边界，将可管理工作分解为35项活动。",
+    "inclusionRule": "活动必须对应已批准范围或项目治理工作，具有唯一编号、上级WBS、计划窗口、责任投入和可验证完成标准。",
+    "changeRule": "只有批准的范围或工作分解变化才新增、删除或重命名活动；日期、依赖、工期和资源调整分别在活动属性、进度计划和资源文件中维护。",
+    "statusModel": ["not_started", "in_progress", "waiting_next_occurrence", "completed"],
+    "typeDefinitions": [
+      { "type": "discrete", "label": "离散活动", "definition": "形成明确交付结果并具有可度量起止点。" },
+      { "type": "level_of_effort", "label": "人力投入型活动", "definition": "随项目持续发生，用于管理、监控与沟通，不单独进入关键路径。" },
+      { "type": "recurring", "label": "重复活动", "definition": "在指定周重复执行，如阶段门和收尾治理。" }
+    ]
+  },
   "activities": [
     {
       "id": "WBS-1.1",
