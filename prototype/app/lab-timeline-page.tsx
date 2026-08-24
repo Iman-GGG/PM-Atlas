@@ -122,6 +122,24 @@ type ChangeControlBoard = {
   decisionRules: string[];
 };
 
+type TeamCharter = {
+  documentId: string;
+  version: string;
+  effectiveWeek: number;
+  facilitatorStakeholderId: string;
+  agreedByStakeholderIds: string[];
+  purpose: string;
+  mission: string;
+  values: Array<{ id: string; title: string; agreement: string }>;
+  decisionRights: Array<{ area: string; ownerStakeholderId: string; consultedStakeholderIds: string[]; rule: string }>;
+  workingAgreements: Array<{ id: string; title: string; agreement: string }>;
+  communicationAgreements: Array<{ id: string; channel: string; cadence: string; responseRule: string; recordDocumentId: string }>;
+  qualityAndSafetyGuardrails: string[];
+  conflictResolutionSteps: Array<{ step: number; ownerStakeholderId: string; timebox: string; rule: string }>;
+  handoverProtocol: { trigger: string; ownerRule: string; requiredContents: string[]; recordDocumentId: string };
+  amendmentRule: { trigger: string; decisionRule: string; recordDocumentId: string };
+};
+
 type ChangeItem = {
   id: string;
   title: string;
@@ -251,6 +269,7 @@ type MainlineData = {
     contentRevisions: DocumentEvent[];
     relations: DocumentRelation[];
     changeControlBoard: ChangeControlBoard;
+    teamCharter: TeamCharter;
     changeItems: ChangeItem[];
     issues: IssueItem[];
     testRounds: TestRound[];
@@ -678,6 +697,10 @@ function documentActions(event: DocumentEvent, documentId: string): string[] {
   return Object.entries(event)
     .filter(([, value]) => Array.isArray(value) && value.includes(documentId))
     .map(([key]) => key);
+}
+
+function documentVersionActions(event: DocumentEvent, documentId: string): string[] {
+  return documentActions(event, documentId).filter((action) => !action.toLowerCase().includes("archived"));
 }
 
 function documentStatus(document: ProjectDocument, events: DocumentEvent[], week: number): string {
@@ -1433,7 +1456,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const documentState = useMemo(() => {
     if (!mainline) return [];
     return mainline.documents.documents.map((document) => {
-      const history = allDocumentEvents.filter((event) => event.week <= selectedWeek && documentActions(event, document.id).length > 0);
+      const history = allDocumentEvents.filter((event) => event.week <= selectedWeek && documentVersionActions(event, document.id).length > 0);
       const branchUpdated = Boolean(branch && branchState && selectedWeek === branch.currentWeek && branchState.documentRevisions.includes(document.id));
       const visibleHistory = branchUpdated
         ? [...history, { id: `branch-${branch?.currentRoundNumber ?? 0}-${document.id}`, week: branch?.currentWeek ?? selectedWeek, reason: "个人分支回合结算更新" }]
@@ -1679,6 +1702,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const requirementCandidates = requirementState.filter((requirement) => requirement.traceabilityStatus === "candidate_unplanned").length;
   const nextGate = milestones.find((milestone) => milestone.week > selectedWeek);
   const stakeholderById = new Map(mainline.stakeholders.stakeholders.map((stakeholder) => [stakeholder.id, stakeholder]));
+  const teamCharter = mainline.documents.teamCharter;
   const stakeholderNames = (stakeholderIds: string[]) => stakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)?.title ?? stakeholderId);
   const ccbMembers = mainline.documents.changeControlBoard.memberStakeholderIds.map((stakeholderId) => stakeholderById.get(stakeholderId)).filter((stakeholder): stakeholder is Stakeholder => Boolean(stakeholder));
   const visibleChangeItems = mainline.documents.changeItems
@@ -2231,6 +2255,50 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                                 <td>{stakeholderById.get(stakeholder.engagementOwnerStakeholderId)?.title ?? stakeholder.engagementOwnerStakeholderId}<small>W{stakeholder.lastUpdatedWeek} · {stakeholder.lastEvidence.join("；")}</small></td>
                               </tr>)}</tbody>
                             </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D31" && (
+                        <section className="lab-v2-team-charter">
+                          <div className="lab-v2-team-charter-hero">
+                            <span>TEAM CHARTER / v{teamCharter.version} / W{teamCharter.effectiveWeek} 生效</span>
+                            <strong>{teamCharter.mission}</strong>
+                            <p>{teamCharter.purpose}</p>
+                            <div><small>共同承诺</small>{stakeholderNames(teamCharter.agreedByStakeholderIds).map((name) => <i key={name}>{name}</i>)}</div>
+                          </div>
+                          <div className="lab-v2-team-charter-section">
+                            <span>共同价值观</span>
+                            <div className="lab-v2-team-charter-values">{teamCharter.values.map((value) => <article key={value.id}><b>{value.id}</b><strong>{value.title}</strong><p>{value.agreement}</p></article>)}</div>
+                          </div>
+                          <div className="lab-v2-team-charter-section">
+                            <span>决策权限</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-team-charter-table">
+                                <thead><tr><th>决策领域</th><th>责任人</th><th>咨询成员</th><th>决策规则</th></tr></thead>
+                                <tbody>{teamCharter.decisionRights.map((decision) => <tr key={decision.area}><td>{decision.area}</td><td>{stakeholderById.get(decision.ownerStakeholderId)?.title ?? decision.ownerStakeholderId}</td><td>{stakeholderNames(decision.consultedStakeholderIds).join("、")}</td><td>{decision.rule}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </div>
+                          <div className="lab-v2-team-charter-section">
+                            <span>工作约定</span>
+                            <div className="lab-v2-team-charter-rules">{teamCharter.workingAgreements.map((agreement) => <article key={agreement.id}><b>{agreement.id}</b><div><strong>{agreement.title}</strong><p>{agreement.agreement}</p></div></article>)}</div>
+                          </div>
+                          <div className="lab-v2-team-charter-section">
+                            <span>沟通与响应</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-team-charter-table communication">
+                                <thead><tr><th>沟通方式</th><th>节奏</th><th>响应与记录规则</th><th>记录文件</th></tr></thead>
+                                <tbody>{teamCharter.communicationAgreements.map((agreement) => <tr key={agreement.id}><td><strong>{agreement.channel}</strong><small>{agreement.id}</small></td><td>{agreement.cadence}</td><td>{agreement.responseRule}</td><td>{agreement.recordDocumentId}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </div>
+                          <div className="lab-v2-team-charter-grid">
+                            <section><span>质量与安全红线</span><ol>{teamCharter.qualityAndSafetyGuardrails.map((guardrail, index) => <li key={guardrail}><b>{String(index + 1).padStart(2, "0")}</b><p>{guardrail}</p></li>)}</ol></section>
+                            <section><span>冲突解决与升级</span><ol>{teamCharter.conflictResolutionSteps.map((step) => <li key={step.step}><b>{step.step}</b><p><strong>{step.timebox} · {stakeholderById.get(step.ownerStakeholderId)?.title ?? step.ownerStakeholderId}</strong>{step.rule}</p></li>)}</ol></section>
+                          </div>
+                          <div className="lab-v2-team-charter-protocols">
+                            <article><span>关键岗位交接</span><strong>{teamCharter.handoverProtocol.trigger}</strong><p>{teamCharter.handoverProtocol.ownerRule}</p><ul>{teamCharter.handoverProtocol.requiredContents.map((content) => <li key={content}>{content}</li>)}</ul><small>记录到 {teamCharter.handoverProtocol.recordDocumentId}</small></article>
+                            <article><span>章程修订规则</span><strong>{teamCharter.amendmentRule.trigger}</strong><p>{teamCharter.amendmentRule.decisionRule}</p><small>如有修订，记录到 {teamCharter.amendmentRule.recordDocumentId}</small></article>
                           </div>
                         </section>
                       )}

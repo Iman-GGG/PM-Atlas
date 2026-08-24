@@ -6,7 +6,7 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
   "schemaVersion": 1,
   "caseId": "car-control",
   "caseVersion": "v4",
-  "contentHash": "20236f42d559b7ed5e7385b940998c555baa68cdac96eaa1308c3aa1e871b6f5",
+  "contentHash": "a87cf662ba516f459c6c396c0c45c4e5a06a1365864ce320c9c399536af44e63",
   "sourceFiles": {
     "workloadPlan": {
       "schemaVersion": 1,
@@ -3749,6 +3749,210 @@ export const privateLabCasePackage: PrivateLabCasePackage = {
           "至少三名核心成员参加且发起人或其授权人确认决议",
           "批准后必须更新关联文件并指定执行与关闭责任人"
         ]
+      },
+      "teamCharter": {
+        "documentId": "D31",
+        "version": "1.0",
+        "effectiveWeek": 1,
+        "facilitatorStakeholderId": "pm",
+        "agreedByStakeholderIds": [
+          "pm",
+          "product_ba",
+          "tech_lead",
+          "mobile",
+          "backend",
+          "vehicle_integration",
+          "qa",
+          "devsecops"
+        ],
+        "purpose": "建立车主远程控车应用核心团队共同遵守的协作、决策、质量、安全、冲突处理与知识交接规则。",
+        "mission": "在不牺牲授权安全、隐私合规和质量门的前提下，于32周内交付可运营、可回滚、可审计的车主远程控车应用。",
+        "values": [
+          {
+            "id": "TC-V01",
+            "title": "安全优先",
+            "agreement": "涉及远程控制、身份授权和隐私的数据与决策，安全约束优先于局部进度。"
+          },
+          {
+            "id": "TC-V02",
+            "title": "证据决策",
+            "agreement": "用需求、数据、测试结果和正式记录支持判断，明确区分事实、假设与意见。"
+          },
+          {
+            "id": "TC-V03",
+            "title": "责任透明",
+            "agreement": "每项行动、风险、问题和决策都有唯一责任人、完成时间与可查状态。"
+          },
+          {
+            "id": "TC-V04",
+            "title": "尊重挑战",
+            "agreement": "任何成员都可以基于风险和证据提出异议，不以职级压制质量或安全意见。"
+          },
+          {
+            "id": "TC-V05",
+            "title": "持续改进",
+            "agreement": "问题处理结束后沉淀经验，优先改进系统和流程，不进行个人归责。"
+          }
+        ],
+        "decisionRights": [
+          {
+            "area": "产品价值与需求优先级",
+            "ownerStakeholderId": "product_ba",
+            "consultedStakeholderIds": [
+              "pm",
+              "tech_lead",
+              "qa"
+            ],
+            "rule": "在已批准范围内由产品负责人决策；影响基线时提交CCB。"
+          },
+          {
+            "area": "技术架构与接口方案",
+            "ownerStakeholderId": "tech_lead",
+            "consultedStakeholderIds": [
+              "backend",
+              "mobile",
+              "vehicle_integration",
+              "devsecops",
+              "qa"
+            ],
+            "rule": "形成架构决策记录；涉及安全红线时DevOps/安全工程师拥有阻断权。"
+          },
+          {
+            "area": "进度、资源与跨团队协调",
+            "ownerStakeholderId": "pm",
+            "consultedStakeholderIds": [
+              "product_ba",
+              "tech_lead",
+              "qa"
+            ],
+            "rule": "可在批准基线内调整；影响里程碑、预算或范围时进入变更控制。"
+          },
+          {
+            "area": "质量门与测试准入",
+            "ownerStakeholderId": "qa",
+            "consultedStakeholderIds": [
+              "tech_lead",
+              "devsecops",
+              "product_ba"
+            ],
+            "rule": "未达到质量门不得推进发布；例外必须形成正式风险接受和审批记录。"
+          },
+          {
+            "area": "安全门与生产发布",
+            "ownerStakeholderId": "devsecops",
+            "consultedStakeholderIds": [
+              "tech_lead",
+              "qa",
+              "pm"
+            ],
+            "rule": "严重安全缺陷未关闭时阻断发布，不允许以口头承诺替代安全验收。"
+          }
+        ],
+        "workingAgreements": [
+          {
+            "id": "TC-W01",
+            "title": "工作可见",
+            "agreement": "任务、阻塞、风险和决策在一个工作日内进入对应项目文件，不以私聊作为唯一记录。"
+          },
+          {
+            "id": "TC-W02",
+            "title": "阻塞升级",
+            "agreement": "预计阻塞超过半个工作日立即通知负责人；影响关键路径、质量门或供应商承诺时同步项目经理。"
+          },
+          {
+            "id": "TC-W03",
+            "title": "范围纪律",
+            "agreement": "未经批准的需求不得进入开发承诺；先完成影响评估和变更决策，再调整版本范围。"
+          },
+          {
+            "id": "TC-W04",
+            "title": "评审要求",
+            "agreement": "关键设计和代码至少由一名相关专业成员评审；授权、安全、接口和回滚方案必须保留评审证据。"
+          },
+          {
+            "id": "TC-W05",
+            "title": "完成定义",
+            "agreement": "实现、评审、自动化测试、验收标准、必要文档和可观测性全部完成后，工作项才可标记完成。"
+          },
+          {
+            "id": "TC-W06",
+            "title": "无责复盘",
+            "agreement": "重要问题关闭后五个工作日内复盘，记录触发条件、系统原因、有效措施与后续改进。"
+          }
+        ],
+        "communicationAgreements": [
+          {
+            "id": "TC-C01",
+            "channel": "核心团队状态会",
+            "cadence": "每周",
+            "responseRule": "同步里程碑、阻塞、风险、决策和下一周责任人。",
+            "recordDocumentId": "D13"
+          },
+          {
+            "id": "TC-C02",
+            "channel": "迭代期交付同步",
+            "cadence": "工作日15分钟",
+            "responseRule": "只讨论进展、当天计划和阻塞；需决策事项另开记录。",
+            "recordDocumentId": "D13"
+          },
+          {
+            "id": "TC-C03",
+            "channel": "一般异步协作",
+            "cadence": "持续",
+            "responseRule": "一个工作日内确认；无法处理时说明预计回复时间。",
+            "recordDocumentId": "D13"
+          },
+          {
+            "id": "TC-C04",
+            "channel": "阻断问题与高等级风险",
+            "cadence": "触发即沟通",
+            "responseRule": "两小时内确认负责人和下一步，并登记问题或风险记录。",
+            "recordDocumentId": "D08"
+          }
+        ],
+        "qualityAndSafetyGuardrails": [
+          "不得绕过身份授权、远程指令幂等、审计、凭证撤销和最小权限要求。",
+          "不得以赶工、加班或口头风险接受替代自动化测试、独立安全测试和发布质量门。",
+          "发现严重安全缺陷或可能影响车辆安全的异常时，立即停止相关发布并升级。",
+          "所有生产变更必须具备监控、告警和经验证的回滚方案。"
+        ],
+        "conflictResolutionSteps": [
+          {
+            "step": 1,
+            "ownerStakeholderId": "pm",
+            "timebox": "4个工作小时",
+            "rule": "争议双方先对齐共同目标、事实和约束，提出至少一个可验证方案。"
+          },
+          {
+            "step": 2,
+            "ownerStakeholderId": "pm",
+            "timebox": "1个工作日",
+            "rule": "仍未解决时由项目经理组织相关专业负责人评审，并记录决定、异议和行动项。"
+          },
+          {
+            "step": 3,
+            "ownerStakeholderId": "sponsor",
+            "timebox": "下一个决策窗口前",
+            "rule": "涉及基线、重大风险或跨组织承诺时升级CCB或项目发起人决策。"
+          }
+        ],
+        "handoverProtocol": {
+          "trigger": "关键岗位计划或突发缺席超过1个工作日，或责任发生转移。",
+          "ownerRule": "原责任人准备交接；无法准备时由项目经理指定代理人与技术负责人共同恢复上下文。",
+          "requiredContents": [
+            "当前工作状态与下一步",
+            "未决决策和关键假设",
+            "开放问题、风险与依赖",
+            "代码、环境、接口和文档位置",
+            "临时代理人的权限与截止时间"
+          ],
+          "recordDocumentId": "D17"
+        },
+        "amendmentRule": {
+          "trigger": "仅当团队协作、决策、质量、安全、冲突处理或交接规则本身需要改变时修订。",
+          "decisionRule": "受影响成员共同评审，项目经理记录；质量或安全规则变化必须由技术负责人、测试工程师和DevOps/安全工程师共同确认。",
+          "recordDocumentId": "D13"
+        }
       },
       "changeItems": [
         {

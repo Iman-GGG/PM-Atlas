@@ -150,6 +150,43 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(stakeholderById.has(documents.changeControlBoard.secretaryStakeholderId), "CCB secretary is unknown");
   assert(documents.changeControlBoard.quorum >= 3, "CCB quorum must be at least 3");
 
+  const teamCharter = documents.teamCharter;
+  assert(teamCharter.documentId === "D31", "Team charter must belong to D31");
+  assert(teamCharter.version === "1.0" && teamCharter.effectiveWeek === 1, "Team charter must be effective as v1.0 in W1");
+  assert(typeof teamCharter.purpose === "string" && teamCharter.purpose.length > 0, "Team charter has no purpose");
+  assert(typeof teamCharter.mission === "string" && teamCharter.mission.length > 0, "Team charter has no mission");
+  assert(stakeholderById.has(teamCharter.facilitatorStakeholderId), "Team charter facilitator is unknown");
+  const expectedCoreTeamIds = stakeholders.stakeholders.filter((stakeholder) => stakeholder.resourceRoleId).map((stakeholder) => stakeholder.id).sort();
+  assert(new Set(teamCharter.agreedByStakeholderIds).size === teamCharter.agreedByStakeholderIds.length, "Team charter contains duplicate agreeing members");
+  assert(JSON.stringify([...teamCharter.agreedByStakeholderIds].sort()) === JSON.stringify(expectedCoreTeamIds), "Team charter must be agreed by all eight staffed core-team roles");
+  uniqueMap(teamCharter.values, "team charter value");
+  uniqueMap(teamCharter.workingAgreements, "team charter working agreement");
+  uniqueMap(teamCharter.communicationAgreements, "team charter communication agreement");
+  assert(teamCharter.values.length >= 4, "Team charter must define at least four values");
+  assert(teamCharter.workingAgreements.length >= 5, "Team charter must define at least five working agreements");
+  assert(teamCharter.qualityAndSafetyGuardrails.length >= 3, "Team charter must define quality and safety guardrails");
+  const decisionAreas = new Set();
+  for (const decision of teamCharter.decisionRights) {
+    assert(!decisionAreas.has(decision.area), `Duplicate team charter decision area ${decision.area}`);
+    decisionAreas.add(decision.area);
+    assert(stakeholderById.has(decision.ownerStakeholderId), `Team charter decision area ${decision.area} has unknown owner`);
+    for (const stakeholderId of decision.consultedStakeholderIds) assert(stakeholderById.has(stakeholderId), `Team charter decision area ${decision.area} has unknown consulted stakeholder ${stakeholderId}`);
+    assert(typeof decision.rule === "string" && decision.rule.length > 0, `Team charter decision area ${decision.area} has no rule`);
+  }
+  for (const agreement of teamCharter.communicationAgreements) {
+    assert(documentById.has(agreement.recordDocumentId), `${agreement.id} references unknown record document ${agreement.recordDocumentId}`);
+  }
+  teamCharter.conflictResolutionSteps.forEach((step, index) => {
+    assert(step.step === index + 1, `Team charter conflict step ${step.step} is out of sequence`);
+    assert(stakeholderById.has(step.ownerStakeholderId), `Team charter conflict step ${step.step} has unknown owner`);
+  });
+  assert(documentById.has(teamCharter.handoverProtocol.recordDocumentId), "Team charter handover protocol references an unknown document");
+  assert(teamCharter.handoverProtocol.requiredContents.length >= 4, "Team charter handover protocol is incomplete");
+  assert(documentById.has(teamCharter.amendmentRule.recordDocumentId), "Team charter amendment rule references an unknown document");
+  assert(!documents.contentRevisions.some((revision) => Object.values(revision).some((value) => Array.isArray(value) && value.includes("D31"))), "D31 must not have planned content revisions after W1");
+  const teamCharterMainlineActions = documents.mainlineEvents.flatMap((event) => Object.entries(event).filter(([, value]) => Array.isArray(value) && value.includes("D31")).map(([key]) => key));
+  assert(teamCharterMainlineActions.length === 1 && teamCharterMainlineActions[0] === "archivedDocumentIds", "D31 may only be archived after W1; it must not receive a new content version");
+
   for (const change of changeById.values()) {
     assert(change.submittedWeek <= change.reviewWeek, `${change.id} is reviewed before submission`);
     assert(change.reviewWeek <= change.decisionWeek, `${change.id} is decided before review`);
