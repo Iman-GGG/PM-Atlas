@@ -8515,6 +8515,48 @@ select {
 .lab-v2-stakeholder-register-table col:nth-child(8) { width: 11%; }
 .lab-v2-stakeholder-register-table col:nth-child(9) { width: 13%; }
 .lab-v2-stakeholder-register-table td { overflow-wrap: anywhere; }
+.lab-v2-data-table-wrap.lab-v2-wide-register-wrap { overflow-x: auto; }
+.lab-v2-document-data .lab-v2-assumption-table { min-width: 1540px; table-layout: fixed; }
+.lab-v2-assumption-table col:nth-child(1) { width: 7%; }
+.lab-v2-assumption-table col:nth-child(2) { width: 16%; }
+.lab-v2-assumption-table col:nth-child(3) { width: 9%; }
+.lab-v2-assumption-table col:nth-child(4) { width: 7%; }
+.lab-v2-assumption-table col:nth-child(5) { width: 8%; }
+.lab-v2-assumption-table col:nth-child(6) { width: 12%; }
+.lab-v2-assumption-table col:nth-child(7) { width: 15%; }
+.lab-v2-assumption-table col:nth-child(8) { width: 16%; }
+.lab-v2-assumption-table col:nth-child(9) { width: 10%; }
+.lab-v2-document-data .lab-v2-lessons-table { min-width: 1500px; table-layout: fixed; }
+.lab-v2-lessons-table col:nth-child(1) { width: 7%; }
+.lab-v2-lessons-table col:nth-child(2) { width: 15%; }
+.lab-v2-lessons-table col:nth-child(3) { width: 7%; }
+.lab-v2-lessons-table col:nth-child(4) { width: 10%; }
+.lab-v2-lessons-table col:nth-child(5) { width: 18%; }
+.lab-v2-lessons-table col:nth-child(6) { width: 12%; }
+.lab-v2-lessons-table col:nth-child(7) { width: 19%; }
+.lab-v2-lessons-table col:nth-child(8) { width: 12%; }
+.lab-v2-document-data .lab-v2-milestone-table { min-width: 1180px; table-layout: fixed; }
+.lab-v2-milestone-table col:nth-child(1) { width: 17%; }
+.lab-v2-milestone-table col:nth-child(2),
+.lab-v2-milestone-table col:nth-child(3),
+.lab-v2-milestone-table col:nth-child(4) { width: 7%; }
+.lab-v2-milestone-table col:nth-child(5) { width: 13%; }
+.lab-v2-milestone-table col:nth-child(6) { width: 24%; }
+.lab-v2-milestone-table col:nth-child(7) { width: 25%; }
+.lab-v2-register-empty { margin: 0; padding: 24px; color: var(--muted); border: 1px solid var(--line); border-top: 0; }
+.lab-v2-milestone-summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 12px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.lab-v2-milestone-summary article { min-height: 116px; padding: 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.lab-v2-milestone-summary article > b { display: block; font-family: var(--font-geist-mono), monospace; font-size: 18px; }
+.lab-v2-milestone-summary article > span { display: block; margin-top: 2px; color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 9px; }
+.lab-v2-milestone-summary article > strong { display: block; margin: 14px 0 8px; font-size: 11px; line-height: 1.45; }
+.lab-v2-milestone-summary article > small { color: var(--muted); }
+.lab-v2-milestone-summary article.at_risk { box-shadow: inset 0 4px 0 #d35400; }
+.lab-v2-milestone-summary article.achieved,
+.lab-v2-milestone-summary article.achieved_with_conditions { color: var(--paper); background: var(--ink); }
+.lab-v2-milestone-summary article.achieved small,
+.lab-v2-milestone-summary article.achieved_with_conditions small,
+.lab-v2-milestone-summary article.achieved span,
+.lab-v2-milestone-summary article.achieved_with_conditions span { color: #bdbdbd; }
 .lab-v2-document-data th,
 .lab-v2-document-data td { padding: 9px 10px; text-align: left; vertical-align: top; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; white-space: normal; word-break: break-word; }
 .lab-v2-document-data th { position: sticky; top: 0; color: var(--paper); background: var(--ink); font-weight: 700; white-space: normal; }
@@ -8635,6 +8677,7 @@ select {
   .lab-v2-draft-readiness { grid-template-columns: 1fr; }
   .lab-v2-round-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lab-v2-team-charter-values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-v2-milestone-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -8684,6 +8727,7 @@ select {
   .lab-v2-team-charter-rules,
   .lab-v2-team-charter-grid,
   .lab-v2-team-charter-protocols { grid-template-columns: 1fr; }
+  .lab-v2-milestone-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-v2-team-charter-table { min-width: 760px; }
   .lab-v2-team-charter .lab-v2-data-table-wrap { overflow-x: auto; }
   .lab-v2-drawer-tab { top: auto; bottom: 24px; }

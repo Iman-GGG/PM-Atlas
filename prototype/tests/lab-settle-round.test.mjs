@@ -61,7 +61,7 @@ test("settles the complete scenario-one minimum chain onto the near-mainline pat
   assert.deepEqual(settled.result.gaps, []);
   assert.equal(settled.result.stateDiff.additionalActualCostCny, 0);
   assert.equal(settled.internalState.totals.requirementsTraceabilityCoveragePercent, 100);
-  assert.deepEqual(new Set(settled.internalState.documentRevisions), new Set(["D05", "D13", "D21", "D26", "D30"]));
+  assert.deepEqual(new Set(settled.internalState.documentRevisions), new Set(["D03", "D05", "D09", "D13", "D21", "D26", "D30"]));
   const stakeholderRegisterPatch = buildDocumentPatch("D30", settled.internalState);
   assert.deepEqual(
     stakeholderRegisterPatch.find((operation) => operation.path === "/stakeholders/pilot_owner_representative/currentEngagement"),

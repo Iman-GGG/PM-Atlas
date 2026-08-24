@@ -64,6 +64,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const changeById = uniqueMap(documents.changeItems, "change item");
   const issueById = uniqueMap(documents.issues, "issue");
   const testRoundById = uniqueMap(documents.testRounds, "test round");
+  const assumptionById = uniqueMap(documents.assumptionLog.items, "assumption");
+  const lessonById = uniqueMap(documents.lessonsLearnedRegister.items, "lesson learned");
+  const milestoneById = uniqueMap(documents.milestoneList.items, "milestone");
   const lifecycleStates = new Set(risks.lifecycle.states);
   const controlStates = new Set(risks.controlStatusModel.states);
   const allowedColumns = ["evidence_document", "tool_technique", "execution_action", "stakeholder"];
@@ -77,6 +80,9 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(changeById.size === 8, `Expected 8 change items; found ${changeById.size}`);
   assert(issueById.size === 8, `Expected 8 issues; found ${issueById.size}`);
   assert(testRoundById.size === 6, `Expected 6 test rounds; found ${testRoundById.size}`);
+  assert(assumptionById.size === 10, `Expected 10 assumptions; found ${assumptionById.size}`);
+  assert(lessonById.size === 9, `Expected 9 lessons learned; found ${lessonById.size}`);
+  assert(milestoneById.size === 6, `Expected 6 milestones; found ${milestoneById.size}`);
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.primaryClues === 3, "Primary clue policy must require 3 items");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.corroboratingClues === 1, "Corroborating clue policy must require 1 item");
   assert(scenarios.eventDiscoveryPolicy.requiredMaterialComposition.dashboardAnomalies === 1, "Dashboard anomaly policy must require 1 item");
@@ -186,6 +192,73 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(!documents.contentRevisions.some((revision) => Object.values(revision).some((value) => Array.isArray(value) && value.includes("D31"))), "D31 must not have planned content revisions after W1");
   const teamCharterMainlineActions = documents.mainlineEvents.flatMap((event) => Object.entries(event).filter(([, value]) => Array.isArray(value) && value.includes("D31")).map(([key]) => key));
   assert(teamCharterMainlineActions.length === 1 && teamCharterMainlineActions[0] === "archivedDocumentIds", "D31 may only be archived after W1; it must not receive a new content version");
+
+  assert(documents.assumptionLog.documentId === "D03", "Assumption log must belong to D03");
+  const assumptionStatuses = new Set(documents.assumptionLog.statusModel);
+  const assumptionCategories = new Set(["scope", "supplier", "resource", "security", "quality", "technical", "stakeholder", "operations", "compliance"]);
+  for (const assumption of assumptionById.values()) {
+    assert(assumptionCategories.has(assumption.category), `${assumption.id} has invalid category ${assumption.category}`);
+    assert(Number.isInteger(assumption.identifiedWeek) && assumption.identifiedWeek >= 1 && assumption.identifiedWeek <= workload.totalWeeks, `${assumption.id} has invalid identification week`);
+    assert(Number.isInteger(assumption.targetValidationWeek) && assumption.targetValidationWeek >= assumption.identifiedWeek && assumption.targetValidationWeek <= workload.totalWeeks, `${assumption.id} has invalid target validation week`);
+    assert(stakeholderById.has(assumption.ownerStakeholderId), `${assumption.id} references unknown owner ${assumption.ownerStakeholderId}`);
+    assert(typeof assumption.statement === "string" && assumption.statement.length > 0, `${assumption.id} has no statement`);
+    assert(typeof assumption.validationMethod === "string" && assumption.validationMethod.length > 0, `${assumption.id} has no validation method`);
+    assert(typeof assumption.impactIfFalse === "string" && assumption.impactIfFalse.length > 0, `${assumption.id} has no false-impact description`);
+    let priorWeek = 0;
+    for (const event of assumption.statusEvents) {
+      assert(Number.isInteger(event.week) && event.week >= assumption.identifiedWeek && event.week <= workload.totalWeeks, `${assumption.id} has invalid status-event week ${event.week}`);
+      assert(event.week >= priorWeek, `${assumption.id} status events are out of order`);
+      assert(assumptionStatuses.has(event.status), `${assumption.id} has invalid status ${event.status}`);
+      assert(typeof event.evidence === "string" && event.evidence.length > 0, `${assumption.id} status event W${event.week} has no evidence`);
+      priorWeek = event.week;
+    }
+    assert(assumption.statusEvents[0]?.week === assumption.identifiedWeek, `${assumption.id} must have an initial status event in its identification week`);
+    for (const riskId of assumption.linkedRiskIds) assert(riskById.has(riskId), `${assumption.id} references unknown risk ${riskId}`);
+    for (const requirementId of assumption.linkedRequirementIds) assert(requirementById.has(requirementId), `${assumption.id} references unknown requirement ${requirementId}`);
+    for (const wbsId of assumption.linkedWbsIds) assert(deliverableById.has(wbsId), `${assumption.id} references unknown WBS ${wbsId}`);
+    for (const documentId of assumption.linkedDocumentIds) assert(documentById.has(documentId), `${assumption.id} references unknown document ${documentId}`);
+  }
+
+  assert(documents.lessonsLearnedRegister.documentId === "D09", "Lessons learned register must belong to D09");
+  assert(documentById.get("D09").coverage === "dynamic_full_history", "D09 must retain full dynamic history");
+  const lessonStatuses = new Set(documents.lessonsLearnedRegister.statusModel);
+  for (const lesson of lessonById.values()) {
+    assert(Number.isInteger(lesson.observedWeek) && lesson.observedWeek >= 1 && lesson.observedWeek <= workload.totalWeeks, `${lesson.id} has invalid observation week`);
+    assert(Number.isInteger(lesson.capturedWeek) && lesson.capturedWeek >= lesson.observedWeek && lesson.capturedWeek <= workload.totalWeeks, `${lesson.id} has invalid capture week`);
+    assert(Number.isInteger(lesson.adoptedWeek) && lesson.adoptedWeek >= lesson.capturedWeek && lesson.adoptedWeek <= workload.totalWeeks, `${lesson.id} has invalid adoption week`);
+    assert(lessonStatuses.has(lesson.status), `${lesson.id} has invalid status ${lesson.status}`);
+    assert(stakeholderById.has(lesson.ownerStakeholderId), `${lesson.id} references unknown owner ${lesson.ownerStakeholderId}`);
+    for (const issueId of lesson.linkedIssueIds) assert(issueById.has(issueId), `${lesson.id} references unknown issue ${issueId}`);
+    for (const riskId of lesson.linkedRiskIds) assert(riskById.has(riskId), `${lesson.id} references unknown risk ${riskId}`);
+    for (const changeId of lesson.linkedChangeIds) assert(changeById.has(changeId), `${lesson.id} references unknown change ${changeId}`);
+    for (const documentId of lesson.evidenceDocumentIds) assert(documentById.has(documentId), `${lesson.id} references unknown evidence document ${documentId}`);
+    for (const field of ["title", "context", "observation", "impact", "recommendation", "applicablePhase"]) {
+      assert(typeof lesson[field] === "string" && lesson[field].length > 0, `${lesson.id} has no ${field}`);
+    }
+  }
+
+  assert(documents.milestoneList.documentId === "D10", "Milestone list must belong to D10");
+  const milestoneStatuses = new Set(documents.milestoneList.statusModel);
+  let priorBaselineWeek = 0;
+  for (const milestone of milestoneById.values()) {
+    assert(Number.isInteger(milestone.baselineWeek) && milestone.baselineWeek > priorBaselineWeek && milestone.baselineWeek <= workload.totalWeeks, `${milestone.id} has an invalid or unordered baseline week`);
+    priorBaselineWeek = milestone.baselineWeek;
+    assert(stakeholderById.has(milestone.ownerStakeholderId), `${milestone.id} references unknown owner ${milestone.ownerStakeholderId}`);
+    assert(typeof milestone.acceptanceCriteria === "string" && milestone.acceptanceCriteria.length > 0, `${milestone.id} has no acceptance criteria`);
+    for (const wbsId of milestone.relatedWbsIds) assert(deliverableById.has(wbsId), `${milestone.id} references unknown WBS ${wbsId}`);
+    for (const documentId of milestone.evidenceDocumentIds) assert(documentById.has(documentId), `${milestone.id} references unknown evidence document ${documentId}`);
+    let priorEventWeek = 0;
+    for (const event of milestone.statusEvents) {
+      assert(Number.isInteger(event.week) && event.week >= 1 && event.week <= workload.totalWeeks, `${milestone.id} has invalid event week ${event.week}`);
+      assert(event.week >= priorEventWeek, `${milestone.id} status events are out of order`);
+      assert(milestoneStatuses.has(event.status), `${milestone.id} has invalid status ${event.status}`);
+      assert(Number.isInteger(event.forecastWeek) && event.forecastWeek >= event.week && event.forecastWeek <= 40, `${milestone.id} has invalid forecast week at W${event.week}`);
+      assert(event.actualWeek === null || (Number.isInteger(event.actualWeek) && event.actualWeek >= 1 && event.actualWeek <= workload.totalWeeks), `${milestone.id} has invalid actual week at W${event.week}`);
+      assert(typeof event.evidence === "string" && event.evidence.length > 0, `${milestone.id} event W${event.week} has no evidence`);
+      priorEventWeek = event.week;
+    }
+    assert(milestone.statusEvents[0]?.week === 1, `${milestone.id} must be planned or achieved in W1`);
+  }
 
   for (const change of changeById.values()) {
     assert(change.submittedWeek <= change.reviewWeek, `${change.id} is reviewed before submission`);

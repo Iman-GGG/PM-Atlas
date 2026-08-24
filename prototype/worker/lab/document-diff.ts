@@ -21,10 +21,70 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
     { op: "add", path: "/branchMeta/scenarioStatus", value: state.scenario.status },
   ];
   switch (documentId) {
+    case "D03": {
+      const scenarioOperations: Record<string, JsonPatchOperation[]> = {
+        "scenario-1": [
+          { op: "replace", path: "/assumptions/ASM-001/status", value: "invalidated" },
+          { op: "add", path: "/assumptions/ASM-001/branchEvidence", value: "家庭共享需求证明单一车主不足以覆盖主要用车场景" },
+        ],
+        "scenario-2": [
+          { op: "replace", path: "/assumptions/ASM-002/status", value: "invalidated" },
+          { op: "replace", path: "/assumptions/ASM-003/status", value: "invalidated" },
+          { op: "add", path: "/assumptions/ASM-003/branchEvidence", value: "供应商延期与核心工程师抽调已核实" },
+        ],
+        "scenario-3": [
+          { op: "replace", path: "/assumptions/ASM-004/status", value: "invalidated" },
+          { op: "replace", path: "/assumptions/ASM-008/status", value: state.scenario.status === "closed" ? "validated" : "open" },
+          { op: "add", path: "/assumptions/ASM-004/branchEvidence", value: "授权链重放漏洞使远程控制安全门失效" },
+        ],
+      };
+      return [...common, ...(scenarioOperations[state.scenario.id] ?? [])];
+    }
     case "D05": return [...common,
       { op: "add", path: "/changeControl/openItems", value: state.governance.ccbOpenItems },
       { op: "add", path: "/changeControl/scopeControlViolation", value: state.governance.scopeControlViolation },
     ];
+    case "D09": {
+      const scenarioLessons: Record<string, { id: string; title: string; recommendation: string }> = {
+        "scenario-1": {
+          id: "BR-LES-S1",
+          title: "高价值反馈仍需经过范围分类和变更控制",
+          recommendation: "先澄清场景并完成综合影响评估，再决定进入当前基线或后续版本。",
+        },
+        "scenario-2": {
+          id: "BR-LES-S2",
+          title: "供应分批承诺与关键岗位备份需要联合设计",
+          recommendation: "把Mock、最小接口、完整接口和结构化交接写入同一份恢复计划。",
+        },
+        "scenario-3": {
+          id: "BR-LES-S3",
+          title: "能力隔离是安全缺陷下保持可交付性的前提",
+          recommendation: "高风险能力应具备独立功能开关、权限边界、回归范围和回滚路径。",
+        },
+      };
+      const lesson = scenarioLessons[state.scenario.id];
+      return lesson ? [...common,
+        { op: "add", path: `/lessons/${lesson.id}/title`, value: lesson.title },
+        { op: "add", path: `/lessons/${lesson.id}/recommendation`, value: lesson.recommendation },
+        { op: "add", path: `/lessons/${lesson.id}/status`, value: state.scenario.status === "closed" ? "shared" : "captured" },
+        { op: "add", path: `/lessons/${lesson.id}/outcomeClassification`, value: state.outcomeClassification ?? "ongoing" },
+      ] : common;
+    }
+    case "D10": {
+      const milestoneOperations: Record<string, JsonPatchOperation[]> = {
+        "scenario-2": [
+          { op: "replace", path: "/milestones/MS-04/status", value: state.scenario.status === "closed" ? "achieved_with_conditions" : "at_risk" },
+          { op: "replace", path: "/milestones/MS-06/currentForecastWeek", value: state.performance.forecastCompletionWeek },
+          { op: "add", path: "/milestones/MS-06/forecastBasis", value: "supplier_and_resource_recovery_plan" },
+        ],
+        "scenario-3": [
+          { op: "replace", path: "/milestones/MS-05/status", value: state.scenario.status === "closed" ? "achieved_with_conditions" : "at_risk" },
+          { op: "add", path: "/milestones/MS-05/releaseScope", value: "read_only_vehicle_status_only" },
+          { op: "replace", path: "/milestones/MS-06/currentForecastWeek", value: state.performance.forecastCompletionWeek },
+        ],
+      };
+      return [...common, ...(milestoneOperations[state.scenario.id] ?? [])];
+    }
     case "D13": return [...common,
       { op: "add", path: "/communication/overdueItems", value: state.totals.overdueCommunicationItems },
     ];

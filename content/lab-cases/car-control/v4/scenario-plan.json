@@ -120,7 +120,7 @@
         { "id": "S1-A3", "title": "评估范围、进度、成本、安全、质量和干系人影响", "completedEffect": { "assessedOption": { "option": "include_family_sharing_in_v1_0", "scheduleIncreaseWeeks": 3, "costIncreaseCny": 180000, "additionalSecurityValidationRequired": true }, "isActualProjectImpact": false } },
         { "id": "S1-A4", "title": "形成正式变更请求并提交CCB审查", "prerequisiteActionIds": ["S1-A1", "S1-A2", "S1-A3"], "completedEffect": { "ccbItemCreated": true, "validWhenPrerequisitesComplete": true, "otherwise": "returned_for_more_information" } },
         { "id": "S1-A5", "title": "纳入1.1后续版本并保护1.0试点基线", "prerequisiteActionIds": ["S1-A4"], "completedEffect": { "changeDisposition": "approved_for_v1_1", "v1_0BaselineChanged": false, "unauthorizedScopeExecutionRiskCleared": true } },
-        { "id": "S1-A6", "title": "更新关联记录并沟通替代流程与承诺", "completedEffect": { "documentAndCommunicationUpdatesCreated": true, "documentRevisions": ["D13", "D30"], "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }], "riskId": "R01", "lifecycleStateWhenAllPriorActionsComplete": "closed", "lifecycleStateOtherwise": "triggered", "controlStatusOtherwise": "active_partially_controlled" } }
+        { "id": "S1-A6", "title": "更新关联记录并沟通替代流程与承诺", "completedEffect": { "documentAndCommunicationUpdatesCreated": true, "documentRevisions": ["D03", "D09", "D13", "D30"], "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }], "riskId": "R01", "lifecycleStateWhenAllPriorActionsComplete": "closed", "lifecycleStateOtherwise": "triggered", "controlStatusOtherwise": "active_partially_controlled" } }
       ],
       "requiredObservations": [
         { "source": "document", "id": "D06", "title": "成本估算" },
@@ -137,7 +137,7 @@
         "changeDecision": { "status": "approved_for_later_version", "targetVersion": "1.1" },
         "ccbOpenItems": 0,
         "unauthorizedScopeWorkPersonDays": 0,
-        "documentRevisions": ["D05", "D13", "D21", "D26", "D30"],
+        "documentRevisions": ["D03", "D05", "D09", "D13", "D21", "D26", "D30"],
         "unchangedBaselines": ["D16"],
         "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }],
         "scenarioState": "closed",
@@ -310,11 +310,11 @@
       },
       "necessaryManagementActions": [
         { "id": "S2-A1", "title": "核实供应商延期与人员抽调事实并登记关联问题", "completedEffect": { "supplierDelayWeeksConfirmed": 3, "engineerUnavailableWeeksConfirmed": 2, "provisionalIssuesVerifiedAndLinked": 2, "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1650 } },
-        { "id": "S2-A2", "title": "重算关键路径、接口依赖、资源日历及受影响里程碑", "completedEffect": { "affectedCriticalActivityIds": ["WBS-8.2", "WBS-9.2"], "unmitigatedForecastCompletionWeek": 35, "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
+        { "id": "S2-A2", "title": "重算关键路径、接口依赖、资源日历及受影响里程碑", "completedEffect": { "affectedCriticalActivityIds": ["WBS-8.2", "WBS-9.2"], "unmitigatedForecastCompletionWeek": 35, "documentRevisions": ["D10"], "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
         { "id": "S2-A3", "title": "与供应商联合排障并确定最小可交付接口和分阶段日期", "completedEffect": { "supplierCommitments": [{ "deliverable": "mock_response", "week": 18 }, { "deliverable": "minimum_vehicle_status_interface", "week": 19 }, { "deliverable": "complete_interface", "week": 22 }], "incrementalWorkPersonDays": 2, "incrementalLaborCostCny": 3300, "incrementalSupplierSupportCostCny": 19600, "incrementalActualCostCny": 22900 } },
         { "id": "S2-A4", "title": "启用Mock接口以保持独立开发与测试并行", "completedEffect": { "parallelItemsUnblocked": 18, "forecastCompletionWeek": 34, "incrementalWorkPersonDays": 6, "incrementalActualCostCny": 9300 } },
         { "id": "S2-A5", "title": "安排替补工程师和结构化交接且不压缩集成与质量门禁", "prerequisiteActionIdsForForecastRecovery": ["S2-A2", "S2-A3", "S2-A4"], "completedEffect": { "backupAssigned": true, "structuredHandoffComplete": true, "qualityGatesCompressed": false, "forecastCompletionWeekWhenPrerequisitesComplete": 33, "incrementalWorkPersonDays": 3, "incrementalActualCostCny": 5150 } },
-        { "id": "S2-A6", "title": "更新进度预测、风险登记册、责任分配及供应商绩效记录", "completedEffect": { "documentRevisions": ["D08", "D13", "D14", "D17", "D24", "D26", "D27", "D29"], "riskUpdates": [{ "riskId": "R02", "lifecycleState": "triggered", "controlStatus": "active_controlled" }, { "riskId": "R03", "lifecycleState": "triggered", "controlStatus": "active_controlled" }], "governanceConfirmationPending": true } },
+        { "id": "S2-A6", "title": "更新进度预测、风险登记册、责任分配及供应商绩效记录", "completedEffect": { "documentRevisions": ["D03", "D08", "D09", "D10", "D13", "D14", "D17", "D24", "D26", "D27", "D29"], "riskUpdates": [{ "riskId": "R02", "lifecycleState": "triggered", "controlStatus": "active_controlled" }, { "riskId": "R03", "lifecycleState": "triggered", "controlStatus": "active_controlled" }], "governanceConfirmationPending": true } },
         { "id": "S2-A7", "title": "沟通顺延一周且质量优先的方案并取得关键干系人一致", "completedEffect": { "approvedDelayWorkDays": 5, "sponsorAligned": true, "productOwnerAligned": true, "governanceGapClosed": true } }
       ],
       "requiredObservations": [
@@ -337,7 +337,7 @@
         ],
         "qualityGateChanges": [],
         "approvedScopeChanged": false,
-        "documentRevisions": ["D08", "D13", "D14", "D17", "D24", "D26", "D27", "D29"],
+        "documentRevisions": ["D03", "D08", "D09", "D10", "D13", "D14", "D17", "D24", "D26", "D27", "D29"],
         "scenarioState": "closed",
         "pathClassification": "near_mainline_success",
         "managementConclusion": "controlled_one_week_delay_quality_first"
@@ -535,7 +535,7 @@
         { "id": "S3-A4", "title": "组织安全分诊与专家评审并制定修复、复测和残余风险处置方案", "completedEffect": { "remediationPlanCreated": true, "retestPlanCreated": true, "riskOwnerAssigned": true, "residualRiskPlanCreated": true, "incrementalWorkPersonDays": 4, "incrementalExternalSecuritySupportCostCny": 14000, "incrementalActualCostCny": 21000 } },
         { "id": "S3-A5", "title": "提交正式变更并完成CCB及上线阶段门决策以批准分阶段交付", "prerequisiteActionIds": ["S3-A1", "S3-A2", "S3-A3", "S3-A4"], "completedEffect": { "changeDecision": "approved_phased_release", "v1_0ReleaseScope": ["read_only_vehicle_status"], "v1_1DeferredScope": ["remote_control"], "riskUpdate": { "riskId": "R10", "lifecycleState": "monitoring", "controlStatus": "pending_execution" }, "incrementalWorkPersonDays": 2, "incrementalActualCostCny": 3500 } },
         { "id": "S3-A6", "title": "通过功能开关和权限隔离确保只读查看状态能力可独立安全上线", "completedEffect": { "remoteControlFeatureFlag": "off", "permissionAndInterfaceIsolationVerified": true, "readOnlyIndependentRegression": "passed", "incrementalWorkPersonDays": 5, "incrementalActualCostCny": 12275 } },
-        { "id": "S3-A7", "title": "更新关联资料并向关键干系人沟通分阶段发布预期", "completedEffect": { "documentRevisions": ["D05", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"], "releaseExpectationCommunicationComplete": true, "riskId": "R10", "lifecycleStateWhenA5AndA6Complete": "closed", "lifecycleStateOtherwise": "monitoring", "controlStatusOtherwise": "active_partially_controlled", "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1650 } }
+        { "id": "S3-A7", "title": "更新关联资料并向关键干系人沟通分阶段发布预期", "completedEffect": { "documentRevisions": ["D03", "D05", "D09", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"], "releaseExpectationCommunicationComplete": true, "riskId": "R10", "lifecycleStateWhenA5AndA6Complete": "closed", "lifecycleStateOtherwise": "monitoring", "controlStatusOtherwise": "active_partially_controlled", "incrementalWorkPersonDays": 1, "incrementalActualCostCny": 1650 } }
       ],
       "idealDecision": "release_read_only_on_schedule_disable_remote_control",
       "requiredObservations": [
@@ -567,7 +567,7 @@
           { "capability": "remote_control", "result": "failed_blocked" },
           { "capability": "read_only_vehicle_status", "result": "passed" }
         ],
-        "documentRevisions": ["D05", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"],
+        "documentRevisions": ["D03", "D05", "D09", "D10", "D13", "D16", "D20", "D21", "D22", "D26", "D27", "D29", "D32"],
         "scenarioState": "closed",
         "pathClassification": "near_mainline_success",
         "managementConclusion": "safe_minimum_scope_delivered_on_schedule"

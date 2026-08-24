@@ -140,6 +140,85 @@ type TeamCharter = {
   amendmentRule: { trigger: string; decisionRule: string; recordDocumentId: string };
 };
 
+type AssumptionStatusEvent = {
+  week: number;
+  status: "open" | "validated" | "invalidated" | "retired";
+  evidence: string;
+};
+
+type AssumptionItem = {
+  id: string;
+  statement: string;
+  category: string;
+  identifiedWeek: number;
+  ownerStakeholderId: string;
+  validationMethod: string;
+  targetValidationWeek: number;
+  impactIfFalse: string;
+  statusEvents: AssumptionStatusEvent[];
+  linkedRiskIds: string[];
+  linkedRequirementIds: string[];
+  linkedWbsIds: string[];
+  linkedDocumentIds: string[];
+};
+
+type AssumptionLog = {
+  documentId: "D03";
+  statusModel: AssumptionStatusEvent["status"][];
+  items: AssumptionItem[];
+};
+
+type LessonLearnedItem = {
+  id: string;
+  title: string;
+  category: string;
+  observedWeek: number;
+  capturedWeek: number;
+  ownerStakeholderId: string;
+  context: string;
+  observation: string;
+  impact: string;
+  recommendation: string;
+  status: "captured" | "adopted" | "shared";
+  adoptedWeek: number;
+  linkedIssueIds: string[];
+  linkedRiskIds: string[];
+  linkedChangeIds: string[];
+  applicablePhase: string;
+  evidenceDocumentIds: string[];
+};
+
+type LessonsLearnedRegister = {
+  documentId: "D09";
+  statusModel: LessonLearnedItem["status"][];
+  items: LessonLearnedItem[];
+};
+
+type MilestoneStatusEvent = {
+  week: number;
+  status: "planned" | "at_risk" | "achieved_with_conditions" | "achieved";
+  forecastWeek: number;
+  actualWeek: number | null;
+  evidence: string;
+};
+
+type MilestoneItem = {
+  id: string;
+  title: string;
+  baselineWeek: number;
+  ownerStakeholderId: string;
+  acceptanceCriteria: string;
+  relatedWbsIds: string[];
+  evidenceDocumentIds: string[];
+  statusEvents: MilestoneStatusEvent[];
+};
+
+type MilestoneList = {
+  documentId: "D10";
+  statusModel: MilestoneStatusEvent["status"][];
+  items: MilestoneItem[];
+};
+
 type ChangeItem = {
   id: string;
   title: string;
@@ -270,6 +349,9 @@ type MainlineData = {
     relations: DocumentRelation[];
     changeControlBoard: ChangeControlBoard;
     teamCharter: TeamCharter;
+    assumptionLog: AssumptionLog;
+    lessonsLearnedRegister: LessonsLearnedRegister;
+    milestoneList: MilestoneList;
     changeItems: ChangeItem[];
     issues: IssueItem[];
     testRounds: TestRound[];
@@ -586,6 +668,36 @@ const engagementStateLabels: Record<string, string> = {
   neutral: "中立",
   supportive: "支持",
   leading: "领导",
+};
+const assumptionStatusLabels: Record<AssumptionStatusEvent["status"], string> = {
+  open: "待验证",
+  validated: "已验证",
+  invalidated: "已失效",
+  retired: "已退役",
+};
+const assumptionCategoryLabels: Record<string, string> = {
+  scope: "范围",
+  supplier: "供应",
+  resource: "资源",
+  security: "安全",
+  quality: "质量",
+  technical: "技术",
+  stakeholder: "干系人",
+  operations: "运营",
+  compliance: "合规",
+  requirements: "需求",
+  release: "发布",
+};
+const lessonStatusLabels: Record<LessonLearnedItem["status"], string> = {
+  captured: "已记录",
+  adopted: "已采纳",
+  shared: "已共享",
+};
+const milestoneStatusLabels: Record<MilestoneStatusEvent["status"], string> = {
+  planned: "按计划",
+  at_risk: "存在风险",
+  achieved_with_conditions: "有条件达成",
+  achieved: "已达成",
 };
 const stakeholderGroupLabels: Record<Stakeholder["group"], string> = {
   governance: "治理",
@@ -1448,6 +1560,29 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     return mainline.requirements.requirements.filter((requirement) => requirement.discoveredWeek <= selectedWeek);
   }, [mainline, selectedWeek]);
 
+  const assumptionState = useMemo(() => {
+    if (!mainline) return [];
+    return mainline.documents.assumptionLog.items
+      .filter((assumption) => assumption.identifiedWeek <= selectedWeek)
+      .map((assumption) => {
+        const currentEvent = [...assumption.statusEvents].reverse().find((event) => event.week <= selectedWeek) ?? assumption.statusEvents[0];
+        return { ...assumption, currentEvent };
+      });
+  }, [mainline, selectedWeek]);
+
+  const lessonState = useMemo(() => {
+    if (!mainline) return [];
+    return mainline.documents.lessonsLearnedRegister.items.filter((lesson) => lesson.capturedWeek <= selectedWeek);
+  }, [mainline, selectedWeek]);
+
+  const milestoneState = useMemo(() => {
+    if (!mainline) return [];
+    return mainline.documents.milestoneList.items.map((milestone) => {
+      const currentEvent = [...milestone.statusEvents].reverse().find((event) => event.week <= selectedWeek) ?? milestone.statusEvents[0];
+      return { ...milestone, currentEvent };
+    });
+  }, [mainline, selectedWeek]);
+
   const allDocumentEvents = useMemo(() => {
     if (!mainline) return [];
     return [...mainline.documents.mainlineEvents, ...mainline.documents.contentRevisions].sort((left, right) => left.week - right.week);
@@ -2176,6 +2311,18 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : selectedDocumentContentLocked ? <div className="lab-v2-document-locked"><strong>登录查看具体内容</strong><p>项目文件目录保持开放；登录后可查看当前内容、版本历史、关联文件和个人分支差异。</p><button type="button" onClick={signIn}>登录并解锁项目文件</button></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
                       {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
+                      {selectedDocument.id === "D03" && (
+                        <section className="lab-v2-document-data">
+                          <span>假设日志 · W{selectedWeek} · {assumptionState.length} 项已识别</span>
+                          <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <table className="lab-v2-assumption-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号 / 类别</th><th>假设陈述</th><th>负责人</th><th>识别 / 目标</th><th>当前状态</th><th>验证方法</th><th>若不成立的影响</th><th>最新证据</th><th>关联项</th></tr></thead>
+                              <tbody>{assumptionState.map((assumption) => <tr key={assumption.id}><td><strong>{assumption.id}</strong><small>{assumptionCategoryLabels[assumption.category] ?? assumption.category}</small></td><td>{assumption.statement}</td><td>{stakeholderById.get(assumption.ownerStakeholderId)?.title ?? assumption.ownerStakeholderId}</td><td>W{assumption.identifiedWeek}<small>目标 W{assumption.targetValidationWeek}</small></td><td><strong>{assumptionStatusLabels[assumption.currentEvent.status]}</strong><small>W{assumption.currentEvent.week} 更新</small></td><td>{assumption.validationMethod}</td><td>{assumption.impactIfFalse}</td><td>{assumption.currentEvent.evidence}</td><td><strong>{assumption.linkedRiskIds.join(" / ") || "—"}</strong><small>{[...assumption.linkedRequirementIds, ...assumption.linkedDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
                       {selectedDocument.id === "D05" && (
                         <section className="lab-v2-document-data">
                           <span>变更日志 · W{selectedWeek}</span>
@@ -2196,6 +2343,32 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号</th><th>问题</th><th>严重度</th><th>发现</th><th>负责人</th><th>处理结果</th><th>关闭</th></tr></thead>
                               <tbody>{visibleIssues.map((issue) => <tr key={issue.id}><td>{issue.id}</td><td>{issue.title}</td><td>{issue.severity}</td><td>W{issue.discoveredWeek}</td><td>{stakeholderById.get(issue.ownerStakeholderId)?.title}</td><td>{selectedWeek >= issue.resolvedWeek ? issue.resolution : "处理中"}</td><td>{selectedWeek >= issue.resolvedWeek ? `W${issue.resolvedWeek}` : "—"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D09" && (
+                        <section className="lab-v2-document-data">
+                          <span>经验教训登记册 · W{selectedWeek} · {lessonState.length} 项已沉淀</span>
+                          <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <table className="lab-v2-lessons-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号 / 类别</th><th>经验主题</th><th>观察 / 收录</th><th>负责人 / 状态</th><th>情境与观察</th><th>影响</th><th>后续建议</th><th>适用阶段 / 证据</th></tr></thead>
+                              <tbody>{lessonState.map((lesson) => <tr key={lesson.id}><td><strong>{lesson.id}</strong><small>{assumptionCategoryLabels[lesson.category] ?? lesson.category}</small></td><td>{lesson.title}</td><td>W{lesson.observedWeek}<small>收录 W{lesson.capturedWeek}</small></td><td>{stakeholderById.get(lesson.ownerStakeholderId)?.title ?? lesson.ownerStakeholderId}<small>{lessonStatusLabels[lesson.status]} · W{lesson.adoptedWeek}</small></td><td>{lesson.context}<small>{lesson.observation}</small></td><td>{lesson.impact}</td><td>{lesson.recommendation}</td><td>{lesson.applicablePhase}<small>{[...lesson.linkedIssueIds, ...lesson.linkedRiskIds, ...lesson.linkedChangeIds, ...lesson.evidenceDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
+                            </table>
+                          </div>
+                          {!lessonState.length && <p className="lab-v2-register-empty">当前周尚未完成正式复盘；经验教训登记册保留空白模板。</p>}
+                        </section>
+                      )}
+                      {selectedDocument.id === "D10" && (
+                        <section className="lab-v2-document-data">
+                          <span>里程碑清单 · W{selectedWeek} · 基准 / 预测 / 实际</span>
+                          <div className="lab-v2-milestone-summary">{milestoneState.map((milestone) => <article key={milestone.id} className={milestone.currentEvent.status}><b>W{milestone.baselineWeek}</b><span>{milestone.id}</span><strong>{milestone.title}</strong><small>{milestoneStatusLabels[milestone.currentEvent.status]}</small></article>)}</div>
+                          <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <table className="lab-v2-milestone-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号 / 里程碑</th><th>基准周</th><th>预测周</th><th>实际周</th><th>状态 / 负责人</th><th>验收标准</th><th>最新结论 / 证据</th></tr></thead>
+                              <tbody>{milestoneState.map((milestone) => <tr key={milestone.id}><td><strong>{milestone.id}</strong><small>{milestone.title}</small></td><td>W{milestone.baselineWeek}</td><td>W{milestone.currentEvent.forecastWeek}</td><td>{milestone.currentEvent.actualWeek === null ? "—" : `W${milestone.currentEvent.actualWeek}`}</td><td><strong>{milestoneStatusLabels[milestone.currentEvent.status]}</strong><small>{stakeholderById.get(milestone.ownerStakeholderId)?.title ?? milestone.ownerStakeholderId}</small></td><td>{milestone.acceptanceCriteria}</td><td>{milestone.currentEvent.evidence}<small>{[...milestone.relatedWbsIds, ...milestone.evidenceDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
                             </table>
                           </div>
                         </section>
