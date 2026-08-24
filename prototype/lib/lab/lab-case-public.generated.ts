@@ -6,7 +6,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
   "schemaVersion": 1,
   "caseId": "car-control",
   "caseVersion": "v4",
-  "contentHash": "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353",
+  "contentHash": "20236f42d559b7ed5e7385b940998c555baa68cdac96eaa1308c3aa1e871b6f5",
   "totalWeeks": 32,
   "plans": {
     "workload": {
@@ -1813,6 +1813,16 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
           ]
         },
         {
+          "week": 10,
+          "stakeholderId": "security_vendor",
+          "current": "neutral",
+          "desired": "supportive",
+          "evidence": [
+            "第三方安全测试工作说明书",
+            "测试窗口与访问安排确认"
+          ]
+        },
+        {
           "week": 12,
           "stakeholderId": "vehicle_integration",
           "current": "leading",
@@ -2458,17 +2468,34 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
         {
           "id": "sponsor",
           "title": "项目发起人",
+          "identifiedWeek": 1,
+          "projectRole": "重大决策与资源支持责任人",
+          "organization": "项目指导委员会",
           "group": "governance",
           "initialEngagement": {
             "power": 5,
             "interest": 5,
             "current": "leading",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "在安全边界内按期交付最小可行范围",
+            "重大偏差及时升级并形成可审计决策"
+          ],
+          "informationNeeds": [
+            "阶段门结论与待决事项",
+            "范围、进度、成本和高等级风险"
+          ],
+          "primaryCommunicationTouchpointId": "steering_committee",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "项目章程与立项授权"
         },
         {
           "id": "pm",
           "title": "项目经理",
+          "identifiedWeek": 1,
+          "projectRole": "项目整合与交付负责人",
+          "organization": "核心项目团队",
           "group": "core_team",
           "resourceRoleId": "pm",
           "initialEngagement": {
@@ -2476,11 +2503,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 5,
             "current": "leading",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "治理机制可执行且决策及时",
+            "跨团队依赖和偏差有明确负责人"
+          ],
+          "informationNeeds": [
+            "全部关键绩效、问题、风险和变更",
+            "阶段门证据与行动项状态"
+          ],
+          "primaryCommunicationTouchpointId": "core_status",
+          "engagementOwnerStakeholderId": "sponsor",
+          "identificationBasis": "项目章程与项目经理任命"
         },
         {
           "id": "product_ba",
           "title": "产品负责人/业务分析师",
+          "identifiedWeek": 1,
+          "projectRole": "产品价值、需求与范围负责人",
+          "organization": "产品与业务团队",
           "group": "core_team",
           "resourceRoleId": "ba",
           "initialEngagement": {
@@ -2488,11 +2529,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 5,
             "current": "leading",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "需求与业务价值保持可追溯",
+            "试点反馈按变更流程进入版本决策"
+          ],
+          "informationNeeds": [
+            "需求状态与验收结果",
+            "范围变更、用户反馈和发布边界"
+          ],
+          "primaryCommunicationTouchpointId": "requirements_workshops",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "产品立项与需求负责人任命"
         },
         {
           "id": "tech_lead",
           "title": "技术负责人",
+          "identifiedWeek": 1,
+          "projectRole": "技术架构与关键技术决策负责人",
+          "organization": "研发团队",
           "group": "core_team",
           "resourceRoleId": "tech_lead",
           "initialEngagement": {
@@ -2500,11 +2555,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 5,
             "current": "supportive",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "架构、安全与质量约束进入方案",
+            "技术债和接口依赖不被隐藏"
+          ],
+          "informationNeeds": [
+            "技术风险与架构决策",
+            "接口、资源和缺陷依赖"
+          ],
+          "primaryCommunicationTouchpointId": "core_status",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "项目团队派工与架构责任分配"
         },
         {
           "id": "mobile",
           "title": "移动端工程师",
+          "identifiedWeek": 1,
+          "projectRole": "移动端功能与交互实现",
+          "organization": "研发团队",
           "group": "core_team",
           "resourceRoleId": "mobile",
           "initialEngagement": {
@@ -2512,11 +2581,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 4,
             "current": "supportive",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "需求和接口保持稳定",
+            "异常体验与验收标准明确"
+          ],
+          "informationNeeds": [
+            "移动端需求与优先级",
+            "接口契约、缺陷和测试结论"
+          ],
+          "primaryCommunicationTouchpointId": "core_status",
+          "engagementOwnerStakeholderId": "tech_lead",
+          "identificationBasis": "项目团队派工单"
         },
         {
           "id": "backend",
           "title": "后端工程师",
+          "identifiedWeek": 1,
+          "projectRole": "服务端能力与数据链路实现",
+          "organization": "研发团队",
           "group": "core_team",
           "resourceRoleId": "backend",
           "initialEngagement": {
@@ -2524,11 +2607,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 4,
             "current": "supportive",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "服务边界和性能目标明确",
+            "依赖变更及时同步"
+          ],
+          "informationNeeds": [
+            "服务端需求与接口契约",
+            "性能、安全和缺陷结论"
+          ],
+          "primaryCommunicationTouchpointId": "core_status",
+          "engagementOwnerStakeholderId": "tech_lead",
+          "identificationBasis": "项目团队派工单"
         },
         {
           "id": "vehicle_integration",
           "title": "车端接口集成工程师",
+          "identifiedWeek": 1,
+          "projectRole": "车端接口与联合集成负责人",
+          "organization": "研发与供应商协作组",
           "group": "core_team",
           "resourceRoleId": "vehicle_integration",
           "initialEngagement": {
@@ -2536,11 +2633,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 5,
             "current": "supportive",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "供应商接口承诺可验证",
+            "联调窗口和问题升级路径明确"
+          ],
+          "informationNeeds": [
+            "接口契约与版本差异",
+            "供应商交付、联调问题和风险"
+          ],
+          "primaryCommunicationTouchpointId": "vendor_interface",
+          "engagementOwnerStakeholderId": "tech_lead",
+          "identificationBasis": "技术方案与集成责任分工"
         },
         {
           "id": "qa",
           "title": "测试工程师",
+          "identifiedWeek": 1,
+          "projectRole": "测试执行与质量门把关",
+          "organization": "质量保障团队",
           "group": "core_team",
           "resourceRoleId": "qa",
           "initialEngagement": {
@@ -2548,11 +2659,25 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 4,
             "current": "supportive",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "需求具备可测试的验收标准",
+            "质量门不因进度压力被绕过"
+          ],
+          "informationNeeds": [
+            "需求跟踪与构建范围",
+            "缺陷、风险和发布准入标准"
+          ],
+          "primaryCommunicationTouchpointId": "risk_quality",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "质量管理计划与团队派工"
         },
         {
           "id": "devsecops",
           "title": "DevOps/安全工程师",
+          "identifiedWeek": 1,
+          "projectRole": "交付流水线、运行安全与安全门负责人",
+          "organization": "工程效能与安全团队",
           "group": "core_team",
           "resourceRoleId": "devsecops",
           "initialEngagement": {
@@ -2560,73 +2685,168 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
             "interest": 5,
             "current": "supportive",
             "desired": "leading"
-          }
+          },
+          "expectations": [
+            "安全基线和发布控制不被绕过",
+            "生产变更可回滚且可审计"
+          ],
+          "informationNeeds": [
+            "安全需求、威胁与缺陷",
+            "构建、部署和阶段门计划"
+          ],
+          "primaryCommunicationTouchpointId": "risk_quality",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "安全与发布治理责任分配"
         },
         {
           "id": "operations_support",
           "title": "运营与客服负责人",
+          "identifiedWeek": 1,
+          "projectRole": "运营准备、客服流程与移交负责人",
+          "organization": "运营与客户支持团队",
           "group": "business",
           "initialEngagement": {
             "power": 4,
             "interest": 4,
             "current": "neutral",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "产品可运营、可支持、可降级",
+            "上线前完成手册、培训和升级路径"
+          ],
+          "informationNeeds": [
+            "试点范围与已知限制",
+            "运行指标、故障处置和移交计划"
+          ],
+          "primaryCommunicationTouchpointId": "pilot_operations",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "运营移交范围与支持责任"
         },
         {
           "id": "marketing_release",
           "title": "市场与发布负责人",
+          "identifiedWeek": 1,
+          "projectRole": "发布沟通与市场承诺负责人",
+          "organization": "市场与发布团队",
           "group": "business",
           "initialEngagement": {
             "power": 4,
             "interest": 4,
             "current": "neutral",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "发布范围和日期稳定可承诺",
+            "对外表述与实际能力一致"
+          ],
+          "informationNeeds": [
+            "版本范围、里程碑和发布风险",
+            "已知限制与用户沟通口径"
+          ],
+          "primaryCommunicationTouchpointId": "pilot_operations",
+          "engagementOwnerStakeholderId": "product_ba",
+          "identificationBasis": "发布计划与市场沟通责任"
         },
         {
           "id": "legal_privacy",
           "title": "法务与隐私合规负责人",
+          "identifiedWeek": 1,
+          "projectRole": "法务、隐私与合规审查责任人",
+          "organization": "法务与隐私治理团队",
           "group": "governance",
           "initialEngagement": {
             "power": 4,
             "interest": 3,
             "current": "neutral",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "授权、隐私和数据处理符合约束",
+            "阶段门前保留完整审查证据"
+          ],
+          "informationNeeds": [
+            "涉及个人数据的需求与设计",
+            "合规风险、变更和审批材料"
+          ],
+          "primaryCommunicationTouchpointId": "stage_gate_approvals",
+          "engagementOwnerStakeholderId": "pm",
+          "identificationBasis": "隐私影响与合规审查要求"
         },
         {
           "id": "vehicle_vendor_pm",
           "title": "车端接口供应商项目经理",
+          "identifiedWeek": 4,
+          "projectRole": "供应商接口交付与承诺负责人",
+          "organization": "车端接口供应商",
           "group": "external",
           "initialEngagement": {
             "power": 4,
             "interest": 4,
             "current": "neutral",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "接口范围、验收和依赖边界清晰",
+            "变更与交付承诺通过正式渠道确认"
+          ],
+          "informationNeeds": [
+            "接口计划、契约和验收标准",
+            "依赖、变更决议和联合风险"
+          ],
+          "primaryCommunicationTouchpointId": "vendor_interface",
+          "engagementOwnerStakeholderId": "vehicle_integration",
+          "identificationBasis": "供应商识别与接口采购工作说明书"
         },
         {
           "id": "security_vendor",
           "title": "第三方安全测试负责人",
+          "identifiedWeek": 8,
+          "projectRole": "独立安全测试与验证负责人",
+          "organization": "第三方安全测试机构",
           "group": "external",
           "initialEngagement": {
             "power": 3,
             "interest": 2,
             "current": "neutral",
             "desired": "neutral"
-          }
+          },
+          "expectations": [
+            "测试范围、访问授权和窗口明确",
+            "发现项获得及时分级与修复反馈"
+          ],
+          "informationNeeds": [
+            "安全测试范围与环境准备",
+            "构建版本、修复状态和复测安排"
+          ],
+          "primaryCommunicationTouchpointId": "stage_gate_approvals",
+          "engagementOwnerStakeholderId": "devsecops",
+          "identificationBasis": "W8阶段门的独立安全验证要求"
         },
         {
           "id": "pilot_owner_representative",
           "title": "试点车主代表",
+          "identifiedWeek": 1,
+          "projectRole": "试点用户需求与体验代表",
+          "organization": "试点用户群体",
           "group": "external",
           "initialEngagement": {
             "power": 2,
             "interest": 5,
             "current": "neutral",
             "desired": "supportive"
-          }
+          },
+          "expectations": [
+            "核心场景可靠且限制透明",
+            "反馈有回应并明确进入当前或后续版本"
+          ],
+          "informationNeeds": [
+            "试点范围、使用方式与已知限制",
+            "反馈处理结果和发布承诺"
+          ],
+          "primaryCommunicationTouchpointId": "requirements_workshops",
+          "engagementOwnerStakeholderId": "product_ba",
+          "identificationBasis": "用户研究与试点代表招募"
         }
       ]
     },
@@ -4126,6 +4346,14 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
           ]
         },
         {
+          "id": "rev-d30-w4",
+          "week": 4,
+          "reason": "纳入车端接口供应商项目经理并更新技术负责人的参与程度",
+          "updatedDocumentIds": [
+            "D30"
+          ]
+        },
+        {
           "id": "rev-d05-w5",
           "week": 5,
           "reason": "记录CR-001评审与批准结论",
@@ -4150,11 +4378,27 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
           ]
         },
         {
+          "id": "rev-d30-w10",
+          "week": 10,
+          "reason": "明确第三方安全测试负责人的目标参与程度、测试窗口与访问安排",
+          "updatedDocumentIds": [
+            "D30"
+          ]
+        },
+        {
           "id": "rev-d32-w12",
           "week": 12,
           "reason": "建立测试策略并完成接口契约与安全基线验证",
           "updatedDocumentIds": [
             "D32"
+          ]
+        },
+        {
+          "id": "rev-d30-w12",
+          "week": 12,
+          "reason": "更新车端集成与安全角色在方案冻结后的实际参与程度",
+          "updatedDocumentIds": [
+            "D30"
           ]
         },
         {
@@ -4187,6 +4431,14 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
           "reason": "登记核心工程师临时抽调问题",
           "updatedDocumentIds": [
             "D08"
+          ]
+        },
+        {
+          "id": "rev-d30-w17",
+          "week": 17,
+          "reason": "更新测试工程师与第三方安全测试负责人在集成测试阶段的参与程度",
+          "updatedDocumentIds": [
+            "D30"
           ]
         },
         {
@@ -4235,6 +4487,14 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
           "reason": "登记远程控制授权链重放漏洞",
           "updatedDocumentIds": [
             "D08"
+          ]
+        },
+        {
+          "id": "rev-d30-w25",
+          "week": 25,
+          "reason": "更新运营与客服负责人、试点车主代表在试点阶段的参与程度",
+          "updatedDocumentIds": [
+            "D30"
           ]
         },
         {
@@ -4473,7 +4733,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
         {
           "id": "D30",
           "title": "干系人登记册",
-          "coverage": "supporting_key_versions",
+          "coverage": "dynamic_full_history",
           "createdWeek": 1
         },
         {

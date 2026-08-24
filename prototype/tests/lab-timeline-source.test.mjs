@@ -97,6 +97,13 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /const managementAreas:[\s\S]*项目干系人管理/);
   assert.match(timeline, /className="lab-v2-document-drawer"/);
   assert.match(timeline, /32 份项目文件/);
+  assert.match(timeline, /selectedDocument\.id === "D30"/);
+  assert.match(timeline, /干系人登记册 · W\{selectedWeek\} · 已识别/);
+  assert.match(timeline, /当前\/目标参与/);
+  assert.match(timeline, /参与责任与最近更新/);
+  assert.match(timeline, /item\.identifiedWeek <= selectedWeek/);
+  assert.match(styles, /\.lab-v2-stakeholder-register-table/);
+  assert.match(styles, /\.lab-v2-data-table-wrap\.lab-v2-stakeholder-register-wrap[^}]*overflow-x: auto/);
   assert.match(timeline, /进度绩效指数 SPI/);
   assert.match(timeline, /成本绩效指数 CPI/);
   assert.match(timeline, /里程碑甘特图/);

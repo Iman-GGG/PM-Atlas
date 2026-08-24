@@ -120,7 +120,7 @@
         { "id": "S1-A3", "title": "评估范围、进度、成本、安全、质量和干系人影响", "completedEffect": { "assessedOption": { "option": "include_family_sharing_in_v1_0", "scheduleIncreaseWeeks": 3, "costIncreaseCny": 180000, "additionalSecurityValidationRequired": true }, "isActualProjectImpact": false } },
         { "id": "S1-A4", "title": "形成正式变更请求并提交CCB审查", "prerequisiteActionIds": ["S1-A1", "S1-A2", "S1-A3"], "completedEffect": { "ccbItemCreated": true, "validWhenPrerequisitesComplete": true, "otherwise": "returned_for_more_information" } },
         { "id": "S1-A5", "title": "纳入1.1后续版本并保护1.0试点基线", "prerequisiteActionIds": ["S1-A4"], "completedEffect": { "changeDisposition": "approved_for_v1_1", "v1_0BaselineChanged": false, "unauthorizedScopeExecutionRiskCleared": true } },
-        { "id": "S1-A6", "title": "更新关联记录并沟通替代流程与承诺", "completedEffect": { "documentAndCommunicationUpdatesCreated": true, "pilotOwnerEngagementState": "supportive", "riskId": "R01", "lifecycleStateWhenAllPriorActionsComplete": "closed", "lifecycleStateOtherwise": "triggered", "controlStatusOtherwise": "active_partially_controlled" } }
+        { "id": "S1-A6", "title": "更新关联记录并沟通替代流程与承诺", "completedEffect": { "documentAndCommunicationUpdatesCreated": true, "documentRevisions": ["D13", "D30"], "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }], "riskId": "R01", "lifecycleStateWhenAllPriorActionsComplete": "closed", "lifecycleStateOtherwise": "triggered", "controlStatusOtherwise": "active_partially_controlled" } }
       ],
       "requiredObservations": [
         { "source": "document", "id": "D06", "title": "成本估算" },
@@ -137,7 +137,7 @@
         "changeDecision": { "status": "approved_for_later_version", "targetVersion": "1.1" },
         "ccbOpenItems": 0,
         "unauthorizedScopeWorkPersonDays": 0,
-        "documentRevisions": ["D05", "D13", "D21", "D26"],
+        "documentRevisions": ["D05", "D13", "D21", "D26", "D30"],
         "unchangedBaselines": ["D16"],
         "stakeholderTransitions": [{ "stakeholderId": "pilot_owner_representative", "state": "supportive" }],
         "scenarioState": "closed",

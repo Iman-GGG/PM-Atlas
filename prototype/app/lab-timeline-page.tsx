@@ -49,12 +49,30 @@ type ScheduleActivity = {
 type Stakeholder = {
   id: string;
   title: string;
+  identifiedWeek: number;
+  projectRole: string;
+  organization: string;
+  group: "governance" | "core_team" | "business" | "external";
+  expectations: string[];
+  informationNeeds: string[];
+  primaryCommunicationTouchpointId: string;
+  engagementOwnerStakeholderId: string;
+  identificationBasis: string;
   initialEngagement: {
     power: number;
     interest: number;
     current: string;
     desired: string;
   };
+};
+
+type CommunicationTouchpoint = {
+  id: string;
+  title: string;
+  cadence: "weekly" | "biweekly" | "specified_weeks" | "activity_driven";
+  startWeek?: number;
+  endWeek?: number;
+  weeks?: number[];
 };
 
 type StakeholderEvent = {
@@ -224,6 +242,7 @@ type MainlineData = {
   stakeholders: {
     stakeholders: Stakeholder[];
     mainlineEngagementEvents: StakeholderEvent[];
+    communicationTouchpoints: CommunicationTouchpoint[];
     workPackageRaci: RaciRow[];
   };
   documents: {
@@ -542,6 +561,31 @@ const engagementScores: Record<string, number> = {
   supportive: 4,
   leading: 5,
 };
+const engagementStateLabels: Record<string, string> = {
+  unaware: "未意识到",
+  resistant: "抵制",
+  neutral: "中立",
+  supportive: "支持",
+  leading: "领导",
+};
+const stakeholderGroupLabels: Record<Stakeholder["group"], string> = {
+  governance: "治理",
+  core_team: "核心团队",
+  business: "业务支持",
+  external: "外部",
+};
+const communicationCadenceLabels: Record<CommunicationTouchpoint["cadence"], string> = {
+  weekly: "每周",
+  biweekly: "每两周",
+  specified_weeks: "指定周",
+  activity_driven: "按活动",
+};
+function communicationTouchpointSchedule(touchpoint?: CommunicationTouchpoint): string {
+  if (!touchpoint) return "未设置";
+  if (touchpoint.weeks?.length) return `${communicationCadenceLabels[touchpoint.cadence]} · W${touchpoint.weeks.join("/W")}`;
+  if (touchpoint.startWeek && touchpoint.endWeek) return `${communicationCadenceLabels[touchpoint.cadence]} · W${touchpoint.startWeek}–W${touchpoint.endWeek}`;
+  return communicationCadenceLabels[touchpoint.cadence];
+}
 const managementAreas: ManagementArea[] = [
   { id: "integration", index: "01", title: "项目整合管理", shortTitle: "整合", documentIds: ["D03", "D05", "D08", "D09", "D10", "D13"] },
   { id: "scope", index: "02", title: "项目范围管理", shortTitle: "范围", documentIds: ["D02", "D16", "D21", "D22"] },
@@ -1316,17 +1360,36 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const stakeholderState = useMemo(() => {
     if (!mainline) return [];
     const currentById = new Map(mainline.stakeholders.stakeholders.map((item) => [item.id, item.initialEngagement.current]));
+    const desiredById = new Map(mainline.stakeholders.stakeholders.map((item) => [item.id, item.initialEngagement.desired]));
+    const latestEventById = new Map<string, StakeholderEvent>();
     for (const event of mainline.stakeholders.mainlineEngagementEvents.filter((item) => item.week <= selectedWeek)) {
       currentById.set(event.stakeholderId, event.current);
+      if (event.desired) desiredById.set(event.stakeholderId, event.desired);
+      latestEventById.set(event.stakeholderId, event);
     }
+    const branchUpdatedStakeholderIds = new Set<string>();
     if (branch && branchState && selectedWeek === branch.currentWeek) {
       for (const transition of branchState.stakeholderTransitions) {
         if (typeof transition.stakeholderId === "string" && typeof transition.state === "string") {
           currentById.set(transition.stakeholderId, transition.state);
+          branchUpdatedStakeholderIds.add(transition.stakeholderId);
         }
       }
     }
-    return mainline.stakeholders.stakeholders.map((item) => ({ ...item, current: currentById.get(item.id) ?? item.initialEngagement.current }));
+    const touchpointById = new Map(mainline.stakeholders.communicationTouchpoints.map((touchpoint) => [touchpoint.id, touchpoint]));
+    return mainline.stakeholders.stakeholders
+      .filter((item) => item.identifiedWeek <= selectedWeek)
+      .map((item) => {
+        const latestEvent = latestEventById.get(item.id);
+        return {
+          ...item,
+          current: currentById.get(item.id) ?? item.initialEngagement.current,
+          desired: desiredById.get(item.id) ?? item.initialEngagement.desired,
+          primaryTouchpoint: touchpointById.get(item.primaryCommunicationTouchpointId),
+          lastUpdatedWeek: branchUpdatedStakeholderIds.has(item.id) ? branch?.currentWeek ?? selectedWeek : latestEvent?.week ?? item.identifiedWeek,
+          lastEvidence: branchUpdatedStakeholderIds.has(item.id) ? ["个人分支回合结算"] : latestEvent?.evidence ?? [item.identificationBasis],
+        };
+      });
   }, [branch, branchState, mainline, selectedWeek]);
 
   const engagementPercent = useMemo(() => {
@@ -2145,6 +2208,28 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号</th><th>风险</th><th>等级</th><th>影响范围</th><th>发现</th><th>执行措施</th><th>负责人</th><th>关闭</th><th>处理后结果</th></tr></thead>
                               <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.impactDimensions.join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D30" && (
+                        <section className="lab-v2-document-data">
+                          <span>干系人登记册 · W{selectedWeek} · 已识别 {stakeholderState.length} 人</span>
+                          <div className="lab-v2-data-table-wrap lab-v2-stakeholder-register-wrap">
+                            <table className="lab-v2-stakeholder-register-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>编号/识别</th><th>干系人与项目角色</th><th>类别</th><th>权力/利益</th><th>当前/目标参与</th><th>核心期望</th><th>信息需求</th><th>主要沟通安排</th><th>参与责任与最近更新</th></tr></thead>
+                              <tbody>{stakeholderState.map((stakeholder) => <tr key={stakeholder.id}>
+                                <td>{stakeholder.id}<small>W{stakeholder.identifiedWeek} · {stakeholder.identificationBasis}</small></td>
+                                <td><strong>{stakeholder.title}</strong><small>{stakeholder.projectRole}</small><small>{stakeholder.organization}</small></td>
+                                <td>{stakeholderGroupLabels[stakeholder.group]}</td>
+                                <td>P{stakeholder.initialEngagement.power} / I{stakeholder.initialEngagement.interest}</td>
+                                <td>{engagementStateLabels[stakeholder.current] ?? stakeholder.current}<small>目标：{engagementStateLabels[stakeholder.desired] ?? stakeholder.desired}</small></td>
+                                <td>{stakeholder.expectations.join("；")}</td>
+                                <td>{stakeholder.informationNeeds.join("；")}</td>
+                                <td><strong>{stakeholder.primaryTouchpoint?.title ?? "未设置"}</strong><small>{communicationTouchpointSchedule(stakeholder.primaryTouchpoint)}</small></td>
+                                <td>{stakeholderById.get(stakeholder.engagementOwnerStakeholderId)?.title ?? stakeholder.engagementOwnerStakeholderId}<small>W{stakeholder.lastUpdatedWeek} · {stakeholder.lastEvidence.join("；")}</small></td>
+                              </tr>)}</tbody>
                             </table>
                           </div>
                         </section>

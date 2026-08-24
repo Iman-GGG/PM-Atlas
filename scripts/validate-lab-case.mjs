@@ -54,6 +54,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
 
   const documentById = uniqueMap(documents.documents, "document");
   const stakeholderById = uniqueMap(stakeholders.stakeholders, "stakeholder");
+  const communicationTouchpointById = uniqueMap(stakeholders.communicationTouchpoints, "communication touchpoint");
   const activityById = uniqueMap(schedule.activities, "activity");
   const workPackageById = uniqueMap(workload.workPackages, "work package");
   const deliverableById = new Map([...workPackageById, ...activityById]);
@@ -83,6 +84,40 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(scenarios.decisionReasoningPolicy.fields.length === 0, "Disabled decision reasoning must not contain fields");
   assert(scenarios.decisionReasoningPolicy.submissionRequirement === "at_least_one_complete_action_chain", "Submission must require one complete action chain");
   assert(scenarios.aiReviewPolicy.capabilityDimensions.length === 5, "AI review must contain 5 capability dimensions");
+
+  const stakeholderGroups = new Set(["governance", "core_team", "business", "external"]);
+  const engagementStates = new Set(stakeholders.engagementPolicy.states);
+  for (const stakeholder of stakeholderById.values()) {
+    assert(Number.isInteger(stakeholder.identifiedWeek) && stakeholder.identifiedWeek >= 1 && stakeholder.identifiedWeek <= workload.totalWeeks, `${stakeholder.id} has invalid identification week`);
+    assert(typeof stakeholder.projectRole === "string" && stakeholder.projectRole.length > 0, `${stakeholder.id} has no project role`);
+    assert(typeof stakeholder.organization === "string" && stakeholder.organization.length > 0, `${stakeholder.id} has no organization`);
+    assert(stakeholderGroups.has(stakeholder.group), `${stakeholder.id} has invalid stakeholder group ${stakeholder.group}`);
+    assert(Number.isInteger(stakeholder.initialEngagement?.power) && stakeholder.initialEngagement.power >= 1 && stakeholder.initialEngagement.power <= 5, `${stakeholder.id} has invalid power`);
+    assert(Number.isInteger(stakeholder.initialEngagement?.interest) && stakeholder.initialEngagement.interest >= 1 && stakeholder.initialEngagement.interest <= 5, `${stakeholder.id} has invalid interest`);
+    assert(engagementStates.has(stakeholder.initialEngagement?.current), `${stakeholder.id} has invalid initial current engagement`);
+    assert(engagementStates.has(stakeholder.initialEngagement?.desired), `${stakeholder.id} has invalid initial desired engagement`);
+    assert(Array.isArray(stakeholder.expectations) && stakeholder.expectations.length >= 1, `${stakeholder.id} has no expectations`);
+    assert(Array.isArray(stakeholder.informationNeeds) && stakeholder.informationNeeds.length >= 1, `${stakeholder.id} has no information needs`);
+    assert(communicationTouchpointById.has(stakeholder.primaryCommunicationTouchpointId), `${stakeholder.id} references unknown primary communication touchpoint ${stakeholder.primaryCommunicationTouchpointId}`);
+    assert(stakeholderById.has(stakeholder.engagementOwnerStakeholderId), `${stakeholder.id} references unknown engagement owner ${stakeholder.engagementOwnerStakeholderId}`);
+    assert(typeof stakeholder.identificationBasis === "string" && stakeholder.identificationBasis.length > 0, `${stakeholder.id} has no identification basis`);
+  }
+  for (const touchpoint of communicationTouchpointById.values()) {
+    assert(["weekly", "biweekly", "specified_weeks", "activity_driven"].includes(touchpoint.cadence), `${touchpoint.id} has invalid cadence ${touchpoint.cadence}`);
+    for (const stakeholderId of touchpoint.participants ?? []) assert(stakeholderById.has(stakeholderId), `${touchpoint.id} references unknown participant ${stakeholderId}`);
+  }
+  const stakeholderEventKeys = new Set();
+  for (const event of stakeholders.mainlineEngagementEvents) {
+    const stakeholder = stakeholderById.get(event.stakeholderId);
+    assert(stakeholder, `Stakeholder engagement event references unknown stakeholder ${event.stakeholderId}`);
+    assert(Number.isInteger(event.week) && event.week >= stakeholder.identifiedWeek && event.week <= workload.totalWeeks, `${event.stakeholderId} has invalid engagement event week ${event.week}`);
+    assert(engagementStates.has(event.current), `${event.stakeholderId} has invalid current engagement ${event.current}`);
+    if (event.desired) assert(engagementStates.has(event.desired), `${event.stakeholderId} has invalid desired engagement ${event.desired}`);
+    assert(Array.isArray(event.evidence) && event.evidence.length >= 1, `${event.stakeholderId} engagement event has no evidence`);
+    const eventKey = `${event.stakeholderId}:${event.week}`;
+    assert(!stakeholderEventKeys.has(eventKey), `Duplicate stakeholder engagement event ${eventKey}`);
+    stakeholderEventKeys.add(eventKey);
+  }
 
   for (const requirement of requirementById.values()) {
     assert(["P0", "P1", "P2", "P3"].includes(requirement.priority), `${requirement.id} has invalid priority`);

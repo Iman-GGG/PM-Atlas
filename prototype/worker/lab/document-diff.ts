@@ -6,6 +6,10 @@ export type JsonPatchOperation = {
   value: string | number | boolean;
 };
 
+function jsonPointerSegment(value: string): string {
+  return value.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
 /**
  * Branch documents are a projection of the immutable mainline document plus
  * these explicitly recorded business-field deltas.  Keeping the deltas small
@@ -35,6 +39,23 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/risk/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
       { op: "add", path: "/risk/scenarioStatus", value: state.scenario.status },
     ];
+    case "D30": {
+      const currentEngagementByStakeholder = new Map<string, string>();
+      for (const transition of state.stakeholderTransitions) {
+        if (typeof transition.stakeholderId === "string" && typeof transition.state === "string") {
+          currentEngagementByStakeholder.set(transition.stakeholderId, transition.state);
+        }
+      }
+      return [
+        ...common,
+        { op: "add", path: "/engagement/overdueCommunicationItems", value: state.totals.overdueCommunicationItems },
+        ...[...currentEngagementByStakeholder].map(([stakeholderId, engagementState]): JsonPatchOperation => ({
+          op: "replace",
+          path: `/stakeholders/${jsonPointerSegment(stakeholderId)}/currentEngagement`,
+          value: engagementState,
+        })),
+      ];
+    }
     default: return common;
   }
 }

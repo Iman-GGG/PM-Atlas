@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { publicLabCaseBaseline } from "../lib/lab/lab-case-public.generated.ts";
 import { privateLabCasePackage } from "../worker/generated/lab-case-private.generated.ts";
+import { buildDocumentPatch } from "../worker/lab/document-diff.ts";
 import { settleRound } from "../worker/lab/settle-round.ts";
 
 const scenario = privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === "scenario-1");
@@ -60,7 +61,13 @@ test("settles the complete scenario-one minimum chain onto the near-mainline pat
   assert.deepEqual(settled.result.gaps, []);
   assert.equal(settled.result.stateDiff.additionalActualCostCny, 0);
   assert.equal(settled.internalState.totals.requirementsTraceabilityCoveragePercent, 100);
-  assert.deepEqual(new Set(settled.internalState.documentRevisions), new Set(["D05", "D13", "D21", "D26"]));
+  assert.deepEqual(new Set(settled.internalState.documentRevisions), new Set(["D05", "D13", "D21", "D26", "D30"]));
+  const stakeholderRegisterPatch = buildDocumentPatch("D30", settled.internalState);
+  assert.deepEqual(
+    stakeholderRegisterPatch.find((operation) => operation.path === "/stakeholders/pilot_owner_representative/currentEngagement"),
+    { op: "replace", path: "/stakeholders/pilot_owner_representative/currentEngagement", value: "supportive" },
+  );
+  assert.equal(stakeholderRegisterPatch.find((operation) => operation.path === "/engagement/overdueCommunicationItems")?.value, 0);
   assert.equal(JSON.stringify(settled.result).includes("minimumCorrectCardIds"), false);
 });
 

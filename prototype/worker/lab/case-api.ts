@@ -125,6 +125,7 @@ function projectSection(section: SectionName, week: number | null): StateEffect 
   if (section === "stakeholders") {
     return {
       ...source,
+      stakeholders: (source.stakeholders as StateEffect[]).filter((item) => Number(item.identifiedWeek) <= week),
       mainlineEngagementEvents: (source.mainlineEngagementEvents as StateEffect[]).filter((item) => Number(item.week) <= week),
     };
   }

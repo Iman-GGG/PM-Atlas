@@ -205,6 +205,14 @@ test("filters public mainline data by section and week", async () => {
   assert.deepEqual(body.sections.baselineWorkload.weeks.map((item) => item.week), [9]);
   assert.ok(body.sections.documents.documents.every((document) => document.createdWeek <= 9));
   assert.ok(body.sections.documents.mainlineEvents.every((event) => event.week <= 9));
+
+  const stakeholderResponse = await request("/api/lab/cases/car-control/v4/mainline?week=1&sections=stakeholders");
+  assert.equal(stakeholderResponse.status, 200);
+  const stakeholderBody = await stakeholderResponse.json();
+  assert.equal(stakeholderBody.sections.stakeholders.stakeholders.length, 13);
+  assert.equal(stakeholderBody.sections.stakeholders.stakeholders.some((stakeholder) => stakeholder.id === "vehicle_vendor_pm"), false);
+  assert.equal(stakeholderBody.sections.stakeholders.stakeholders.some((stakeholder) => stakeholder.id === "security_vendor"), false);
+  assert.ok(stakeholderBody.sections.stakeholders.mainlineEngagementEvents.every((event) => event.week <= 1));
 });
 
 test("lists the signed-in user's scenario branches for switching", async () => {
