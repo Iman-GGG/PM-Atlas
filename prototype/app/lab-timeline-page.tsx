@@ -37,6 +37,19 @@ type WorkPackage = {
   endWeek: number;
 };
 
+type CostRole = {
+  id: string;
+  title: string;
+  plannedPersonDays: number;
+  standardDayRateCny: number;
+};
+
+type PlannedNonLaborCost = {
+  id: string;
+  title: string;
+  entries: Array<{ week: number; amountCny: number }>;
+};
+
 type ScheduleActivity = {
   id: string;
   parentId: string;
@@ -137,6 +150,16 @@ type CommunicationTouchpoint = {
   startWeek?: number;
   endWeek?: number;
   weeks?: number[];
+};
+
+type StageGate = {
+  id: string;
+  week: number;
+  title: string;
+  decisionOwner: string;
+  presenters: string[];
+  requiredSignoffs: string[];
+  evidenceTitles: string[];
 };
 
 type StakeholderEvent = {
@@ -435,14 +458,25 @@ type NetworkActivity = {
 type MainlineData = {
   workload: {
     budgetAtCompletionCny: number;
-    roles: Array<{ id: string; title: string }>;
+    personDaysPerPersonWeek: number;
+    roles: CostRole[];
+    plannedNonLaborCosts: PlannedNonLaborCost[];
     workPackages: WorkPackage[];
   };
-  schedule: { activityList: ActivityListPolicy; projectSchedulePlan: ProjectSchedulePlan; activities: ScheduleActivity[] };
+  schedule: {
+    activityList: ActivityListPolicy;
+    projectSchedulePlan: ProjectSchedulePlan;
+    activities: ScheduleActivity[];
+    dependencyPolicy: {
+      supportedTypes: string[];
+      levelOfEffortAndRecurringExcludedFromCriticalPath: boolean;
+    };
+  };
   stakeholders: {
     stakeholders: Stakeholder[];
     mainlineEngagementEvents: StakeholderEvent[];
     communicationTouchpoints: CommunicationTouchpoint[];
+    stageGates: StageGate[];
     workPackageRaci: RaciRow[];
   };
   documents: {
@@ -2037,6 +2071,123 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const closedChangeItems = visibleChangeItems.filter((change) => change.currentStatus === "closed");
   const latestChangeItem = visibleChangeItems.at(-1);
   const visibleIssues = mainline.documents.issues.filter((issue) => issue.discoveredWeek <= selectedWeek);
+  const discreteEstimateActivityCount = mainline.schedule.activities.filter((activity) => activity.type === "discrete" && activity.durationWeeks).length;
+  const estimateMethodRows = [
+    {
+      id: "EST-M01",
+      target: `${discreteEstimateActivityCount} 项离散活动工期`,
+      method: "三点估算（PERT）",
+      rule: "期望工期 = (O + 4M + P) / 6；方差 = ((P - O) / 6)²",
+      source: "D02 / D07",
+    },
+    {
+      id: "EST-M02",
+      target: "人工成本",
+      method: "自下而上估算",
+      rule: "计划人日 × 标准日费率，按角色汇总",
+      source: "D17 / D25",
+    },
+    {
+      id: "EST-M03",
+      target: "非人工成本",
+      method: "自下而上估算",
+      rule: "按资源类别和预计发生周汇总",
+      source: "D11 / D25",
+    },
+  ];
+  const estimateBasisRows = [
+    {
+      id: "BAS-01",
+      parameter: "工作周换算",
+      value: `1 周 = ${mainline.schedule.projectSchedulePlan.calendar.workDaysPerWeek} 个工作日`,
+      boundary: "工期、人日和资源容量统一使用该口径。",
+    },
+    {
+      id: "BAS-02",
+      parameter: "关键路径适用范围",
+      value: `${discreteEstimateActivityCount} 项离散活动`,
+      boundary: `只使用 ${mainline.schedule.dependencyPolicy.supportedTypes.join(" / ")} 关系；人力投入型和重复活动不进入关键路径。`,
+    },
+    {
+      id: "BAS-03",
+      parameter: "资源装载",
+      value: `${mainline.schedule.projectSchedulePlan.baseline.totalPlannedPersonDays} 计划人日`,
+      boundary: "角色投入必须与 WBS 和批准进度基线对账。",
+    },
+    {
+      id: "BAS-04",
+      parameter: "变更控制",
+      value: "仅使用已批准变更",
+      boundary: "候选需求和待决变更不自动改写工期、成本或范围基线。",
+    },
+  ];
+  const laborCostRows = mainline.workload.roles.map((role) => ({
+    ...role,
+    subtotalCny: role.plannedPersonDays * role.standardDayRateCny,
+  }));
+  const totalLaborCostCny = laborCostRows.reduce((sum, role) => sum + role.subtotalCny, 0);
+  const nonLaborCostRows = mainline.workload.plannedNonLaborCosts.map((cost) => ({
+    ...cost,
+    weeks: cost.entries.map((entry) => entry.week),
+    subtotalCny: cost.entries.reduce((sum, entry) => sum + entry.amountCny, 0),
+  }));
+  const totalNonLaborCostCny = nonLaborCostRows.reduce((sum, cost) => sum + cost.subtotalCny, 0);
+  const riskReserveCny = nonLaborCostRows.find((cost) => cost.id === "risk_uncertainty")?.subtotalCny ?? 0;
+  const approvedCurrentReleaseCostChanges = visibleChangeItems.filter((change) => (
+    change.decisionWeek > mainline.schedule.projectSchedulePlan.baseline.approvedWeek
+    && change.decisionWeek <= selectedWeek
+    && (change.decision === "approved" || change.decision === "approved_phased_delivery")
+  ));
+  const approvedCurrentReleaseCostImpactCny = approvedCurrentReleaseCostChanges.reduce((sum, change) => sum + change.impact.costCny, 0);
+  const latestCostEstimateCny = mainline.workload.budgetAtCompletionCny + approvedCurrentReleaseCostImpactCny;
+  const communicationRecords = [
+    ...(teamCharter.effectiveWeek <= selectedWeek ? [{
+      id: "COM-W1",
+      week: teamCharter.effectiveWeek,
+      type: "协作生效",
+      subject: "团队协作与沟通规则生效",
+      conclusion: "D31 团队章程生效；后续关键决策、审批、承诺和升级进入 D13。",
+      owner: stakeholderById.get(teamCharter.facilitatorStakeholderId)?.title ?? teamCharter.facilitatorStakeholderId,
+      participants: stakeholderNames(teamCharter.agreedByStakeholderIds).join("、"),
+      evidence: "D31",
+    }] : []),
+    ...mainline.stakeholders.stageGates.filter((gate) => gate.week <= selectedWeek).map((gate) => ({
+      id: `COM-${gate.id}`,
+      week: gate.week,
+      type: "阶段门",
+      subject: gate.title,
+      conclusion: "阶段门通过，后续工作按已批准结论执行。",
+      owner: stakeholderById.get(gate.decisionOwner)?.title ?? gate.decisionOwner,
+      participants: stakeholderNames(gate.requiredSignoffs).join("、"),
+      evidence: `${gate.id} / ${gate.evidenceTitles.slice(0, 3).join(" / ")}${gate.evidenceTitles.length > 3 ? ` 等 ${gate.evidenceTitles.length} 项` : ""}`,
+    })),
+    ...visibleChangeItems.map((change) => {
+      const decided = change.decisionWeek <= selectedWeek;
+      return {
+        id: `COM-${change.id}`,
+        week: decided ? change.decisionWeek : change.submittedWeek,
+        type: "变更审查",
+        subject: `${change.id} ${change.title}`,
+        conclusion: decided ? change.decisionSummary : `已提交评审，计划 W${change.decisionWeek} 形成决策。`,
+        owner: stakeholderById.get(change.ownerStakeholderId)?.title ?? change.ownerStakeholderId,
+        participants: `提出：${stakeholderById.get(change.requesterStakeholderId)?.title ?? change.requesterStakeholderId}`,
+        evidence: `D05 / ${change.id}`,
+      };
+    }),
+    ...visibleIssues.filter((issue) => issue.severity === "high" || issue.severity === "critical").map((issue) => {
+      const resolved = issue.resolvedWeek <= selectedWeek;
+      return {
+        id: `COM-${issue.id}`,
+        week: resolved ? issue.resolvedWeek : issue.discoveredWeek,
+        type: "问题升级",
+        subject: `${issue.id} ${issue.title}`,
+        conclusion: resolved ? issue.resolution : `已升级，目标 W${issue.targetResolutionWeek} 完成处置。`,
+        owner: stakeholderById.get(issue.ownerStakeholderId)?.title ?? issue.ownerStakeholderId,
+        participants: "必要专业负责人和受影响责任人",
+        evidence: ["D08", issue.id, ...issue.linkedChangeIds].join(" / "),
+      };
+    }),
+  ].sort((left, right) => right.week - left.week || right.id.localeCompare(left.id));
   const visibleTestRounds = mainline.documents.testRounds.filter((testRound) => testRound.executionWeek <= selectedWeek);
   const requirementDetailItems = requirementState.filter((requirement) => requirementPriorityFilter === "ALL" || requirement.priority === requirementPriorityFilter);
   const riskDetailItems = riskState.filter((risk) => {
@@ -2530,6 +2681,30 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </div>
                         </section>
                       )}
+                      {selectedDocument.id === "D04" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <section>
+                            <span>估算方法与适用边界</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-estimate-method-table">
+                                <colgroup><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>编号</th><th>估算对象</th><th>方法</th><th>计算规则</th><th>数据来源</th></tr></thead>
+                                <tbody>{estimateMethodRows.map((row) => <tr key={row.id}><td>{row.id}</td><td>{row.target}</td><td>{row.method}</td><td>{row.rule}</td><td>{row.source}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section>
+                            <span>关键参数与控制口径</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-estimate-basis-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>编号</th><th>参数</th><th>批准口径</th><th>适用边界</th></tr></thead>
+                                <tbody>{estimateBasisRows.map((row) => <tr key={row.id}><td>{row.id}</td><td>{row.parameter}</td><td>{row.value}</td><td>{row.boundary}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                        </section>
+                      )}
                       {selectedDocument.id === "D05" && (
                         <section className="lab-v2-document-data">
                           <span>变更日志 · W{selectedWeek}</span>
@@ -2540,6 +2715,47 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{visibleChangeItems.map((change) => <tr key={change.id}><td>{change.id}</td><td><strong>{change.title}</strong><small>{change.decisionSummary}</small></td><td>W{change.submittedWeek}</td><td>{changeStatusLabels[change.currentStatus]}</td><td>{changeDecisionLabels[change.decision]}</td><td>{change.impact.scheduleWeeks ? `+${change.impact.scheduleWeeks}周` : "不延期"} / {formatMoney(change.impact.costCny)}</td><td>{stakeholderById.get(change.ownerStakeholderId)?.title}</td><td>{change.currentStatus === "closed" ? `W${change.closedWeek}` : "—"}</td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D06" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-cost-estimate">
+                          <div className="lab-v2-cost-metrics">
+                            <span><b>{formatMoney(mainline.workload.budgetAtCompletionCny)}</b>{selectedWeek >= mainline.schedule.projectSchedulePlan.baseline.approvedWeek ? "批准 BAC" : "拟议 BAC"}</span>
+                            <span><b>{formatMoney(totalLaborCostCny)}</b>人工估算</span>
+                            <span><b>{formatMoney(totalNonLaborCostCny)}</b>非人工估算<small>含风险与不确定性 {formatMoney(riskReserveCny)}</small></span>
+                            <span><b>{formatMoney(latestCostEstimateCny)}</b>最新估算<small>含已批准当前版本影响 {formatMoney(approvedCurrentReleaseCostImpactCny)}</small></span>
+                          </div>
+                          <section>
+                            <span>人工成本 · 自下而上</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-cost-role-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>角色</th><th>计划人日</th><th>标准日费率</th><th>小计</th></tr></thead>
+                                <tbody>{laborCostRows.map((role) => <tr key={role.id}><td>{role.title}</td><td>{role.plannedPersonDays}</td><td>{formatMoney(role.standardDayRateCny)}</td><td>{formatMoney(role.subtotalCny)}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section>
+                            <span>非人工成本 · 类别与发生周</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-cost-nonlabor-table">
+                                <colgroup><col /><col /><col /></colgroup>
+                                <thead><tr><th>类别</th><th>预计发生周</th><th>估算</th></tr></thead>
+                                <tbody>{nonLaborCostRows.map((cost) => <tr key={cost.id}><td>{cost.title}</td><td>W{cost.weeks.join(" / W")}</td><td>{formatMoney(cost.subtotalCny)}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section>
+                            <span>已批准的当前版本成本影响</span>
+                            {approvedCurrentReleaseCostChanges.length ? <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-cost-change-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>变更</th><th>决策周</th><th>决议</th><th>成本影响</th></tr></thead>
+                                <tbody>{approvedCurrentReleaseCostChanges.map((change) => <tr key={change.id}><td>{change.id}<small>{change.title}</small></td><td>W{change.decisionWeek}</td><td>{changeDecisionLabels[change.decision]}</td><td>{formatMoney(change.impact.costCny)}</td></tr>)}</tbody>
+                              </table>
+                            </div> : <p className="lab-v2-register-empty">当前数据日期前没有已批准并纳入当前版本的成本变更。</p>}
+                            <p className="lab-v2-document-note">最新估算用于影响判断，不等于重设 BAC；成本基线只有经过 D05 正式批准后才变更。</p>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D08" && (
@@ -2577,6 +2793,20 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{milestoneState.map((milestone) => <tr key={milestone.id}><td><strong>{milestone.id}</strong><small>{milestone.title}</small></td><td>W{milestone.baselineWeek}</td><td>W{milestone.currentEvent.forecastWeek}</td><td>{milestone.currentEvent.actualWeek === null ? "—" : `W${milestone.currentEvent.actualWeek}`}</td><td><strong>{milestoneStatusLabels[milestone.currentEvent.status]}</strong><small>{stakeholderById.get(milestone.ownerStakeholderId)?.title ?? milestone.ownerStakeholderId}</small></td><td>{milestone.acceptanceCriteria}</td><td>{milestone.currentEvent.evidence}<small>{[...milestone.relatedWbsIds, ...milestone.evidenceDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D13" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <section>
+                            <span>关键沟通记录 · W{selectedWeek} · {communicationRecords.length} 项</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-communication-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>周次 / 类型</th><th>主题</th><th>决策、承诺或升级结论</th><th>负责人</th><th>必要参与方</th><th>证据</th></tr></thead>
+                                <tbody>{communicationRecords.map((record) => <tr key={record.id}><td>W{record.week}<small>{record.type}</small></td><td>{record.subject}</td><td>{record.conclusion}</td><td>{record.owner}</td><td>{record.participants}</td><td>{record.evidence}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D14" && schedulePlanState && (

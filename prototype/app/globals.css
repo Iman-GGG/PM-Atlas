@@ -8543,6 +8543,41 @@ select {
 .lab-v2-milestone-table col:nth-child(5) { width: 13%; }
 .lab-v2-milestone-table col:nth-child(6) { width: 24%; }
 .lab-v2-milestone-table col:nth-child(7) { width: 25%; }
+.lab-v2-document-stack { display: grid; gap: 24px; }
+.lab-v2-document-stack > section > span { display: block; margin-bottom: 12px; font-size: 11px; font-weight: 800; }
+.lab-v2-estimate-method-table col:nth-child(1) { width: 10%; }
+.lab-v2-estimate-method-table col:nth-child(2) { width: 21%; }
+.lab-v2-estimate-method-table col:nth-child(3) { width: 18%; }
+.lab-v2-estimate-method-table col:nth-child(4) { width: 37%; }
+.lab-v2-estimate-method-table col:nth-child(5) { width: 14%; }
+.lab-v2-estimate-basis-table col:nth-child(1) { width: 10%; }
+.lab-v2-estimate-basis-table col:nth-child(2) { width: 20%; }
+.lab-v2-estimate-basis-table col:nth-child(3) { width: 24%; }
+.lab-v2-estimate-basis-table col:nth-child(4) { width: 46%; }
+.lab-v2-cost-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.lab-v2-cost-metrics span { display: grid; gap: 4px; align-content: start; padding: 12px; color: var(--body); background: var(--soft); font-size: 10px; }
+.lab-v2-cost-metrics b { color: var(--ink); font-size: 22px; }
+.lab-v2-cost-metrics small { color: var(--muted); line-height: 1.45; }
+.lab-v2-cost-role-table col:nth-child(1) { width: 37%; }
+.lab-v2-cost-role-table col:nth-child(2) { width: 19%; }
+.lab-v2-cost-role-table col:nth-child(3) { width: 22%; }
+.lab-v2-cost-role-table col:nth-child(4) { width: 22%; }
+.lab-v2-cost-nonlabor-table col:nth-child(1) { width: 45%; }
+.lab-v2-cost-nonlabor-table col:nth-child(2) { width: 35%; }
+.lab-v2-cost-nonlabor-table col:nth-child(3) { width: 20%; }
+.lab-v2-cost-change-table col:nth-child(1) { width: 46%; }
+.lab-v2-cost-change-table col:nth-child(2) { width: 16%; }
+.lab-v2-cost-change-table col:nth-child(3) { width: 22%; }
+.lab-v2-cost-change-table col:nth-child(4) { width: 16%; }
+.lab-v2-cost-estimate .lab-v2-register-empty { border-top: 1px solid var(--line); }
+.lab-v2-document-note { margin: 9px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.lab-v2-document-data .lab-v2-communication-table { min-width: 1180px; table-layout: fixed; }
+.lab-v2-communication-table col:nth-child(1) { width: 9%; }
+.lab-v2-communication-table col:nth-child(2) { width: 18%; }
+.lab-v2-communication-table col:nth-child(3) { width: 28%; }
+.lab-v2-communication-table col:nth-child(4) { width: 11%; }
+.lab-v2-communication-table col:nth-child(5) { width: 22%; }
+.lab-v2-communication-table col:nth-child(6) { width: 12%; }
 .lab-v2-register-empty { margin: 0; padding: 24px; color: var(--muted); border: 1px solid var(--line); border-top: 0; }
 .lab-v2-activity-list,
 .lab-v2-scope-statement { display: grid; gap: 24px; margin-top: 28px; }
@@ -8860,6 +8895,7 @@ select {
   .lab-v2-team-charter-protocols { grid-template-columns: 1fr; }
   .lab-v2-scope-components { grid-template-columns: 1fr; }
   .lab-v2-activity-list-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-v2-cost-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-v2-scope-boundaries article { grid-template-columns: 68px 1fr; }
   .lab-v2-scope-boundaries article > p,
   .lab-v2-scope-boundaries article > small { grid-column: 2; }
