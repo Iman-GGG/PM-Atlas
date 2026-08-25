@@ -127,5 +127,7 @@ test("renders dedicated D03, D09 and D10 file views", async () => {
   assert.match(timeline, /基准 \/ 预测 \/ 实际/);
   assert.match(styles, /\.lab-v2-assumption-table/);
   assert.match(styles, /\.lab-v2-lessons-table/);
-  assert.match(styles, /\.lab-v2-milestone-summary/);
+  assert.match(styles, /\.lab-v2-milestone-table/);
+  assert.doesNotMatch(timeline, /lab-v2-milestone-summary/);
+  assert.doesNotMatch(styles, /\.lab-v2-milestone-summary/);
 });

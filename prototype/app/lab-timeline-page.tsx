@@ -2503,12 +2503,6 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
                       {selectedDocument.id === "D02" && (
                         <section className="lab-v2-activity-list">
-                          <div className="lab-v2-activity-list-policy">
-                            <span>ACTIVITY LIST / W{mainline.schedule.activityList.createdWeek} 创建 / W{mainline.schedule.activityList.approvedWeek} 批准</span>
-                            <strong>{mainline.schedule.activityList.decompositionBasis}</strong>
-                            <p>{mainline.schedule.activityList.changeRule}</p>
-                            <div>{mainline.schedule.activityList.typeDefinitions.map((definition) => <i key={definition.type}><b>{definition.label}</b>{definition.definition}</i>)}</div>
-                          </div>
                           <div className="lab-v2-activity-list-metrics">
                             <span><b>{activityListState.length}</b>全部活动</span>
                             <span><b>{activityStatusCounts.in_progress}</b>进行中</span>
@@ -2576,7 +2570,6 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       {selectedDocument.id === "D10" && (
                         <section className="lab-v2-document-data">
                           <span>里程碑清单 · W{selectedWeek} · 基准 / 预测 / 实际</span>
-                          <div className="lab-v2-milestone-summary">{milestoneState.map((milestone) => <article key={milestone.id} className={milestone.currentEvent.status}><b>W{milestone.baselineWeek}</b><span>{milestone.id}</span><strong>{milestone.title}</strong><small>{milestoneStatusLabels[milestone.currentEvent.status]}</small></article>)}</div>
                           <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
                             <table className="lab-v2-milestone-table">
                               <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
@@ -2672,12 +2665,6 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       )}
                       {selectedDocument.id === "D16" && scopeState && (
                         <section className="lab-v2-scope-statement">
-                          <div className="lab-v2-scope-hero">
-                            <span>PROJECT SCOPE STATEMENT / v{scopeState.currentBaseline.version} / W{scopeState.currentBaseline.week}</span>
-                            <strong>{scopeState.productScopeDescription}</strong>
-                            <p>{scopeState.projectScopeDescription}</p>
-                            <div><b>{scopeState.currentBaseline.status}</b><i>{scopeState.currentBaseline.decision}</i></div>
-                          </div>
                           <section className="lab-v2-scope-section">
                             <span>产品范围组成</span>
                             <div className="lab-v2-scope-components">{scopeState.productScopeItems.map((item) => <article key={item.id} className={item.currentEvent.status}><b>{item.id}</b><small>{scopeStatusLabels[item.currentEvent.status]}</small><strong>{item.title}</strong><p>{item.description}</p><i>{item.relatedRequirementIds.join(" / ")}</i><em>{item.currentEvent.evidence}</em></article>)}</div>
@@ -2767,12 +2754,6 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       )}
                       {selectedDocument.id === "D31" && (
                         <section className="lab-v2-team-charter">
-                          <div className="lab-v2-team-charter-hero">
-                            <span>TEAM CHARTER / v{teamCharter.version} / W{teamCharter.effectiveWeek} 生效</span>
-                            <strong>{teamCharter.mission}</strong>
-                            <p>{teamCharter.purpose}</p>
-                            <div><small>共同承诺</small>{stakeholderNames(teamCharter.agreedByStakeholderIds).map((name) => <i key={name}>{name}</i>)}</div>
-                          </div>
                           <div className="lab-v2-team-charter-section">
                             <span>共同价值观</span>
                             <div className="lab-v2-team-charter-values">{teamCharter.values.map((value) => <article key={value.id}><b>{value.id}</b><strong>{value.title}</strong><p>{value.agreement}</p></article>)}</div>

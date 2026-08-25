@@ -91,10 +91,13 @@ test("renders dedicated activity-list and scope-statement views without false un
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(timeline, /selectedDocument\.id === "D02"/);
-  assert.match(timeline, /ACTIVITY LIST/);
+  assert.doesNotMatch(timeline, /lab-v2-activity-list-policy/);
+  assert.doesNotMatch(styles, /\.lab-v2-activity-list-policy/);
   assert.match(timeline, /三点估算/);
   assert.match(timeline, /selectedDocument\.id === "D16"/);
-  assert.match(timeline, /PROJECT SCOPE STATEMENT/);
+  assert.doesNotMatch(timeline, /lab-v2-scope-hero/);
+  assert.doesNotMatch(styles, /\.lab-v2-scope-hero/);
+  assert.match(timeline, /产品范围组成/);
   assert.match(timeline, /明确不包含/);
   assert.match(timeline, /范围基线演进/);
   assert.match(timeline, /!normalized\.includes\("archived"\) && !normalized\.includes\("unchanged"\)/);

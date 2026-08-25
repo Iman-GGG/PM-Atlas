@@ -105,11 +105,12 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(styles, /\.lab-v2-stakeholder-register-table/);
   assert.match(styles, /\.lab-v2-data-table-wrap\.lab-v2-stakeholder-register-wrap[^}]*overflow-x: auto/);
   assert.match(timeline, /selectedDocument\.id === "D31"/);
-  assert.match(timeline, /TEAM CHARTER \/ v\{teamCharter\.version\}/);
+  assert.doesNotMatch(timeline, /lab-v2-team-charter-hero/);
+  assert.doesNotMatch(styles, /\.lab-v2-team-charter-hero/);
+  assert.match(timeline, /共同价值观/);
   assert.match(timeline, /质量与安全红线/);
   assert.match(timeline, /章程修订规则/);
   assert.match(timeline, /function documentVersionActions[\s\S]*!normalized\.includes\("archived"\)[\s\S]*!normalized\.includes\("unchanged"\)/);
-  assert.match(styles, /\.lab-v2-team-charter-hero/);
   assert.match(styles, /\.lab-v2-team-charter-values/);
   assert.match(timeline, /进度绩效指数 SPI/);
   assert.match(timeline, /成本绩效指数 CPI/);
