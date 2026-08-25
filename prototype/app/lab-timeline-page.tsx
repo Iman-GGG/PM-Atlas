@@ -63,6 +63,53 @@ type ActivityListPolicy = {
   typeDefinitions: Array<{ type: ScheduleActivity["type"]; label: string; definition: string }>;
 };
 
+type SchedulePlanStatusEvent = {
+  week: number;
+  health: "planning" | "on_track" | "at_risk" | "recovery_approved" | "recovered" | "completed";
+  forecastFinishWeek: number;
+  actualFinishWeek: number | null;
+  forecastVarianceWeeks: number;
+  evidence: string;
+};
+
+type ProjectSchedulePlan = {
+  documentId: "D14";
+  createdWeek: number;
+  baselineWeek: number;
+  scheduleModelId: string;
+  purpose: string;
+  sourceDocumentIds: string[];
+  calendar: {
+    plannedStartWeek: number;
+    plannedFinishWeek: number;
+    deadlineWeek: number;
+    workDaysPerWeek: number;
+    dataDateRule: string;
+  };
+  baseline: {
+    version: string;
+    approvedWeek: number;
+    activityCount: number;
+    milestoneCount: number;
+    criticalActivityCount: number;
+    totalPlannedPersonDays: number;
+    resourceLoaded: boolean;
+    criticalityRule: string;
+    approvalEvidence: string;
+  };
+  versionEvents: Array<{
+    week: number;
+    version: string;
+    status: string;
+    baselineChanged: boolean;
+    approvedChangeIds: string[];
+    decision: string;
+  }>;
+  statusEvents: SchedulePlanStatusEvent[];
+  controlRules: Array<{ id: string; title: string; rule: string }>;
+  resourceSchedulingNotes: string[];
+};
+
 type Stakeholder = {
   id: string;
   title: string;
@@ -374,6 +421,8 @@ type QualitySeries = {
 
 type NetworkActivity = {
   activityId: string;
+  expectedDuration: number;
+  durationVariance: number;
   earliestStart: number;
   earliestFinish: number;
   latestStart: number;
@@ -389,7 +438,7 @@ type MainlineData = {
     roles: Array<{ id: string; title: string }>;
     workPackages: WorkPackage[];
   };
-  schedule: { activityList: ActivityListPolicy; activities: ScheduleActivity[] };
+  schedule: { activityList: ActivityListPolicy; projectSchedulePlan: ProjectSchedulePlan; activities: ScheduleActivity[] };
   stakeholders: {
     stakeholders: Stakeholder[];
     mainlineEngagementEvents: StakeholderEvent[];
@@ -765,6 +814,14 @@ const activityStatusLabels = {
   waiting_next_occurrence: "等待下次发生",
   completed: "已完成",
 } as const;
+const scheduleHealthLabels: Record<SchedulePlanStatusEvent["health"], string> = {
+  planning: "编制中",
+  on_track: "按计划",
+  at_risk: "存在进度风险",
+  recovery_approved: "恢复方案已批准",
+  recovered: "预测已恢复",
+  completed: "按基线完成",
+};
 const scopeStatusLabels: Record<ScopeStatusEvent["status"], string> = {
   draft_included: "草案纳入",
   baselined_included: "基线纳入",
@@ -1677,6 +1734,27 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     });
   }, [mainline, selectedWeek]);
 
+  const schedulePlanState = useMemo(() => {
+    if (!mainline || selectedWeek < mainline.schedule.projectSchedulePlan.createdWeek) return null;
+    const plan = mainline.schedule.projectSchedulePlan;
+    const currentVersion = [...plan.versionEvents].reverse().find((event) => event.week <= selectedWeek) ?? plan.versionEvents[0];
+    const currentStatus = [...plan.statusEvents].reverse().find((event) => event.week <= selectedWeek) ?? plan.statusEvents[0];
+    const networkByActivityId = new Map(mainline.baselineWorkload.scheduleNetwork.activities.map((activity) => [activity.activityId, activity]));
+    const activities = mainline.schedule.activities.map((activity) => ({
+      ...activity,
+      currentStatus: activityStatus(activity, selectedWeek),
+      network: networkByActivityId.get(activity.id) ?? null,
+    }));
+    return {
+      ...plan,
+      currentVersion,
+      currentStatus,
+      activities,
+      visibleVersionEvents: plan.versionEvents.filter((event) => event.week <= selectedWeek),
+      visibleStatusEvents: plan.statusEvents.filter((event) => event.week <= selectedWeek),
+    };
+  }, [mainline, selectedWeek]);
+
   const scopeState = useMemo(() => {
     if (!mainline) return null;
     const statement = mainline.documents.projectScopeStatement;
@@ -2506,6 +2584,90 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{milestoneState.map((milestone) => <tr key={milestone.id}><td><strong>{milestone.id}</strong><small>{milestone.title}</small></td><td>W{milestone.baselineWeek}</td><td>W{milestone.currentEvent.forecastWeek}</td><td>{milestone.currentEvent.actualWeek === null ? "—" : `W${milestone.currentEvent.actualWeek}`}</td><td><strong>{milestoneStatusLabels[milestone.currentEvent.status]}</strong><small>{stakeholderById.get(milestone.ownerStakeholderId)?.title ?? milestone.ownerStakeholderId}</small></td><td>{milestone.acceptanceCriteria}</td><td>{milestone.currentEvent.evidence}<small>{[...milestone.relatedWbsIds, ...milestone.evidenceDocumentIds].join(" / ")}</small></td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D14" && schedulePlanState && (
+                        <section className="lab-v2-project-schedule">
+                          <div className={`lab-v2-schedule-hero ${schedulePlanState.currentStatus.health}`}>
+                            <span>PROJECT SCHEDULE / {schedulePlanState.scheduleModelId} / DATA DATE W{selectedWeek}</span>
+                            <div className="lab-v2-schedule-hero-main">
+                              <div><small>当前受控版本</small><strong>v{schedulePlanState.currentVersion.version}</strong><i>{schedulePlanState.currentVersion.status}</i></div>
+                              <div><small>进度基线</small><strong>W{schedulePlanState.calendar.plannedStartWeek}–W{schedulePlanState.calendar.plannedFinishWeek}</strong><i>W{schedulePlanState.baseline.approvedWeek} 批准</i></div>
+                              <div><small>当前完工预测</small><strong>W{schedulePlanState.currentStatus.forecastFinishWeek}</strong><i>{schedulePlanState.currentStatus.forecastVarianceWeeks ? `较基线 +${schedulePlanState.currentStatus.forecastVarianceWeeks} 周` : "与基线一致"}</i></div>
+                              <div><small>进度健康度</small><strong>{scheduleHealthLabels[schedulePlanState.currentStatus.health]}</strong><i>SPI {weekState?.spi.toFixed(2) ?? "—"}</i></div>
+                            </div>
+                            <p>{schedulePlanState.currentStatus.evidence}</p>
+                            <footer><b>基线版本 {schedulePlanState.baseline.version}</b><span>{schedulePlanState.currentVersion.baselineChanged ? "本版本建立/修订基线" : "本版本未改变W32基线"}</span></footer>
+                          </div>
+
+                          <div className="lab-v2-schedule-metrics">
+                            <span><b>{schedulePlanState.baseline.activityCount}</b>活动</span>
+                            <span><b>{schedulePlanState.baseline.criticalActivityCount}</b>零浮动活动</span>
+                            <span><b>{schedulePlanState.baseline.milestoneCount}</b>里程碑</span>
+                            <span><b>{schedulePlanState.baseline.totalPlannedPersonDays}</b>计划人日</span>
+                            <span><b>{formatMoney(weekState?.cumulativePlannedValueCny ?? 0)}</b>累计PV</span>
+                            <span><b>{formatMoney(weekState?.cumulativeEarnedValueCny ?? 0)}</b>累计EV</span>
+                          </div>
+
+                          <section className="lab-v2-schedule-section">
+                            <span>32周工作包进度图 · 基线窗口 / 数据日期</span>
+                            <div className="lab-v2-schedule-gantt-wrap">
+                              <div className="lab-v2-schedule-gantt">
+                                <div className="lab-v2-schedule-gantt-weeks"><b>工作包</b><div>{Array.from({ length: 32 }, (_, index) => <i key={index}>W{index + 1}</i>)}</div></div>
+                                {mainline.workload.workPackages.map((workPackage) => (
+                                  <div className="lab-v2-schedule-gantt-row" key={workPackage.id}>
+                                    <strong>{workPackage.id}<small>{workPackage.title}</small></strong>
+                                    <div>
+                                      <i className="baseline-bar" style={{ gridColumn: `${workPackage.startWeek} / ${workPackage.endWeek + 1}` }}><em>{workPackage.startWeek}–{workPackage.endWeek}</em></i>
+                                      <i className="data-date" style={{ gridColumn: `${selectedWeek} / ${selectedWeek + 1}` }} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <p className="lab-v2-schedule-caption">横条表示批准的工作包计划窗口；竖线表示当前数据日期。工作包横条不是实际完成证明，活动状态仍需依据D28进度数据和验收证据更新。</p>
+                          </section>
+
+                          <section className="lab-v2-schedule-section">
+                            <span>详细活动进度模型 · CPM / 计划窗口状态</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-schedule-activity-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / WBS</th><th>活动名称</th><th>类型</th><th>基线窗口</th><th>期望工期</th><th>逻辑关系</th><th>总/自由浮动</th><th>关键性 / 当前窗口</th></tr></thead>
+                                <tbody>{schedulePlanState.activities.map((activity) => <tr key={activity.id} className={activity.network?.isCritical ? "critical" : ""}>
+                                  <td><strong>{activity.id}</strong><small>{activity.parentId}</small></td>
+                                  <td>{activity.title}</td>
+                                  <td>{activityTypeLabels[activity.type]}</td>
+                                  <td>W{activity.startWeek}–W{activity.endWeek}</td>
+                                  <td>{activity.network ? `${activity.network.expectedDuration.toFixed(2)}周` : activity.type === "recurring" ? `W${activity.occurrenceWeeks?.join(" / W")}` : "持续投入"}<small>{activity.network ? `方差 ${activity.network.durationVariance.toFixed(4)}` : "不进入CPM"}</small></td>
+                                  <td>{activity.predecessors?.length ? activity.predecessors.map((predecessor) => `${predecessor.activityId} ${predecessor.type}${predecessor.lagWeeks ? `+${predecessor.lagWeeks}` : ""}`).join("；") : "无"}</td>
+                                  <td>{activity.network ? `${activity.network.totalFloat} / ${activity.network.freeFloat} 周` : "—"}</td>
+                                  <td><strong>{activity.network?.isCritical ? "关键活动" : activity.network ? "非关键活动" : "不参与CPM"}</strong><small>{activityStatusLabels[activity.currentStatus]}</small></td>
+                                </tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-schedule-caption">“关键活动”表示当前批准基线下总浮动为0，并不代表风险最高；预测变化后必须重新计算，而不能沿用静态标签。</p>
+                          </section>
+
+                          <section className="lab-v2-schedule-section">
+                            <span>里程碑基线与当前预测</span>
+                            <div className="lab-v2-schedule-milestones">{milestoneState.map((milestone) => <article key={milestone.id} className={milestone.currentEvent.status}><b>{milestone.id}</b><strong>{milestone.title}</strong><div><span>基线 W{milestone.baselineWeek}</span><span>预测 W{milestone.currentEvent.forecastWeek}</span><span>{milestone.currentEvent.actualWeek === null ? "实际 —" : `实际 W${milestone.currentEvent.actualWeek}`}</span></div><p>{milestone.currentEvent.evidence}</p></article>)}</div>
+                          </section>
+
+                          <div className="lab-v2-schedule-governance">
+                            <section><span>进度控制规则</span>{schedulePlanState.controlRules.map((rule) => <article key={rule.id}><b>{rule.id}</b><div><strong>{rule.title}</strong><p>{rule.rule}</p></div></article>)}</section>
+                            <section><span>资源排程说明</span><ol>{schedulePlanState.resourceSchedulingNotes.map((note, index) => <li key={note}><b>{String(index + 1).padStart(2, "0")}</b><p>{note}</p></li>)}</ol><footer>{schedulePlanState.calendar.dataDateRule}</footer></section>
+                          </div>
+
+                          <section className="lab-v2-schedule-section">
+                            <span>预测演进 · 不等同于基线变更</span>
+                            <ol className="lab-v2-schedule-status-history">{schedulePlanState.visibleStatusEvents.map((event) => <li key={event.week}><b>W{event.week}</b><div><strong>{scheduleHealthLabels[event.health]} · 预测W{event.forecastFinishWeek}</strong><p>{event.evidence}</p><small>{event.forecastVarianceWeeks ? `较W32基线 +${event.forecastVarianceWeeks} 周` : event.actualFinishWeek ? `实际完成 W${event.actualFinishWeek}` : "预测与W32基线一致"}</small></div></li>)}</ol>
+                          </section>
+
+                          <section className="lab-v2-schedule-section">
+                            <span>受控版本演进</span>
+                            <ol className="lab-v2-schedule-version-history">{schedulePlanState.visibleVersionEvents.map((event) => <li key={event.version}><b>v{event.version}</b><div><strong>W{event.week} · {event.status}</strong><p>{event.decision}</p><small>{event.baselineChanged ? "进度基线建立/修订" : "进度基线未变化"}{event.approvedChangeIds.length ? ` · ${event.approvedChangeIds.join(" / ")}` : ""}</small></div></li>)}</ol>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D16" && scopeState && (

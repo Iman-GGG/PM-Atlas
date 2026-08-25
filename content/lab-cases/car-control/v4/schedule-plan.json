@@ -29,6 +29,126 @@
       { "type": "recurring", "label": "重复活动", "definition": "在指定周重复执行，如阶段门和收尾治理。" }
     ]
   },
+  "projectSchedulePlan": {
+    "documentId": "D14",
+    "createdWeek": 6,
+    "baselineWeek": 8,
+    "scheduleModelId": "SCH-CC-V1",
+    "purpose": "将活动顺序、持续时间、资源可用性、里程碑和批准的进度约束组合成可执行、可预测、可控制的32周进度模型。",
+    "sourceDocumentIds": ["D02", "D07", "D10", "D12", "D15", "D24", "D29"],
+    "calendar": {
+      "plannedStartWeek": 1,
+      "plannedFinishWeek": 32,
+      "deadlineWeek": 32,
+      "workDaysPerWeek": 5,
+      "dataDateRule": "当前时间轴周次即进度数据日期；只使用数据日期之前的状态证据更新实际与预测。"
+    },
+    "baseline": {
+      "version": "1.0",
+      "approvedWeek": 8,
+      "activityCount": 35,
+      "milestoneCount": 6,
+      "criticalActivityCount": 14,
+      "totalPlannedPersonDays": 1024,
+      "resourceLoaded": true,
+      "criticalityRule": "离散活动采用关键路径法计算；总浮动为0的活动属于关键活动，人力投入型和重复活动不进入关键路径计算。",
+      "approvalEvidence": "W8需求与范围基线阶段门批准D14，并确认W32为正式上线、运营移交与项目收尾期限。"
+    },
+    "versionEvents": [
+      {
+        "week": 6,
+        "version": "0.1",
+        "status": "draft",
+        "baselineChanged": false,
+        "approvedChangeIds": [],
+        "decision": "依据35项活动、逻辑关系、三点工期估算、资源日历和6个里程碑形成首版资源加载进度模型。"
+      },
+      {
+        "week": 8,
+        "version": "1.0",
+        "status": "baselined",
+        "baselineChanged": true,
+        "approvedChangeIds": [],
+        "decision": "跨职能评审通过，W1至W32的计划日期和6个阶段里程碑建立进度基线。"
+      },
+      {
+        "week": 12,
+        "version": "1.1",
+        "status": "rolling_wave_updated",
+        "baselineChanged": false,
+        "approvedChangeIds": [],
+        "decision": "细化核心开发、集成和测试活动的近期计划；W32基线完工日期保持不变。"
+      },
+      {
+        "week": 20,
+        "version": "1.2",
+        "status": "performance_and_remaining_plan_updated",
+        "baselineChanged": false,
+        "approvedChangeIds": ["CR-003", "CR-004"],
+        "decision": "纳入接口兼容层、资源重排和Mock并行方案，记录W33阶段性预测；质量与安全门禁不压缩，W32基线保持不变。"
+      },
+      {
+        "week": 28,
+        "version": "1.3",
+        "status": "status_and_remaining_plan_updated",
+        "baselineChanged": false,
+        "approvedChangeIds": ["CR-005", "CR-006"],
+        "decision": "安全、性能和关键接口恢复后预测回到W32；远程控制移出V1.0不改变上线与收尾日期。"
+      },
+      {
+        "week": 32,
+        "version": "1.4",
+        "status": "final_actuals_and_archive",
+        "baselineChanged": false,
+        "approvedChangeIds": ["CR-008"],
+        "decision": "批准范围在W32完成上线、运营移交与收尾，登记最终实际结果并归档进度模型。"
+      }
+    ],
+    "statusEvents": [
+      { "week": 6, "health": "planning", "forecastFinishWeek": 32, "actualFinishWeek": null, "forecastVarianceWeeks": 0, "evidence": "首版进度模型完成，等待跨职能评审。" },
+      { "week": 8, "health": "on_track", "forecastFinishWeek": 32, "actualFinishWeek": null, "forecastVarianceWeeks": 0, "evidence": "进度基线批准，W32完工期限生效。" },
+      { "week": 12, "health": "on_track", "forecastFinishWeek": 32, "actualFinishWeek": null, "forecastVarianceWeeks": 0, "evidence": "架构与接口阶段门有条件通过，近期活动已细化。" },
+      { "week": 17, "health": "at_risk", "forecastFinishWeek": 35, "actualFinishWeek": null, "forecastVarianceWeeks": 3, "evidence": "供应商完整接口预计延期3周，车端接口工程师W17至W18不可用；WBS-8.2与WBS-9.2均为零浮动活动。" },
+      { "week": 18, "health": "recovery_approved", "forecastFinishWeek": 33, "actualFinishWeek": null, "forecastVarianceWeeks": 1, "evidence": "CR-004批准分批接口、Mock并行、替补与结构化交接方案；预测压缩到W33，但不重设W32基线。" },
+      { "week": 20, "health": "at_risk", "forecastFinishWeek": 33, "actualFinishWeek": null, "forecastVarianceWeeks": 1, "evidence": "核心开发阶段门有条件通过；剩余关键接口与缺陷关闭计划仍需追回1周。" },
+      { "week": 24, "health": "recovered", "forecastFinishWeek": 32, "actualFinishWeek": null, "forecastVarianceWeeks": 0, "evidence": "关键接口、性能、安全与撤销链路验证通过，完工预测恢复W32。" },
+      { "week": 28, "health": "on_track", "forecastFinishWeek": 32, "actualFinishWeek": null, "forecastVarianceWeeks": 0, "evidence": "试点验收有条件通过，只读能力按计划进入上线准备。" },
+      { "week": 32, "health": "completed", "forecastFinishWeek": 32, "actualFinishWeek": 32, "forecastVarianceWeeks": 0, "evidence": "正式上线、运营移交与项目收尾在基线周完成。" }
+    ],
+    "controlRules": [
+      {
+        "id": "SCH-C01",
+        "title": "数据日期与状态更新",
+        "rule": "每周用D28进度数据更新活动状态、实际成本与绩效；未取得完成证据的活动不得按时间自动宣告完成。"
+      },
+      {
+        "id": "SCH-C02",
+        "title": "关键活动预警",
+        "rule": "任一零浮动活动出现预计延期，立即重算网络、后续里程碑与完工预测，并更新D29进度预测。"
+      },
+      {
+        "id": "SCH-C03",
+        "title": "滚动式规划",
+        "rule": "近期活动细化和剩余计划调整可以更新D14版本，但不得被误计为进度基线变更。"
+      },
+      {
+        "id": "SCH-C04",
+        "title": "基线变更控制",
+        "rule": "只有D05中经CCB批准且明确改变基准日期的变更，才可修订进度基线；预测日期变化本身不改变基线。"
+      },
+      {
+        "id": "SCH-C05",
+        "title": "质量门保护",
+        "rule": "不得通过删除集成、安全或验收活动来维持日期；需要压缩时优先评估并行、资源重排和范围分阶段。"
+      }
+    ],
+    "resourceSchedulingNotes": [
+      "1024计划人日与角色—WBS基线完全对账。",
+      "150人日属于活动正式窗口前后的准备或收尾投入，距离正式窗口不超过3周。",
+      "W18后端工程师增加1人日短时赶工已获批准并可追溯。",
+      "资源投入窗口可以调整，但不能掩盖活动逻辑、质量门或W32基线约束。"
+    ]
+  },
   "activities": [
     {
       "id": "WBS-1.1",

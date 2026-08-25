@@ -37,9 +37,10 @@ function visit(value, visitor, pathParts = []) {
 }
 
 export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
-  const [workload, schedule, stakeholders, documents, requirements, risks, scenarios] = await Promise.all([
+  const [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, scenarios] = await Promise.all([
     readJson(caseDirectory, "workload-plan.json"),
     readJson(caseDirectory, "schedule-plan.json"),
+    readJson(caseDirectory, "baseline-workload.generated.json"),
     readJson(caseDirectory, "stakeholder-plan.json"),
     readJson(caseDirectory, "document-plan.json"),
     readJson(caseDirectory, "requirement-plan.json"),
@@ -47,7 +48,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
     readJson(caseDirectory, "scenario-plan.json"),
   ]);
 
-  for (const plan of [workload, schedule, stakeholders, documents, requirements, risks, scenarios]) {
+  for (const plan of [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, scenarios]) {
     assert(plan.caseId === workload.caseId, `Case id mismatch in ${plan.caseId ?? "unknown plan"}`);
     assert(plan.caseVersion === workload.caseVersion, `Case version mismatch in ${plan.caseVersion ?? "unknown plan"}`);
   }
@@ -232,6 +233,49 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   ));
   assert(JSON.stringify(documents.mainlineEvents.filter((event) => documentHasVersionAction(event, "D02")).map((event) => event.week)) === JSON.stringify([8]), "D02 may only receive its W8 approval version after creation");
   assert(!documents.contentRevisions.some((revision) => documentHasVersionAction(revision, "D02")), "D02 must not receive content revisions when only dates, dependencies or resources change");
+
+  const projectSchedulePlan = schedule.projectSchedulePlan;
+  assert(projectSchedulePlan.documentId === "D14", "Project schedule plan must belong to D14");
+  assert(documentById.get("D14").createdWeek === 6 && documentById.get("D14").coverage === "dynamic_full_history", "D14 metadata is inconsistent");
+  assert(projectSchedulePlan.createdWeek === 6 && projectSchedulePlan.baselineWeek === 8, "D14 creation or baseline week is inconsistent");
+  for (const documentId of projectSchedulePlan.sourceDocumentIds) assert(documentById.has(documentId), `D14 references unknown source document ${documentId}`);
+  assert(projectSchedulePlan.calendar.plannedStartWeek === 1 && projectSchedulePlan.calendar.plannedFinishWeek === 32 && projectSchedulePlan.calendar.deadlineWeek === 32, "D14 calendar must preserve the W1-W32 approved window");
+  assert(projectSchedulePlan.calendar.workDaysPerWeek === workload.personDaysPerPersonWeek, "D14 calendar workdays must match the workload plan");
+  assert(projectSchedulePlan.baseline.activityCount === activityById.size, "D14 baseline activity count differs from D02");
+  assert(projectSchedulePlan.baseline.milestoneCount === milestoneById.size, "D14 baseline milestone count differs from D10");
+  assert(projectSchedulePlan.baseline.criticalActivityCount === baselineWorkload.scheduleNetwork.criticalActivityIds.length, "D14 critical activity count differs from the generated network");
+  assert(projectSchedulePlan.baseline.totalPlannedPersonDays === baselineWorkload.totalPlannedPersonDays, "D14 planned person-days differ from the generated workload baseline");
+  assert(baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek === projectSchedulePlan.calendar.plannedFinishWeek, "D14 finish week differs from the generated CPM result");
+  for (const activityId of baselineWorkload.scheduleNetwork.criticalActivityIds) assert(activityById.has(activityId), `D14 critical path references unknown activity ${activityId}`);
+  const scheduleVersionWeeks = projectSchedulePlan.versionEvents.map((event) => event.week);
+  const scheduleVersionNumbers = projectSchedulePlan.versionEvents.map((event) => event.version);
+  assert(JSON.stringify(scheduleVersionWeeks) === JSON.stringify([6, 8, 12, 20, 28, 32]), "D14 version weeks must be W6, W8, W12, W20, W28 and W32");
+  assert(JSON.stringify(scheduleVersionNumbers) === JSON.stringify(["0.1", "1.0", "1.1", "1.2", "1.3", "1.4"]), "D14 version numbers are inconsistent");
+  assert(projectSchedulePlan.versionEvents.filter((event) => event.baselineChanged).length === 1 && projectSchedulePlan.versionEvents.find((event) => event.baselineChanged)?.week === 8, "D14 may establish its baseline only in W8; rolling forecasts must not rebaseline it");
+  for (const event of projectSchedulePlan.versionEvents) {
+    assert(typeof event.decision === "string" && event.decision.length > 0, `D14 version ${event.version} has no decision basis`);
+    for (const changeId of event.approvedChangeIds) assert(changeById.has(changeId), `D14 version ${event.version} references unknown change ${changeId}`);
+  }
+  const scheduleHealthStates = new Set(["planning", "on_track", "at_risk", "recovery_approved", "recovered", "completed"]);
+  assert(JSON.stringify(projectSchedulePlan.statusEvents.map((event) => event.week)) === JSON.stringify([6, 8, 12, 17, 18, 20, 24, 28, 32]), "D14 forecast status event weeks are inconsistent");
+  for (const event of projectSchedulePlan.statusEvents) {
+    assert(scheduleHealthStates.has(event.health), `D14 has invalid schedule health ${event.health}`);
+    assert(event.forecastFinishWeek - projectSchedulePlan.calendar.plannedFinishWeek === event.forecastVarianceWeeks, `D14 W${event.week} forecast variance is inconsistent`);
+    assert(event.actualFinishWeek === null || event.actualFinishWeek === projectSchedulePlan.calendar.plannedFinishWeek, `D14 W${event.week} has an unsupported actual finish week`);
+    assert(typeof event.evidence === "string" && event.evidence.length > 0, `D14 W${event.week} status has no evidence`);
+  }
+  const scheduleStatusByWeek = new Map(projectSchedulePlan.statusEvents.map((event) => [event.week, event]));
+  assert(scheduleStatusByWeek.get(17).forecastFinishWeek === 35, "D14 must show the unmitigated W35 forecast at the W17 supply/resource event");
+  assert(scheduleStatusByWeek.get(18).forecastFinishWeek === 33 && scheduleStatusByWeek.get(20).forecastFinishWeek === 33, "D14 must retain the W33 recovery forecast through W20");
+  assert(scheduleStatusByWeek.get(24).forecastFinishWeek === 32 && scheduleStatusByWeek.get(32).actualFinishWeek === 32, "D14 must recover and finish on the W32 baseline");
+  uniqueMap(projectSchedulePlan.controlRules, "schedule control rule");
+  assert(projectSchedulePlan.controlRules.length === 5, "D14 must define five schedule control rules");
+  assert(projectSchedulePlan.resourceSchedulingNotes.length >= 4, "D14 resource scheduling notes are incomplete");
+  assert(JSON.stringify(documents.mainlineEvents.filter((event) => documentHasVersionAction(event, "D14")).map((event) => event.week)) === JSON.stringify([8, 12, 20, 28, 32]), "D14 mainline version events must align with its approved lifecycle");
+  assert(!documents.contentRevisions.some((revision) => documentHasVersionAction(revision, "D14")), "D14 lifecycle versions must be controlled through the defined mainline events");
+  const scenarioTwo = scenarioById.get("scenario-2");
+  assert(scenarioTwo.idealOutcome.documentRevisions.includes("D14"), "Scenario 2 must revise D14 after the recovery plan is agreed");
+  assert(!scenarioById.get("scenario-1").idealOutcome.documentRevisions.includes("D14") && !scenarioById.get("scenario-3").idealOutcome.documentRevisions.includes("D14"), "Only the schedule-disruption scenario should revise D14");
 
   const scopeStatement = documents.projectScopeStatement;
   assert(scopeStatement.documentId === "D16", "Project scope statement must belong to D16");

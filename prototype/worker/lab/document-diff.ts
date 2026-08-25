@@ -88,6 +88,18 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
     case "D13": return [...common,
       { op: "add", path: "/communication/overdueItems", value: state.totals.overdueCommunicationItems },
     ];
+    case "D14": return [...common,
+      { op: "replace", path: "/scheduleStatus/dataDateWeek", value: state.week },
+      { op: "replace", path: "/scheduleStatus/spi", value: state.performance.spi },
+      { op: "replace", path: "/scheduleStatus/cpi", value: state.performance.cpi },
+      { op: "replace", path: "/scheduleStatus/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
+      { op: "replace", path: "/scheduleStatus/forecastVarianceWeeks", value: state.performance.forecastCompletionWeek - 32 },
+      { op: "replace", path: "/scheduleBaseline/finishWeek", value: 32 },
+      { op: "add", path: "/scheduleBaseline/changeStatus", value: "unchanged" },
+      { op: "replace", path: "/activities/WBS-8.2/forecastStatus", value: state.scenario.status === "closed" ? "recovery_plan_active" : "at_risk" },
+      { op: "replace", path: "/activities/WBS-9.2/forecastStatus", value: state.scenario.status === "closed" ? "recovery_plan_active" : "at_risk" },
+      { op: "add", path: "/recoveryPlan/strategy", value: "staged_interface_mock_parallel_backup_handoff" },
+    ];
     case "D16": return [...common,
       { op: "replace", path: "/scopeBaseline/version", value: state.scenario.id === "scenario-3" ? "1.1-branch" : "1.0" },
       { op: "replace", path: "/productScope/PSC-03/status", value: state.scenario.id === "scenario-3" ? "deferred_from_v1_0" : "baselined_included" },
