@@ -130,6 +130,29 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/risk/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
       { op: "add", path: "/risk/scenarioStatus", value: state.scenario.status },
     ];
+    case "D28": return [...common,
+      { op: "replace", path: "/progress/dataDateWeek", value: state.week },
+      { op: "replace", path: "/progress/spi", value: state.performance.spi },
+      { op: "replace", path: "/progress/cpi", value: state.performance.cpi },
+      { op: "replace", path: "/progress/cumulativePlannedValueCny", value: state.performance.cumulativePlannedValueCny },
+      { op: "replace", path: "/progress/cumulativeEarnedValueCny", value: state.performance.cumulativeEarnedValueCny },
+      { op: "replace", path: "/progress/cumulativeActualCostCny", value: state.performance.cumulativeActualCostCny },
+    ];
+    case "D29": {
+      const forecastBasisByScenario: Record<string, string> = {
+        "scenario-1": "scope_clarification_impact_analysis_change_control",
+        "scenario-2": "staged_interface_mock_parallel_backup_handoff",
+        "scenario-3": "read_only_scope_security_isolation",
+      };
+      return [...common,
+        { op: "replace", path: "/forecast/dataDateWeek", value: state.week },
+        { op: "replace", path: "/forecast/completionWeek", value: state.performance.forecastCompletionWeek },
+        { op: "replace", path: "/forecast/varianceWeeks", value: state.performance.forecastCompletionWeek - 32 },
+        { op: "replace", path: "/forecast/spi", value: state.performance.spi },
+        { op: "replace", path: "/forecast/cpi", value: state.performance.cpi },
+        { op: "add", path: "/forecast/basis", value: forecastBasisByScenario[state.scenario.id] ?? "deterministic_round_snapshot" },
+      ];
+    }
     case "D30": {
       const currentEngagementByStakeholder = new Map<string, string>();
       for (const transition of state.stakeholderTransitions) {

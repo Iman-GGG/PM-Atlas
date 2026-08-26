@@ -996,8 +996,8 @@ function documentVersionActions(event: DocumentEvent, documentId: string): strin
 }
 
 function activityStatus(activity: ScheduleActivity, week: number): keyof typeof activityStatusLabels {
-  if (week > activity.endWeek) return "completed";
   if (week < activity.startWeek) return "not_started";
+  if (week >= activity.endWeek) return "completed";
   if (activity.type === "recurring" && !activity.occurrenceWeeks?.includes(week)) return "waiting_next_occurrence";
   return "in_progress";
 }
@@ -2146,6 +2146,62 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       boundary: "候选需求和待决变更不自动改写工期、成本或范围基线。",
     },
   ];
+  const scheduleNetworkByActivityId = new Map(mainline.baselineWorkload.scheduleNetwork.activities.map((activity) => [activity.activityId, activity]));
+  const discreteScheduleActivities = mainline.schedule.activities.filter((activity) => activity.type === "discrete" && activity.durationWeeks);
+  const activityAttributeRows = discreteScheduleActivities.map((activity) => {
+    const network = scheduleNetworkByActivityId.get(activity.id);
+    const parallelRelations = activity.predecessors?.filter((predecessor) => predecessor.type === "SS") ?? [];
+    const lagRelations = activity.predecessors?.filter((predecessor) => predecessor.lagWeeks !== 0) ?? [];
+    return {
+      ...activity,
+      controlAttribute: network?.isCritical ? "零总浮动；延误会改变完工预测" : `可用总浮动 ${network?.totalFloat ?? 0} 周`,
+      parallelRule: parallelRelations.length ? `与 ${parallelRelations.map((relation) => relation.activityId).join(" / ")} 并行启动` : activity.predecessors?.length ? "前置完成后启动" : "项目启动后可开始",
+      leadLag: lagRelations.length ? lagRelations.map((relation) => `${relation.activityId} ${relation.type} +${relation.lagWeeks}周`).join("；") : "无提前量或滞后量",
+    };
+  });
+  const durationEstimateRows = discreteScheduleActivities.map((activity) => {
+    const network = scheduleNetworkByActivityId.get(activity.id);
+    const estimate = activity.durationWeeks!;
+    const standardDeviation = (estimate.pessimistic - estimate.optimistic) / 6;
+    return {
+      ...activity,
+      expectedDuration: network?.expectedDuration ?? (estimate.optimistic + 4 * estimate.mostLikely + estimate.pessimistic) / 6,
+      standardDeviation,
+      variance: network?.durationVariance ?? standardDeviation ** 2,
+    };
+  });
+  const scheduleNetworkRows = discreteScheduleActivities.map((activity) => ({
+    ...activity,
+    network: scheduleNetworkByActivityId.get(activity.id)!,
+  }));
+  const scheduleDataRows = mainline.schedule.activities
+    .map((activity) => ({
+      ...activity,
+      currentStatus: activityStatus(activity, selectedWeek),
+      network: scheduleNetworkByActivityId.get(activity.id) ?? null,
+    }))
+    .filter((activity) => (
+      activity.startWeek === selectedWeek
+      || activity.endWeek === selectedWeek
+      || Boolean(activity.network?.isCritical && activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek)
+      || (activity.type !== "discrete" && activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek)
+    ));
+  const visibleScheduleStatusEvents = mainline.schedule.projectSchedulePlan.statusEvents.filter((event) => event.week <= selectedWeek);
+  const currentScheduleStatusEvent = visibleScheduleStatusEvents.at(-1) ?? null;
+  const previousScheduleStatusEvent = visibleScheduleStatusEvents.at(-2) ?? null;
+  const branchForecastActive = Boolean(branch && branchState && selectedWeek === branch.currentWeek);
+  const forecastCompletionWeek = branchForecastActive ? branchState!.performance.forecastCompletionWeek : currentScheduleStatusEvent?.forecastFinishWeek ?? 32;
+  const forecastVarianceWeeks = forecastCompletionWeek - mainline.schedule.projectSchedulePlan.calendar.plannedFinishWeek;
+  const forecastEvidence = branchForecastActive
+    ? `个人分支 W${branch!.currentWeek} 回合快照；基线仍为 W${mainline.schedule.projectSchedulePlan.calendar.plannedFinishWeek}。`
+    : currentScheduleStatusEvent?.evidence ?? "初始预测依据批准的活动网络、资源日历和 W32 完工约束。";
+  const activeCriticalActivityIds = scheduleNetworkRows
+    .filter((activity) => activity.network.isCritical && activity.startWeek <= selectedWeek && activity.endWeek >= selectedWeek)
+    .map((activity) => activity.id);
+  const openScheduleRiskIds = riskState
+    .filter((risk) => risk.lifecycle !== "closed" && risk.impactDimensions.includes("schedule"))
+    .map((risk) => risk.id);
+  const forecastMilestoneRows = milestoneState.filter((milestone) => milestone.currentEvent.forecastWeek !== milestone.baselineWeek);
   const laborCostRows = mainline.workload.roles.map((role) => ({
     ...role,
     subtotalCny: role.plannedPersonDays * role.standardDayRateCny,
@@ -2801,6 +2857,27 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : selectedDocumentContentLocked ? <div className="lab-v2-document-locked"><strong>登录查看具体内容</strong><p>项目文件目录保持开放；登录后可查看当前内容、版本历史、关联文件和个人分支差异。</p><button type="button" onClick={signIn}>登录并解锁项目文件</button></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
                       {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
+                      {selectedDocument.id === "D01" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
+                          <div className="lab-v2-schedule-control-metrics">
+                            <span><b>{activityAttributeRows.length}</b>离散活动</span>
+                            <span><b>{activityAttributeRows.filter((activity) => activity.controlAttribute.startsWith("零总浮动")).length}</b>零浮动活动</span>
+                            <span><b>{activityAttributeRows.filter((activity) => activity.parallelRule.startsWith("与")).length}</b>允许并行启动</span>
+                            <span><b>{activityAttributeRows.filter((activity) => activity.leadLag !== "无提前量或滞后量").length}</b>含滞后关系</span>
+                          </div>
+                          <section>
+                            <span>活动控制属性 · 不重复 D02 的清单、工期和完成标准</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-activity-attribute-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / WBS</th><th>关键性与浮动约束</th><th>并行启动约束</th><th>提前量 / 滞后量</th></tr></thead>
+                                <tbody>{activityAttributeRows.map((activity) => <tr key={activity.id}><td>{activity.id}<small>{activity.title}</small></td><td>{activity.controlAttribute}</td><td>{activity.parallelRule}</td><td>{activity.leadLag}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-document-note">关系和活动编号来自 D02；浮动来自 D15。没有批准依据的限制日期、提前量或额外假设不写入本文件。</p>
+                          </section>
+                        </section>
+                      )}
                       {selectedDocument.id === "D02" && (
                         <section className="lab-v2-activity-list">
                           <div className="lab-v2-activity-list-metrics">
@@ -2904,6 +2981,27 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               </table>
                             </div> : <p className="lab-v2-register-empty">当前数据日期前没有已批准并纳入当前版本的成本变更。</p>}
                             <p className="lab-v2-document-note">最新估算用于影响判断，不等于重设 BAC；成本基线只有经过 D05 正式批准后才变更。</p>
+                          </section>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D07" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
+                          <div className="lab-v2-schedule-control-metrics">
+                            <span><b>{durationEstimateRows.length}</b>三点估算活动</span>
+                            <span><b>{durationEstimateRows.reduce((sum, activity) => sum + activity.expectedDuration, 0).toFixed(1)}</b>期望工期合计<small>非项目总工期</small></span>
+                            <span><b>{Math.max(...durationEstimateRows.map((activity) => activity.standardDeviation)).toFixed(2)}</b>最大标准差</span>
+                            <span><b>W8</b>批准版本</span>
+                          </div>
+                          <section>
+                            <span>持续时间估算 · PERT 结果与客观不确定性</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-duration-estimate-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / WBS</th><th>O / M / P（周）</th><th>PERT 期望工期</th><th>不确定性</th></tr></thead>
+                                <tbody>{durationEstimateRows.map((activity) => <tr key={activity.id}><td>{activity.id}<small>{activity.title}</small></td><td>{activity.durationWeeks!.optimistic} / {activity.durationWeeks!.mostLikely} / {activity.durationWeeks!.pessimistic}</td><td>{activity.expectedDuration.toFixed(2)} 周</td><td>标准差 {activity.standardDeviation.toFixed(2)}<small>方差 {activity.variance.toFixed(4)}</small></td></tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-document-note">估算方法和假设只在 D04 维护；本文件仅保存计算结果。人力投入型和重复活动不进入 PERT 与关键路径计算。</p>
                           </section>
                         </section>
                       )}
@@ -3077,6 +3175,30 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </section>
                         </section>
                       )}
+                      {selectedDocument.id === "D15" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
+                          <div className="lab-v2-schedule-control-metrics">
+                            <span><b>{scheduleNetworkRows.length}</b>网络活动</span>
+                            <span><b>{scheduleNetworkRows.filter((activity) => activity.network.isCritical).length}</b>零浮动活动</span>
+                            <span><b>W{mainline.baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek}</b>网络完工</span>
+                            <span><b>{mainline.schedule.dependencyPolicy.supportedTypes.join(" / ")}</b>关系类型</span>
+                          </div>
+                          <section>
+                            <span>活动逻辑网络 · CPM 早晚日期与浮动</span>
+                            <div className="lab-v2-network-keyline" aria-label="零浮动活动按最早开始周排序">
+                              {scheduleNetworkRows.filter((activity) => activity.network.isCritical).sort((left, right) => left.network.earliestStart - right.network.earliestStart).map((activity) => <i key={activity.id}><b>{activity.id}</b><small>W{activity.network.earliestStart}–W{activity.network.earliestFinish}</small></i>)}
+                            </div>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-network-register-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / 节点</th><th>前置关系</th><th>最早开始 / 完成</th><th>最晚开始 / 完成</th><th>总 / 自由浮动</th><th>关键性</th></tr></thead>
+                                <tbody>{scheduleNetworkRows.map((activity) => <tr key={activity.id} className={activity.network.isCritical ? "critical" : ""}><td>{activity.id}<small>{activity.title}</small></td><td>{activity.predecessors?.length ? activity.predecessors.map((predecessor) => `${predecessor.activityId} ${predecessor.type}${predecessor.lagWeeks ? ` +${predecessor.lagWeeks}` : ""}`).join("；") : "起点"}</td><td>W{activity.network.earliestStart} / W{activity.network.earliestFinish}</td><td>W{activity.network.latestStart} / W{activity.network.latestFinish}</td><td>{activity.network.totalFloat} / {activity.network.freeFloat} 周</td><td>{activity.network.isCritical ? "零浮动" : "非关键"}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-document-note">网络只包含 33 项离散活动；D01 提供关系约束说明，D07 提供工期，D14 保存批准基线。人力投入型和重复活动不进入 CPM。</p>
+                          </section>
+                        </section>
+                      )}
                       {selectedDocument.id === "D16" && scopeState && (
                         <section className="lab-v2-scope-statement">
                           <section className="lab-v2-scope-section">
@@ -3220,6 +3342,60 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.impactDimensions.join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D28" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
+                          <div className="lab-v2-schedule-control-metrics six">
+                            <span><b>W{selectedWeek}</b>数据日期</span>
+                            <span><b>{formatMoney(weekState.cumulativePlannedValueCny)}</b>累计 PV</span>
+                            <span><b>{formatMoney(weekState.cumulativeEarnedValueCny)}</b>累计 EV</span>
+                            <span><b>{formatMoney(weekState.cumulativeActualCostCny)}</b>累计 AC</span>
+                            <span><b>{weekState.spi.toFixed(2)}</b>SPI</span>
+                            <span><b>{weekState.cpi.toFixed(2)}</b>CPI</span>
+                          </div>
+                          <section>
+                            <span>本数据日期需记录的活动状态 · 状态变化与当前关键活动</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-schedule-data-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / WBS</th><th>当前状态</th><th>实际开始</th><th>实际完成</th><th>计划窗口</th><th>状态证据</th></tr></thead>
+                                <tbody>{scheduleDataRows.map((activity) => <tr key={activity.id} className={activity.network?.isCritical ? "critical" : ""}><td>{activity.id}<small>{activity.title}</small></td><td>{activityStatusLabels[activity.currentStatus]}</td><td>{selectedWeek >= activity.startWeek ? `W${activity.startWeek}` : "—"}</td><td>{activity.currentStatus === "completed" ? `W${activity.endWeek}` : "—"}</td><td>W{activity.startWeek}–W{activity.endWeek}</td><td>{activity.currentStatus === "completed" ? activity.acceptanceCriteria[0] : activity.currentStatus === "not_started" ? "数据日期未到计划开始周" : `W${selectedWeek} 主线周状态与 EVM 快照`}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-document-note">这里只列出本周开始、完成或仍在执行的零浮动活动，不复制 D02 的 35 项完整清单。个人分支当前周的 PV、EV、AC、SPI 和 CPI 使用回合快照。</p>
+                          </section>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D29" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
+                          <div className="lab-v2-schedule-control-metrics six">
+                            <span><b>W{selectedWeek}</b>预测日期</span>
+                            <span><b>W{mainline.schedule.projectSchedulePlan.calendar.plannedFinishWeek}</b>批准基线</span>
+                            <span><b>{previousScheduleStatusEvent ? `W${previousScheduleStatusEvent.forecastFinishWeek}` : "—"}</b>上次预测</span>
+                            <span><b>W{forecastCompletionWeek}</b>当前预测</span>
+                            <span><b>{forecastVarianceWeeks > 0 ? `+${forecastVarianceWeeks}` : forecastVarianceWeeks}</b>预测偏差（周）</span>
+                            <span><b>{currentScheduleStatusEvent ? scheduleHealthLabels[currentScheduleStatusEvent.health] : "初始编制"}</b>主线健康</span>
+                          </div>
+                          <section>
+                            <span>当前预测依据</span>
+                            <div className="lab-v2-forecast-basis">
+                              <article><b>结论依据</b><p>{forecastEvidence}</p></article>
+                              <article><b>当前零浮动活动</b><p>{activeCriticalActivityIds.join(" / ") || "当前数据日期无执行中的零浮动活动"}</p></article>
+                              <article><b>未关闭进度风险</b><p>{openScheduleRiskIds.join(" / ") || "无"}</p></article>
+                            </div>
+                          </section>
+                          <section>
+                            <span>里程碑预测偏差</span>
+                            {forecastMilestoneRows.length ? <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-forecast-milestone-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>里程碑</th><th>基准周</th><th>预测周</th><th>最新依据</th></tr></thead>
+                                <tbody>{forecastMilestoneRows.map((milestone) => <tr key={milestone.id}><td>{milestone.id}<small>{milestone.title}</small></td><td>W{milestone.baselineWeek}</td><td>W{milestone.currentEvent.forecastWeek}</td><td>{milestone.currentEvent.evidence}</td></tr>)}</tbody>
+                              </table>
+                            </div> : <p className="lab-v2-register-empty">当前里程碑预测与批准基线一致。</p>}
+                            <p className="lab-v2-document-note">D29 只记录当前预测、偏差和依据，不重抄 D14 计划明细或 D26 风险条目；预测变化本身不构成基线变更。</p>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D30" && (
