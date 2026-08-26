@@ -1,6 +1,6 @@
-import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated";
 import type {
   ManagementActionChain,
+  LabCaseRuntimePackage,
   RoundResult,
   RoundSubmissionRequest,
   ScenarioDefinition,
@@ -9,14 +9,19 @@ import type {
 import { getPlatformIdentity } from "../auth/platform-identity";
 import { isAnalyticsAdmin } from "../analytics/api";
 import { recordAnalyticsEvent, recordAuthenticatedVisit } from "../analytics/repository";
-import { privateLabCasePackage } from "../generated/lab-case-private.generated";
 import { projectScenarioForClient } from "./project-case-for-client";
+import {
+  currentLabCaseRuntimePackage,
+  findLabCaseRuntimePackage,
+  isCurrentLabCase,
+} from "./case-packages";
 import {
   createBranchRecords,
   commitRoundRecords,
   findRoundSubmissionByIdempotency,
   findLabUser,
   findOwnedBranch,
+  listOwnedCaseBranches,
   listOwnedBranches,
   findStoredCaseVersion,
   readCurrentStateSnapshot,
@@ -76,11 +81,11 @@ function withPrivateCache(response: Response): Response {
   return response;
 }
 
-function parseWeek(url: URL): number | null {
+function parseWeek(url: URL, totalWeeks: number): number | null {
   const rawWeek = url.searchParams.get("week");
   if (rawWeek === null) return null;
   const week = Number(rawWeek);
-  return Number.isInteger(week) && week >= 1 && week <= publicLabCaseBaseline.totalWeeks ? week : Number.NaN;
+  return Number.isInteger(week) && week >= 1 && week <= totalWeeks ? week : Number.NaN;
 }
 
 function parseSections(url: URL): SectionName[] | null {
@@ -90,8 +95,8 @@ function parseSections(url: URL): SectionName[] | null {
   return [...new Set(requested)] as SectionName[];
 }
 
-function projectSection(section: SectionName, week: number | null): StateEffect {
-  const source = publicLabCaseBaseline.plans[section] as StateEffect;
+function projectSection(runtime: LabCaseRuntimePackage, section: SectionName, week: number | null): StateEffect {
+  const source = runtime.plans[section] as StateEffect;
   if (week === null) return source;
 
   if (section === "baselineWorkload") {
@@ -176,8 +181,8 @@ function parseEventVisibility(events: BranchEvent[], scenarioId: string): {
   };
 }
 
-function findScenarioMaterial(scenarioId: string, materialId: string) {
-  const scenario = privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === scenarioId);
+function findScenarioMaterial(runtime: LabCaseRuntimePackage, scenarioId: string, materialId: string) {
+  const scenario = runtime.scenarios.find(({ id }) => id === scenarioId);
   if (!scenario) return null;
   for (const [group, materials] of Object.entries(scenario.eventMaterials)) {
     const material = materials.find((item) => item.id === materialId);
@@ -186,8 +191,8 @@ function findScenarioMaterial(scenarioId: string, materialId: string) {
   return null;
 }
 
-function findScenario(scenarioId: string) {
-  return privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === scenarioId) ?? null;
+function findScenario(runtime: LabCaseRuntimePackage, scenarioId: string) {
+  return runtime.scenarios.find(({ id }) => id === scenarioId) ?? null;
 }
 
 function materialSummary(group: string, material: Record<string, unknown>, opened: boolean) {
@@ -355,7 +360,7 @@ function validateRoundContent(
 }
 
 function caseMatches(caseId: string, caseVersion: string): boolean {
-  return caseId === publicLabCaseBaseline.caseId && caseVersion === publicLabCaseBaseline.caseVersion;
+  return findLabCaseRuntimePackage(caseId, caseVersion) !== null;
 }
 
 function stableValue(value: unknown): unknown {
@@ -396,7 +401,7 @@ async function parseCreateBranchBody(request: Request): Promise<{
 }
 
 async function createBranch(request: Request, env: LabApiEnv, caseId: string, caseVersion: string): Promise<Response> {
-  if (!caseMatches(caseId, caseVersion)) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
+  if (!isCurrentLabCase(caseId, caseVersion)) return errorResponse(404, "CASE_NOT_FOUND", "Only the current case version accepts new branches.");
   const identity = await getPlatformIdentity(request);
   if (!identity) {
     return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to take over a project."));
@@ -411,14 +416,15 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
     ));
   }
 
-  const scenario = privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === body.scenarioId);
-  const takeoverPoint = publicLabCaseBaseline.takeoverPoints.find(({ scenarioId }) => scenarioId === body.scenarioId);
+  const runtime = currentLabCaseRuntimePackage;
+  const scenario = findScenario(runtime, body.scenarioId);
+  const takeoverPoint = runtime.takeoverPoints.find(({ scenarioId }) => scenarioId === body.scenarioId);
   if (!scenario || !takeoverPoint || scenario.week !== takeoverPoint.week) {
     return withPrivateCache(errorResponse(404, "TAKEOVER_POINT_NOT_FOUND", "Takeover point not found."));
   }
 
   const storedCaseVersion = await findStoredCaseVersion(env.DB, caseId, caseVersion);
-  if (storedCaseVersion && storedCaseVersion.contentHash !== publicLabCaseBaseline.contentHash) {
+  if (storedCaseVersion && storedCaseVersion.contentHash !== runtime.contentHash) {
     return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The stored case version differs from this deployment."));
   }
 
@@ -436,14 +442,14 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
 
   const storedUser = await findLabUser(env.DB, identity.identityKey);
   const userId = storedUser?.id ?? await stableId("user", identity.identityKey);
-  const baselineWeek = (publicLabCaseBaseline.plans.baselineWorkload.weeks as StateEffect[])
+  const baselineWeek = (runtime.plans.baselineWorkload.weeks as StateEffect[])
     .find((item) => item.week === scenario.week);
   if (!baselineWeek) return withPrivateCache(errorResponse(500, "BASELINE_STATE_MISSING", "The takeover baseline is unavailable."));
 
   const initialState = {
     caseId,
     caseVersion,
-    contentHash: publicLabCaseBaseline.contentHash,
+    contentHash: runtime.contentHash,
     mode: "learning",
     week: scenario.week,
     baseline: baselineWeek,
@@ -460,14 +466,14 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
     scenarioId: scenario.id,
     scenarioTitle: scenario.title,
     availableMaterialIds: materialIds,
-    entrySignals: publicLabCaseBaseline.learningPolicies.eventDiscovery.entrySignals,
+    entrySignals: runtime.learningPolicies.eventDiscovery.entrySignals,
     cardsUnlocked: false,
   };
 
   await createBranchRecords(env.DB, {
     caseId,
     caseVersion,
-    contentHash: publicLabCaseBaseline.contentHash,
+    contentHash: runtime.contentHash,
     userId,
     identityKey: identity.identityKey,
     displayName: identity.displayName,
@@ -510,6 +516,7 @@ async function readOwnedScenarioContext(
   branch: Awaited<ReturnType<typeof findOwnedBranch>> & {};
   events: BranchEvent[];
   visibility: ReturnType<typeof parseEventVisibility>;
+  runtime: LabCaseRuntimePackage;
 } | Response> {
   const identity = await getPlatformIdentity(request);
   if (!identity) {
@@ -519,10 +526,11 @@ async function readOwnedScenarioContext(
   const ownedContext = await readOwnedBranchContext(env.DB, branchId, identity.identityKey);
   if (!ownedContext) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
   const { branch, events } = ownedContext;
-  if (!caseMatches(branch.caseId, branch.caseVersion) || branch.contentHash !== publicLabCaseBaseline.contentHash) {
+  const runtime = findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash);
+  if (!runtime) {
     return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
   }
-  return { branch, events, visibility: parseEventVisibility(events, scenarioId) };
+  return { branch, events, visibility: parseEventVisibility(events, scenarioId), runtime };
 }
 
 async function listScenarioMaterials(
@@ -535,7 +543,7 @@ async function listScenarioMaterials(
   if (context instanceof Response) return context;
   const opened = new Set(context.visibility.visibleMaterialIds);
   const materials = context.visibility.availableMaterialIds.flatMap((materialId) => {
-    const found = findScenarioMaterial(scenarioId, materialId);
+    const found = findScenarioMaterial(context.runtime, scenarioId, materialId);
     return found ? [materialSummary(found.group, found.material, opened.has(materialId))] : [];
   });
   if (materials.length === 0) {
@@ -564,7 +572,7 @@ async function openScenarioMaterial(
   if (!context.visibility.availableMaterialIds.includes(materialId)) {
     return withPrivateCache(errorResponse(404, "MATERIAL_NOT_AVAILABLE", "This material is not available for the branch."));
   }
-  const found = findScenarioMaterial(scenarioId, materialId);
+  const found = findScenarioMaterial(context.runtime, scenarioId, materialId);
   if (!found || context.branch.currentWeek < found.scenario.week) {
     return withPrivateCache(errorResponse(403, "MATERIAL_LOCKED", "This material is not available at the branch's current week."));
   }
@@ -582,7 +590,7 @@ async function openScenarioMaterial(
       unlockCards,
     });
   }
-  const projection = projectScenarioForClient({
+  const projection = projectScenarioForClient(context.runtime.scenarios, {
     scenarioId,
     currentWeek: context.branch.currentWeek,
     visibleMaterialIds: [...openedMaterialIds],
@@ -607,7 +615,7 @@ async function readScenarioDraft(
 ): Promise<Response> {
   const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
   if (context instanceof Response) return context;
-  const scenario = findScenario(scenarioId);
+  const scenario = findScenario(context.runtime, scenarioId);
   if (!scenario || context.branch.currentWeek < scenario.week) {
     return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
   }
@@ -634,7 +642,7 @@ async function saveScenarioDraft(
 ): Promise<Response> {
   const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
   if (context instanceof Response) return context;
-  const scenario = findScenario(scenarioId);
+  const scenario = findScenario(context.runtime, scenarioId);
   if (!scenario || context.branch.currentWeek < scenario.week) {
     return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
   }
@@ -681,7 +689,7 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
   }
   const context = await readOwnedScenarioContext(request, env, branchId, body.scenarioId);
   if (context instanceof Response) return context;
-  const scenario = findScenario(body.scenarioId);
+  const scenario = findScenario(context.runtime, body.scenarioId);
   if (!scenario || context.branch.currentWeek < scenario.week) {
     return withPrivateCache(errorResponse(403, "SCENARIO_LOCKED", "This scenario is not available at the branch's current week."));
   }
@@ -719,13 +727,13 @@ async function submitRound(request: Request, env: LabApiEnv, branchId: string): 
     return withPrivateCache(errorResponse(409, "BRANCH_STATE_MISSING", "The current branch state is unavailable for this scenario."));
   }
   const previousState = parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {});
-  const baselineWeeks = publicLabCaseBaseline.plans.baselineWorkload.weeks as StateEffect[];
+  const baselineWeeks = context.runtime.plans.baselineWorkload.weeks as StateEffect[];
   const nextWeek = context.branch.currentWeek + 1;
-  const nextBaseline = baselineWeeks.find((week) => Number(week.week) === Math.min(nextWeek, publicLabCaseBaseline.totalWeeks));
+  const nextBaseline = baselineWeeks.find((week) => Number(week.week) === Math.min(nextWeek, context.runtime.totalWeeks));
   if (!nextBaseline) {
     return withPrivateCache(errorResponse(500, "BASELINE_STATE_MISSING", "The next weekly baseline is unavailable."));
   }
-  const budgetAtCompletionCny = Number(publicLabCaseBaseline.plans.workload.budgetAtCompletionCny);
+  const budgetAtCompletionCny = Number(context.runtime.plans.workload.budgetAtCompletionCny);
   const historicalActionChains = historicalSubmissions.flatMap((submission) => {
     const stored = parseStoredJson<{ actionChains?: unknown[] }>(submission.submissionJson, {});
     return (stored.actionChains ?? []).flatMap((value) => {
@@ -820,7 +828,8 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to list project branches."));
       if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
       if (!caseMatches(parts[3], parts[4])) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
-      const branches = await listOwnedBranches(env.DB, identity.identityKey, parts[3], parts[4]);
+      const branches = (await listOwnedBranches(env.DB, identity.identityKey, parts[3], parts[4]))
+        .filter((branch) => Boolean(findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash)));
       const response = withPrivateCache(jsonResponse({ branches }));
       return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
     }
@@ -828,6 +837,19 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET, HEAD, and POST are supported.", { allow: "GET, HEAD, POST" });
     }
     return createBranch(request, env, parts[3], parts[4]);
+  }
+  if (parts.length === 5 && parts[2] === "cases" && parts[4] === "branches") {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });
+    }
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to list project branches."));
+    if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
+    if (parts[3] !== currentLabCaseRuntimePackage.caseId) return errorResponse(404, "CASE_NOT_FOUND", "Case not found.");
+    const branches = (await listOwnedCaseBranches(env.DB, identity.identityKey, parts[3]))
+      .filter((branch) => Boolean(findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash)));
+    const response = withPrivateCache(jsonResponse({ branches }));
+    return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
   }
   if (parts.length === 7 && parts[2] === "branches" && parts[4] === "scenarios" && parts[6] === "materials") {
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -929,10 +951,12 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
     const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
     if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    const runtime = findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash);
+    if (!runtime) return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
     const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
     const state = snapshot ? projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})) : null;
-    const baseline = projectSection("baselineWorkload", branch.currentWeek) as { weeks?: Array<Record<string, unknown>> };
-    const mainlineWeek = baseline.weeks?.[0] ?? {};
+    const mainlineWeek = (runtime.plans.baselineWorkload.weeks as StateEffect[])
+      .find((week) => Number(week.week) === branch.currentWeek) ?? {};
     return withPrivateCache(jsonResponse({
       forkWeek: branch.currentWeek - branch.currentRoundNumber,
       currentWeek: branch.currentWeek,
@@ -964,30 +988,32 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     } : { authenticated: false }));
   } else if (parts.length === 5 && parts[2] === "cases") {
     const [, , , caseId, caseVersion] = parts;
-    if (!caseMatches(caseId, caseVersion)) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
+    const runtime = findLabCaseRuntimePackage(caseId, caseVersion);
+    if (!runtime) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
     response = withPublicCache(jsonResponse({
-      schemaVersion: publicLabCaseBaseline.schemaVersion,
+      schemaVersion: runtime.schemaVersion,
       caseId,
       caseVersion,
-      contentHash: publicLabCaseBaseline.contentHash,
-      totalWeeks: publicLabCaseBaseline.totalWeeks,
-      learningPolicies: publicLabCaseBaseline.learningPolicies,
-      takeoverPoints: publicLabCaseBaseline.takeoverPoints,
+      contentHash: runtime.contentHash,
+      totalWeeks: runtime.totalWeeks,
+      learningPolicies: runtime.learningPolicies,
+      takeoverPoints: runtime.takeoverPoints,
       availableSections: sectionNames,
     }));
   } else if (parts.length === 6 && parts[2] === "cases" && parts[5] === "mainline") {
     const [, , , caseId, caseVersion] = parts;
-    if (!caseMatches(caseId, caseVersion)) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
-    const week = parseWeek(url);
-    if (Number.isNaN(week)) return errorResponse(400, "INVALID_WEEK", `week must be between 1 and ${publicLabCaseBaseline.totalWeeks}.`);
+    const runtime = findLabCaseRuntimePackage(caseId, caseVersion);
+    if (!runtime) return errorResponse(404, "CASE_NOT_FOUND", "Case version not found.");
+    const week = parseWeek(url, runtime.totalWeeks);
+    if (Number.isNaN(week)) return errorResponse(400, "INVALID_WEEK", `week must be between 1 and ${runtime.totalWeeks}.`);
     const sections = parseSections(url);
     if (!sections) return errorResponse(400, "INVALID_SECTIONS", `sections must use: ${sectionNames.join(", ")}.`);
     response = withPublicCache(jsonResponse({
       caseId,
       caseVersion,
-      contentHash: publicLabCaseBaseline.contentHash,
+      contentHash: runtime.contentHash,
       week,
-      sections: Object.fromEntries(sections.map((section) => [section, projectSection(section, week)])),
+      sections: Object.fromEntries(sections.map((section) => [section, projectSection(runtime, section, week)])),
     }));
   } else if (parts.length === 7 && parts[2] === "branches" && parts[4] === "scenarios") {
     const branchId = parts[3];
@@ -995,8 +1021,8 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     if (parts[6] !== "projection") return errorResponse(404, "LAB_ROUTE_NOT_FOUND", "Lab API route not found.");
     const context = await readOwnedScenarioContext(request, env, branchId, scenarioId);
     if (context instanceof Response) return context;
-    const { branch, visibility } = context;
-    const projection = projectScenarioForClient({
+    const { branch, visibility, runtime } = context;
+    const projection = projectScenarioForClient(runtime.scenarios, {
       scenarioId,
       currentWeek: branch.currentWeek,
       ...visibility,
@@ -1009,6 +1035,7 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     response = withPrivateCache(jsonResponse({
       branch: {
         id: branch.id,
+        caseVersion: branch.caseVersion,
         currentWeek: branch.currentWeek,
         currentRoundNumber: branch.currentRoundNumber,
         status: branch.status,

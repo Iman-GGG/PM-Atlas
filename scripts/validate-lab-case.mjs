@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
-const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v4");
+const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v5");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

@@ -529,6 +529,7 @@ type MainlineResponse = {
 
 type BranchContext = {
   id: string;
+  caseVersion: string;
   currentWeek: number;
   currentRoundNumber: number;
   status: string;
@@ -702,7 +703,7 @@ type ManagementArea = {
 };
 
 const caseId = "car-control";
-const caseVersion = "v4";
+const caseVersion = "v5";
 const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
@@ -1448,7 +1449,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
 
   const refreshBranches = async () => {
     try {
-      const response = await apiJson<{ branches: BranchSummary[] }>(`/api/lab/cases/${caseId}/${caseVersion}/branches`, undefined, false);
+      const response = await apiJson<{ branches: BranchSummary[] }>(`/api/lab/cases/${caseId}/branches`, undefined, false);
       setBranches(response.branches);
     } catch {
       setBranches([]);
@@ -1483,6 +1484,15 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
           `/api/lab/branches/${encodeURIComponent(restored.branchId)}/scenarios/${encodeURIComponent(restored.scenarioId)}/projection`,
         );
         if (cancelled) return;
+        if (projection.branch.caseVersion !== caseVersion) {
+          const [historicalManifest, historicalMainline] = await Promise.all([
+            apiJson<CaseManifest>(`/api/lab/cases/${caseId}/${projection.branch.caseVersion}`),
+            apiJson<MainlineResponse>(`/api/lab/cases/${caseId}/${projection.branch.caseVersion}/mainline?sections=${mainlineSections}`),
+          ]);
+          if (cancelled) return;
+          setManifest(historicalManifest);
+          setMainline(historicalMainline.sections);
+        }
         setBranch(projection.branch);
         setBranchState(projection.state);
         setRoundResult(projection.lastRoundResult);
@@ -1602,6 +1612,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     setActionMessage(null);
     setSelectedWeek(targetWeek ?? selectedWeek);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#lab-schedule`);
+    if (manifest?.caseVersion !== caseVersion) window.location.reload();
   };
 
   const switchBranch = (summary: BranchSummary) => {
@@ -2753,7 +2764,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
         <aside className="lab-v2-branch-history-drawer" onClick={(event) => event.stopPropagation()}>
           <header><div><span>TAKEOVER HISTORY</span><h2>接手记录</h2><p>每次接手形成独立分支；点击记录可切换并回看当时的行动和结局。</p></div><button type="button" onClick={() => setBranchHistoryOpen(false)}>关闭</button></header>
           {branch && <button className="lab-v2-history-mainline" type="button" onClick={() => { setBranchHistoryOpen(false); leaveBranch(branch.currentWeek); }}>返回项目主线</button>}
-          <div className="lab-v2-branch-history-list">{branches.length ? branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><i>W{summary.forkWeek}</i><span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></span><b>{branch?.id === summary.id ? "当前" : "打开"}</b></button>) : <p>还没有接手记录。请先在 W9、W17 或 W25 从主线创建分支。</p>}</div>
+          <div className="lab-v2-branch-history-list">{branches.length ? branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><i>W{summary.forkWeek}</i><span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.caseVersion.toUpperCase()} · {summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></span><b>{branch?.id === summary.id ? "当前" : "打开"}</b></button>) : <p>还没有接手记录。请先在 W9、W17 或 W25 从主线创建分支。</p>}</div>
         </aside>
       </div>}
 
@@ -2924,7 +2935,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       {selectedDocument.id === "D10" && (
                         <section className="lab-v2-document-data">
                           <span>里程碑清单 · W{selectedWeek} · 基准 / 预测 / 实际</span>
-                          <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                          <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
                             <table className="lab-v2-milestone-table">
                               <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号 / 里程碑</th><th>基准周</th><th>预测周</th><th>实际周</th><th>状态 / 负责人</th><th>验收标准</th><th>最新结论 / 证据</th></tr></thead>
@@ -2937,7 +2948,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                         <section className="lab-v2-document-data lab-v2-document-stack">
                           <section>
                             <span>非人力资源分配 · W{selectedWeek}</span>
-                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
                               <table className="lab-v2-material-allocation-table">
                                 <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
                                 <thead><tr><th>资源</th><th>类别</th><th>对应WBS</th><th>计划分配周</th><th>累计已分配</th><th>剩余</th><th>状态 / 下一窗口</th></tr></thead>
@@ -3074,7 +3085,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </section>
                           <section className="lab-v2-scope-section">
                             <span>主要可交付成果</span>
-                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
                               <table className="lab-v2-scope-deliverables-table">
                                 <colgroup><col /><col /><col /><col /><col /></colgroup>
                                 <thead><tr><th>编号 / 可交付成果</th><th>目标周</th><th>对应WBS</th><th>验收摘要</th><th>证据文件</th></tr></thead>
@@ -3101,7 +3112,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                         <section className="lab-v2-document-data lab-v2-document-stack">
                           <section>
                             <span>核心团队派工 · W{selectedWeek}</span>
-                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
                               <table className="lab-v2-team-assignment-table">
                                 <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
                                 <thead><tr><th>角色 / 派工对象</th><th>所属组织</th><th>责任范围</th><th>主要WBS</th><th>生效窗口</th><th>当前状态</th><th>交接 / 依据</th></tr></thead>

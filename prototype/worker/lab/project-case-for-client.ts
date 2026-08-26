@@ -3,9 +3,9 @@ import type {
   EventMaterials,
   PublicScenarioCard,
   ScenarioCard,
+  ScenarioDefinition,
   VisibleScenarioProjection,
 } from "../../lib/lab/contracts";
-import { privateLabCasePackage } from "../generated/lab-case-private.generated";
 
 export type ScenarioVisibilityContext = {
   scenarioId: string;
@@ -31,8 +31,11 @@ function toPublicCard(card: ScenarioCard & { column: PublicScenarioCard["column"
   };
 }
 
-export function projectScenarioForClient(context: ScenarioVisibilityContext): VisibleScenarioProjection | null {
-  const scenario = privateLabCasePackage.sourceFiles.scenarioPlan.scenarios.find(({ id }) => id === context.scenarioId);
+export function projectScenarioForClient(
+  scenarios: readonly ScenarioDefinition[],
+  context: ScenarioVisibilityContext,
+): VisibleScenarioProjection | null {
+  const scenario = scenarios.find(({ id }) => id === context.scenarioId);
   if (!scenario || context.currentWeek < scenario.week) return null;
 
   const visibleMaterialIds = new Set(context.visibleMaterialIds);

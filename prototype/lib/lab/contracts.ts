@@ -202,6 +202,11 @@ export type PublicLabCaseBaseline = LabCasePackageIdentity & {
   takeoverPoints: PublicTakeoverPoint[];
 };
 
+/** Immutable public baseline plus private scenario rules for one exact case hash. */
+export type LabCaseRuntimePackage = PublicLabCaseBaseline & {
+  scenarios: ScenarioDefinition[];
+};
+
 export type PublicScenarioCard = Pick<ScenarioCard, "id" | "referenceId" | "title"> & {
   column: VisibleCardColumn;
 };

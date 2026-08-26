@@ -143,6 +143,37 @@ export async function listOwnedBranches(
   return result.results ?? [];
 }
 
+export async function listOwnedCaseBranches(
+  db: LabD1,
+  identityKey: string,
+  caseId: string,
+): Promise<OwnedBranchSummary[]> {
+  const result = await db.prepare(`
+    SELECT
+      b.id,
+      b.case_id AS caseId,
+      b.case_version AS caseVersion,
+      cv.content_hash AS contentHash,
+      b.fork_week AS forkWeek,
+      b.current_week AS currentWeek,
+      b.current_round_number AS currentRoundNumber,
+      b.lock_version AS lockVersion,
+      b.status,
+      b.outcome_classification AS outcomeClassification,
+      initial.scenario_id AS scenarioId,
+      b.created_at AS createdAt
+    FROM lab_branches b
+    INNER JOIN lab_users u ON u.id = b.user_id
+    INNER JOIN lab_case_versions cv
+      ON cv.case_id = b.case_id AND cv.case_version = b.case_version
+    INNER JOIN lab_state_snapshots initial
+      ON initial.branch_id = b.id AND initial.round_number = b.fork_round_number
+    WHERE u.identity_key = ? AND b.case_id = ? AND b.status <> 'archived'
+    ORDER BY b.created_at DESC, b.id DESC
+  `).bind(identityKey, caseId).all<OwnedBranchSummary>();
+  return result.results ?? [];
+}
+
 export async function readOwnedBranchContext(
   db: LabD1,
   branchId: string,

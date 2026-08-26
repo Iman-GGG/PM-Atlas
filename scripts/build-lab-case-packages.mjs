@@ -6,7 +6,7 @@ import { validateLabCase } from "./validate-lab-case.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
-const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v4");
+const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v5");
 const privateOutputPath = path.join(projectRoot, "prototype", "worker", "generated", "lab-case-private.generated.ts");
 const publicOutputPath = path.join(projectRoot, "prototype", "lib", "lab", "lab-case-public.generated.ts");
 

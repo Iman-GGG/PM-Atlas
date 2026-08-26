@@ -27,7 +27,11 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(app, /if \(nextSection === "lab"\)[\s\S]*switchPage\("schedule"\)/);
   assert.match(app, /section === "lab" && page !== "schedule"/);
   assert.match(timeline, /\/mainline\?sections=\$\{mainlineSections\}/);
-  assert.match(timeline, /\/api\/lab\/cases\/\$\{caseId\}\/\$\{caseVersion\}\/branches/);
+  assert.match(timeline, /const caseVersion = "v5"/);
+  assert.match(timeline, /\/api\/lab\/cases\/\$\{caseId\}\/branches/);
+  assert.match(timeline, /summary\.caseVersion\.toUpperCase\(\)/);
+  assert.match(timeline, /projection\.branch\.caseVersion !== caseVersion/);
+  assert.match(timeline, /projection\.branch\.caseVersion}\/mainline\?sections=/);
   assert.match(timeline, /JSON\.stringify\(\{ scenarioId: point\.scenarioId, idempotencyKey \}\)/);
   assert.match(timeline, /\/materials\/\$\{encodeURIComponent\(material\.id\)\}\/view/);
   assert.match(timeline, /materials\?\.materials\.map/);

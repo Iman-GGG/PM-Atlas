@@ -5,14 +5,14 @@ import type { PublicLabCaseBaseline } from "./contracts";
 export const publicLabCaseBaseline: PublicLabCaseBaseline = {
   "schemaVersion": 1,
   "caseId": "car-control",
-  "caseVersion": "v4",
-  "contentHash": "26a7c18c124cc84a9c1c8348494aca9d7d968b6c48b94bcf05059f388efca803",
+  "caseVersion": "v5",
+  "contentHash": "a1b0a1b786181e520f17755c4975c68c23e24fb3311d6b0a3681ece806b205c1",
   "totalWeeks": 32,
   "plans": {
     "workload": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "totalWeeks": 32,
       "personDaysPerPersonWeek": 5,
       "budgetAtCompletionCny": 2600000,
@@ -430,7 +430,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "schedule": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "resourceSchedulingPolicy": {
         "defaultBufferWeeks": 3,
         "outsideWindowCostPerWeek": 5,
@@ -1933,7 +1933,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "stakeholders": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "raciPolicy": {
         "overviewRows": "level_1_work_packages",
         "exactlyOneAccountablePerRow": true,
@@ -3090,7 +3090,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "documents": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "statusPolicy": {
         "lifecycleStates": [
           "not_created",
@@ -6808,7 +6808,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "requirements": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "documentIds": {
         "requirements": "D21",
         "traceabilityMatrix": "D22"
@@ -7570,7 +7570,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "risks": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "probabilityScale": [
         {
           "level": 1,
@@ -8532,7 +8532,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "quality": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "preMeasurementState": "not_measured",
       "scopeExclusionState": "not_applicable_by_approved_scope_change",
       "hardGates": [
@@ -8813,13 +8813,13 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "baselineWorkload": {
       "schemaVersion": 1,
       "generatedFrom": [
-        "content/lab-cases/car-control/v4/workload-plan.json",
-        "content/lab-cases/car-control/v4/schedule-plan.json",
-        "content/lab-cases/car-control/v4/stakeholder-plan.json",
-        "content/lab-cases/car-control/v4/document-plan.json"
+        "content/lab-cases/car-control/v5/workload-plan.json",
+        "content/lab-cases/car-control/v5/schedule-plan.json",
+        "content/lab-cases/car-control/v5/stakeholder-plan.json",
+        "content/lab-cases/car-control/v5/document-plan.json"
       ],
       "caseId": "car-control",
-      "caseVersion": "v4",
+      "caseVersion": "v5",
       "totalPlannedPersonDays": 1024,
       "totalActivities": 35,
       "budgetAtCompletionCny": 2600000,
