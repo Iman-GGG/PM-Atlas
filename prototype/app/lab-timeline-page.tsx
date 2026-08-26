@@ -27,6 +27,7 @@ type BaselineWeek = {
   spi: number;
   cpi: number;
   rolePersonDays: Record<string, number>;
+  overtimePersonDays: Record<string, number>;
   workPackagePersonDays: Record<string, number>;
 };
 
@@ -130,6 +131,7 @@ type Stakeholder = {
   projectRole: string;
   organization: string;
   group: "governance" | "core_team" | "business" | "external";
+  resourceRoleId?: string;
   expectations: string[];
   informationNeeds: string[];
   primaryCommunicationTouchpointId: string;
@@ -461,6 +463,7 @@ type MainlineData = {
     personDaysPerPersonWeek: number;
     roles: CostRole[];
     plannedNonLaborCosts: PlannedNonLaborCost[];
+    roleWorkPackagePersonDays: Record<string, Record<string, number>>;
     workPackages: WorkPackage[];
   };
   schedule: {
@@ -470,6 +473,11 @@ type MainlineData = {
     dependencyPolicy: {
       supportedTypes: string[];
       levelOfEffortAndRecurringExcludedFromCriticalPath: boolean;
+    };
+    resourceSchedulingPolicy: {
+      defaultBufferWeeks: number;
+      outsideWindowCostPerWeek: number;
+      approvedOvertime: Array<{ week: number; roleId: string; extraPersonDays: number; reason: string }>;
     };
   };
   stakeholders: {
@@ -848,6 +856,12 @@ const activityStatusLabels = {
   waiting_next_occurrence: "等待下次发生",
   completed: "已完成",
 } as const;
+const nonHumanResourceDetails: Record<string, { group: string; relatedWbsIds: string[] }> = {
+  vehicle_vendor: { group: "外部服务", relatedWbsIds: ["WBS-8.0"] },
+  security_quality: { group: "外部服务", relatedWbsIds: ["WBS-9.0", "WBS-10.0"] },
+  cloud_tools_devices: { group: "环境与工具", relatedWbsIds: ["WBS-3.0", "WBS-9.0", "WBS-10.0"] },
+  pilot_training_support: { group: "试点与支持", relatedWbsIds: ["WBS-11.0"] },
+};
 const scheduleHealthLabels: Record<SchedulePlanStatusEvent["health"], string> = {
   planning: "编制中",
   on_track: "按计划",
@@ -2140,6 +2154,130 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   ));
   const approvedCurrentReleaseCostImpactCny = approvedCurrentReleaseCostChanges.reduce((sum, change) => sum + change.impact.costCny, 0);
   const latestCostEstimateCny = mainline.workload.budgetAtCompletionCny + approvedCurrentReleaseCostImpactCny;
+  const projectCalendarRows = [
+    {
+      id: "CAL-01",
+      type: "项目基线周期",
+      window: `W${mainline.schedule.projectSchedulePlan.calendar.plannedStartWeek}–W${mainline.schedule.projectSchedulePlan.calendar.plannedFinishWeek}`,
+      rule: `每周 ${mainline.schedule.projectSchedulePlan.calendar.workDaysPerWeek} 个工作日`,
+      owner: "项目经理",
+      source: "D14",
+    },
+    {
+      id: "CAL-02",
+      type: "迭代节奏",
+      window: "W9–W28",
+      rule: "S1–S10，每两周一个迭代",
+      owner: "技术负责人",
+      source: "D14",
+    },
+    ...mainline.stakeholders.stageGates.map((gate) => ({
+      id: gate.id,
+      type: "阶段门",
+      window: `W${gate.week}`,
+      rule: gate.title,
+      owner: stakeholderById.get(gate.decisionOwner)?.title ?? gate.decisionOwner,
+      source: "D10 / D13",
+    })),
+  ];
+  const nonHumanResourcePlans = nonLaborCostRows.filter((cost) => Boolean(nonHumanResourceDetails[cost.id]));
+  const resourceBreakdownRows = [
+    ...mainline.workload.roles.map((role) => ({
+      id: `RBS-P-${role.id}`,
+      level: "人员 / 核心团队",
+      resource: role.title,
+      resourceId: role.id,
+      controlBoundary: "派工与交接见 D17；逐周容量见 D24。",
+    })),
+    ...nonHumanResourcePlans.map((resource) => ({
+      id: `RBS-N-${resource.id}`,
+      level: `非人力 / ${nonHumanResourceDetails[resource.id].group}`,
+      resource: resource.title,
+      resourceId: resource.id,
+      controlBoundary: "需求窗口见 D25；分配记录见 D11。",
+    })),
+  ];
+  const activityResourceRequirementRows = mainline.schedule.activities.map((activity) => {
+    const roleRequirements = Object.entries(activity.plannedPersonDaysByRole)
+      .filter(([, personDays]) => personDays > 0)
+      .map(([roleId, personDays]) => `${roleById.get(roleId)?.title ?? roleId} ${personDays}人日`);
+    return {
+      ...activity,
+      roleRequirements,
+      totalPersonDays: Object.values(activity.plannedPersonDaysByRole).reduce((sum, personDays) => sum + personDays, 0),
+    };
+  });
+  const nonHumanRequirementRows = nonHumanResourcePlans.map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    group: nonHumanResourceDetails[resource.id].group,
+    weeks: resource.weeks,
+    relatedWbsIds: nonHumanResourceDetails[resource.id].relatedWbsIds,
+  }));
+  const materialAllocationRows = nonHumanResourcePlans.map((resource) => {
+    const allocatedEntries = resource.entries.filter((entry) => entry.week <= selectedWeek);
+    const allocatedCny = allocatedEntries.reduce((sum, entry) => sum + entry.amountCny, 0);
+    const nextEntry = resource.entries.find((entry) => entry.week > selectedWeek);
+    return {
+      ...resource,
+      group: nonHumanResourceDetails[resource.id].group,
+      relatedWbsIds: nonHumanResourceDetails[resource.id].relatedWbsIds,
+      allocatedCny,
+      remainingCny: resource.subtotalCny - allocatedCny,
+      nextWeek: nextEntry?.week ?? null,
+      status: allocatedCny === resource.subtotalCny ? "已完成" : allocatedCny > 0 ? "部分分配" : "待分配",
+    };
+  });
+  const teamAssignmentRows = mainline.workload.roles.map((role) => {
+    const stakeholder = mainline.stakeholders.stakeholders.find((item) => item.resourceRoleId === role.id);
+    const primaryWorkPackages = Object.entries(mainline.workload.roleWorkPackagePersonDays[role.id] ?? {})
+      .filter(([, personDays]) => personDays > 0)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 3)
+      .map(([workPackageId]) => workPackageId);
+    const resourceInterrupted = role.id === "vehicle_integration" && selectedWeek >= 17;
+    const assignmentStatus = !resourceInterrupted
+      ? "已派工"
+      : selectedWeek === 17
+        ? "临时不可用"
+        : selectedWeek < 20
+          ? "替补执行中"
+          : "已恢复";
+    const handoverStatus = !resourceInterrupted
+      ? "不适用"
+      : selectedWeek === 17
+        ? "待启动"
+        : selectedWeek < 20
+          ? "结构化交接中"
+          : "交接完成";
+    return {
+      role,
+      stakeholder,
+      primaryWorkPackages,
+      assignmentStatus,
+      handoverStatus,
+      evidence: resourceInterrupted ? "ISS-004 / CR-004" : "D17 / D31",
+    };
+  });
+  const resourceCalendarRows = mainline.workload.roles.map((role) => {
+    const plannedPersonDays = weekState.rolePersonDays[role.id] ?? 0;
+    const overtimePersonDays = weekState.overtimePersonDays?.[role.id] ?? 0;
+    const isUnavailable = role.id === "vehicle_integration" && (selectedWeek === 17 || selectedWeek === 18);
+    const availablePersonDays = isUnavailable ? 0 : mainline.workload.personDaysPerPersonWeek + overtimePersonDays;
+    const balancePersonDays = availablePersonDays - plannedPersonDays;
+    return {
+      role,
+      plannedPersonDays,
+      availablePersonDays,
+      balancePersonDays,
+      status: isUnavailable ? "不可用" : balancePersonDays < 0 ? "存在缺口" : balancePersonDays === 0 ? "满载" : "有余量",
+      exception: isUnavailable
+        ? "ISS-004：W17–W18 不可用"
+        : overtimePersonDays > 0
+          ? `批准加班 ${overtimePersonDays} 人日`
+          : "无当前例外",
+    };
+  });
   const communicationRecords = [
     ...(teamCharter.effectiveWeek <= selectedWeek ? [{
       id: "COM-W1",
@@ -2795,6 +2933,41 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </div>
                         </section>
                       )}
+                      {selectedDocument.id === "D11" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <section>
+                            <span>非人力资源分配 · W{selectedWeek}</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-material-allocation-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>资源</th><th>类别</th><th>对应WBS</th><th>计划分配周</th><th>累计已分配</th><th>剩余</th><th>状态 / 下一窗口</th></tr></thead>
+                                <tbody>{materialAllocationRows.map((resource) => <tr key={resource.id}><td>{resource.id}<small>{resource.title}</small></td><td>{resource.group}</td><td>{resource.relatedWbsIds.join(" / ")}</td><td>W{resource.weeks.join(" / W")}</td><td>{formatMoney(resource.allocatedCny)}</td><td>{formatMoney(resource.remainingCny)}</td><td>{resource.status}<small>{resource.nextWeek ? `下一次 W${resource.nextWeek}` : "无后续分配"}</small></td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D12" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <div className="lab-v2-resource-metrics">
+                            <span><b>W1–W32</b>项目周期</span>
+                            <span><b>{mainline.schedule.projectSchedulePlan.calendar.workDaysPerWeek}</b>工作日 / 周</span>
+                            <span><b>10</b>双周迭代</span>
+                            <span><b>{mainline.stakeholders.stageGates.length}</b>阶段门</span>
+                          </div>
+                          <section>
+                            <span>受控项目日历</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-project-calendar-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>编号</th><th>类型</th><th>窗口</th><th>日历事项</th><th>责任人</th><th>依据</th></tr></thead>
+                                <tbody>{projectCalendarRows.map((row) => <tr key={row.id}><td>{row.id}</td><td>{row.type}</td><td>{row.window}</td><td>{row.rule}</td><td>{row.owner}</td><td>{row.source}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                            <p className="lab-v2-document-note">当前基线没有项目级停工日；个人不可用和批准加班只在 D24 资源日历维护。</p>
+                          </section>
+                        </section>
+                      )}
                       {selectedDocument.id === "D13" && (
                         <section className="lab-v2-document-data lab-v2-document-stack">
                           <section>
@@ -2924,6 +3097,20 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </section>
                         </section>
                       )}
+                      {selectedDocument.id === "D17" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <section>
+                            <span>核心团队派工 · W{selectedWeek}</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-team-assignment-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>角色 / 派工对象</th><th>所属组织</th><th>责任范围</th><th>主要WBS</th><th>生效窗口</th><th>当前状态</th><th>交接 / 依据</th></tr></thead>
+                                <tbody>{teamAssignmentRows.map((assignment) => <tr key={assignment.role.id}><td>{assignment.role.id}<small>{assignment.stakeholder?.title ?? assignment.role.title}</small></td><td>{assignment.stakeholder?.organization ?? "核心项目团队"}</td><td>{assignment.stakeholder?.projectRole ?? assignment.role.title}</td><td>{assignment.primaryWorkPackages.join(" / ")}</td><td>W1–W32</td><td>{assignment.assignmentStatus}</td><td>{assignment.handoverStatus}<small>{assignment.evidence}</small></td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                        </section>
+                      )}
                       {selectedDocument.id === "D21" && (
                         <section className="lab-v2-document-data">
                           <span>需求文件 · W{selectedWeek}</span>
@@ -2946,6 +3133,70 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                               <tbody>{requirementState.map((requirement) => <tr key={requirement.id}><td>{requirement.id}</td><td>{requirement.title}</td><td>{requirement.priority}</td><td>{requirementStatus(requirement, selectedWeek)}</td><td>{requirement.primaryWbsId ?? requirement.proposedPrimaryWbsId}</td><td>{(requirement.supportingWbsIds ?? requirement.proposedSupportingWbsIds ?? []).join("、")}</td><td>{requirement.targetRelease}</td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D23" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <section>
+                            <span>资源分解结构 · {resourceBreakdownRows.length} 项</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-resource-breakdown-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>RBS编号</th><th>层级</th><th>资源</th><th>管理边界</th></tr></thead>
+                                <tbody>{resourceBreakdownRows.map((resource) => <tr key={resource.id}><td>{resource.id}</td><td>{resource.level}</td><td>{resource.resource}<small>{resource.resourceId}</small></td><td>{resource.controlBoundary}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D24" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <div className="lab-v2-resource-metrics">
+                            <span><b>{weekState.plannedTeamPersonDays}</b>本周计划人日</span>
+                            <span><b>{resourceCalendarRows.reduce((sum, row) => sum + row.availablePersonDays, 0)}</b>本周可用人日</span>
+                            <span><b>{resourceCalendarRows.filter((row) => row.balancePersonDays < 0).length}</b>容量缺口角色</span>
+                            <span><b>{resourceCalendarRows.filter((row) => row.exception !== "无当前例外").length}</b>当前例外</span>
+                          </div>
+                          <section>
+                            <span>逐周资源容量 · 当前 W{selectedWeek}</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-resource-calendar-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>角色</th><th>计划人日</th><th>可用人日</th><th>余量 / 缺口</th><th>状态</th><th>日历例外</th></tr></thead>
+                                <tbody>{resourceCalendarRows.map((row) => <tr key={row.role.id}><td>{row.role.title}<small>{row.role.id}</small></td><td>{row.plannedPersonDays}</td><td>{row.availablePersonDays}</td><td>{row.balancePersonDays > 0 ? `+${row.balancePersonDays}` : row.balancePersonDays}</td><td>{row.status}</td><td>{row.exception}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D25" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack">
+                          <div className="lab-v2-resource-metrics">
+                            <span><b>{activityResourceRequirementRows.length}</b>活动</span>
+                            <span><b>{mainline.workload.roles.length}</b>核心角色</span>
+                            <span><b>{mainline.baselineWorkload.totalPlannedPersonDays}</b>计划人日</span>
+                            <span><b>{nonHumanRequirementRows.length}</b>非人力类别</span>
+                          </div>
+                          <section>
+                            <span>活动级人员需求</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                              <table className="lab-v2-resource-requirement-table">
+                                <colgroup><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>活动 / WBS</th><th>活动</th><th>计划窗口</th><th>角色投入</th><th>总人日</th></tr></thead>
+                                <tbody>{activityResourceRequirementRows.map((activity) => <tr key={activity.id}><td>{activity.id}<small>{activity.parentId}</small></td><td>{activity.title}</td><td>W{activity.startWeek}–W{activity.endWeek}</td><td>{activity.roleRequirements.join("；")}</td><td>{activity.totalPersonDays}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section>
+                            <span>非人力资源需求窗口</span>
+                            <div className="lab-v2-data-table-wrap">
+                              <table className="lab-v2-nonhuman-requirement-table">
+                                <colgroup><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>资源</th><th>类别</th><th>需求周</th><th>对应WBS</th></tr></thead>
+                                <tbody>{nonHumanRequirementRows.map((resource) => <tr key={resource.id}><td>{resource.id}<small>{resource.title}</small></td><td>{resource.group}</td><td>W{resource.weeks.join(" / W")}</td><td>{resource.relatedWbsIds.join(" / ")}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
                         </section>
                       )}
                       {selectedDocument.id === "D26" && (

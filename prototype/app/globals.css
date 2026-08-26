@@ -8554,10 +8554,14 @@ select {
 .lab-v2-estimate-basis-table col:nth-child(2) { width: 20%; }
 .lab-v2-estimate-basis-table col:nth-child(3) { width: 24%; }
 .lab-v2-estimate-basis-table col:nth-child(4) { width: 46%; }
-.lab-v2-cost-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.lab-v2-cost-metrics span { display: grid; gap: 4px; align-content: start; padding: 12px; color: var(--body); background: var(--soft); font-size: 10px; }
-.lab-v2-cost-metrics b { color: var(--ink); font-size: 22px; }
-.lab-v2-cost-metrics small { color: var(--muted); line-height: 1.45; }
+.lab-v2-cost-metrics,
+.lab-v2-resource-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.lab-v2-cost-metrics span,
+.lab-v2-resource-metrics span { display: grid; gap: 4px; align-content: start; padding: 12px; color: var(--body); background: var(--soft); font-size: 10px; }
+.lab-v2-cost-metrics b,
+.lab-v2-resource-metrics b { color: var(--ink); font-size: 22px; }
+.lab-v2-cost-metrics small,
+.lab-v2-resource-metrics small { color: var(--muted); line-height: 1.45; }
 .lab-v2-cost-role-table col:nth-child(1) { width: 37%; }
 .lab-v2-cost-role-table col:nth-child(2) { width: 19%; }
 .lab-v2-cost-role-table col:nth-child(3) { width: 22%; }
@@ -8578,6 +8582,48 @@ select {
 .lab-v2-communication-table col:nth-child(4) { width: 11%; }
 .lab-v2-communication-table col:nth-child(5) { width: 22%; }
 .lab-v2-communication-table col:nth-child(6) { width: 12%; }
+.lab-v2-document-data .lab-v2-material-allocation-table { min-width: 1100px; table-layout: fixed; }
+.lab-v2-material-allocation-table col:nth-child(1) { width: 20%; }
+.lab-v2-material-allocation-table col:nth-child(2) { width: 10%; }
+.lab-v2-material-allocation-table col:nth-child(3) { width: 13%; }
+.lab-v2-material-allocation-table col:nth-child(4) { width: 20%; }
+.lab-v2-material-allocation-table col:nth-child(5),
+.lab-v2-material-allocation-table col:nth-child(6) { width: 12%; }
+.lab-v2-material-allocation-table col:nth-child(7) { width: 13%; }
+.lab-v2-project-calendar-table col:nth-child(1) { width: 10%; }
+.lab-v2-project-calendar-table col:nth-child(2),
+.lab-v2-project-calendar-table col:nth-child(3) { width: 12%; }
+.lab-v2-project-calendar-table col:nth-child(4) { width: 30%; }
+.lab-v2-project-calendar-table col:nth-child(5),
+.lab-v2-project-calendar-table col:nth-child(6) { width: 18%; }
+.lab-v2-document-data .lab-v2-team-assignment-table { min-width: 1280px; table-layout: fixed; }
+.lab-v2-team-assignment-table col:nth-child(1) { width: 17%; }
+.lab-v2-team-assignment-table col:nth-child(2) { width: 13%; }
+.lab-v2-team-assignment-table col:nth-child(3) { width: 24%; }
+.lab-v2-team-assignment-table col:nth-child(4) { width: 12%; }
+.lab-v2-team-assignment-table col:nth-child(5) { width: 8%; }
+.lab-v2-team-assignment-table col:nth-child(6) { width: 11%; }
+.lab-v2-team-assignment-table col:nth-child(7) { width: 15%; }
+.lab-v2-resource-breakdown-table col:nth-child(1) { width: 14%; }
+.lab-v2-resource-breakdown-table col:nth-child(2) { width: 22%; }
+.lab-v2-resource-breakdown-table col:nth-child(3) { width: 24%; }
+.lab-v2-resource-breakdown-table col:nth-child(4) { width: 40%; }
+.lab-v2-resource-calendar-table col:nth-child(1) { width: 24%; }
+.lab-v2-resource-calendar-table col:nth-child(2),
+.lab-v2-resource-calendar-table col:nth-child(3),
+.lab-v2-resource-calendar-table col:nth-child(4) { width: 12%; }
+.lab-v2-resource-calendar-table col:nth-child(5) { width: 14%; }
+.lab-v2-resource-calendar-table col:nth-child(6) { width: 26%; }
+.lab-v2-document-data .lab-v2-resource-requirement-table { min-width: 1260px; table-layout: fixed; }
+.lab-v2-resource-requirement-table col:nth-child(1) { width: 12%; }
+.lab-v2-resource-requirement-table col:nth-child(2) { width: 18%; }
+.lab-v2-resource-requirement-table col:nth-child(3) { width: 12%; }
+.lab-v2-resource-requirement-table col:nth-child(4) { width: 48%; }
+.lab-v2-resource-requirement-table col:nth-child(5) { width: 10%; }
+.lab-v2-nonhuman-requirement-table col:nth-child(1) { width: 30%; }
+.lab-v2-nonhuman-requirement-table col:nth-child(2) { width: 18%; }
+.lab-v2-nonhuman-requirement-table col:nth-child(3) { width: 28%; }
+.lab-v2-nonhuman-requirement-table col:nth-child(4) { width: 24%; }
 .lab-v2-register-empty { margin: 0; padding: 24px; color: var(--muted); border: 1px solid var(--line); border-top: 0; }
 .lab-v2-activity-list,
 .lab-v2-scope-statement { display: grid; gap: 24px; margin-top: 28px; }
@@ -8895,7 +8941,8 @@ select {
   .lab-v2-team-charter-protocols { grid-template-columns: 1fr; }
   .lab-v2-scope-components { grid-template-columns: 1fr; }
   .lab-v2-activity-list-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lab-v2-cost-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-v2-cost-metrics,
+  .lab-v2-resource-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-v2-scope-boundaries article { grid-template-columns: 68px 1fr; }
   .lab-v2-scope-boundaries article > p,
   .lab-v2-scope-boundaries article > small { grid-column: 2; }

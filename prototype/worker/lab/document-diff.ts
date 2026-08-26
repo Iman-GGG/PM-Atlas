@@ -107,6 +107,12 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/scopeExclusions/EX-05/status", value: state.scenario.id === "scenario-3" ? "active" : "not_applicable" },
       { op: "add", path: "/scopeApproval/status", value: state.scenario.status === "closed" ? "ccb_approved" : "pending_scope_decision" },
     ];
+    case "D17": return state.scenario.id === "scenario-2" ? [...common,
+      { op: "replace", path: "/assignments/vehicle_integration/status", value: state.scenario.status === "closed" ? "restored" : "backup_active" },
+      { op: "replace", path: "/assignments/vehicle_integration/handoverStatus", value: state.scenario.status === "closed" ? "structured_handover_complete" : "structured_handover_in_progress" },
+      { op: "add", path: "/assignments/tech_lead/temporaryCoverage", value: "vehicle_interface_coordination" },
+      { op: "add", path: "/assignments/pm/approvedChangeId", value: "CR-004" },
+    ] : common;
     case "D21": return [...common,
       { op: "add", path: "/requirements/traceabilityCoveragePercent", value: state.totals.requirementsTraceabilityCoveragePercent },
     ];
@@ -114,6 +120,12 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/traceability/coveragePercent", value: state.totals.requirementsTraceabilityCoveragePercent },
       { op: "add", path: "/traceability/unauthorizedScopeWorkPersonDays", value: state.totals.unauthorizedScopeWorkPersonDays },
     ];
+    case "D24": return state.scenario.id === "scenario-2" ? [...common,
+      { op: "replace", path: "/availability/vehicle_integration/W17-W18/status", value: "unavailable" },
+      { op: "add", path: "/availability/vehicle_integration/recoveryStatus", value: state.scenario.status === "closed" ? "restored" : "backup_active" },
+      { op: "add", path: "/capacity/backend/W18/approvedOvertimePersonDays", value: 1 },
+      { op: "add", path: "/capacity/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
+    ] : common;
     case "D26": return [...common,
       { op: "add", path: "/risk/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
       { op: "add", path: "/risk/scenarioStatus", value: state.scenario.status },
