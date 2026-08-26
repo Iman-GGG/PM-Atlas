@@ -3190,7 +3190,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </div>
                           <section>
                             <span>活动级人员需求</span>
-                            <div className="lab-v2-data-table-wrap lab-v2-wide-register-wrap">
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
                               <table className="lab-v2-resource-requirement-table">
                                 <colgroup><col /><col /><col /><col /><col /></colgroup>
                                 <thead><tr><th>活动 / WBS</th><th>活动</th><th>计划窗口</th><th>角色投入</th><th>总人日</th></tr></thead>

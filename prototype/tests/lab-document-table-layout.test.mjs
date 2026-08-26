@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("fits the four compact project-file tables to the drawer canvas on desktop", async () => {
+test("fits the five compact project-file tables to the drawer canvas on desktop", async () => {
   const [timeline, styles] = await Promise.all([
     readFile(new URL("../app/lab-timeline-page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -12,6 +12,7 @@ test("fits the four compact project-file tables to the drawer canvas on desktop"
     "lab-v2-material-allocation-table",
     "lab-v2-scope-deliverables-table",
     "lab-v2-team-assignment-table",
+    "lab-v2-resource-requirement-table",
   ];
 
   for (const table of tables) {
@@ -22,6 +23,7 @@ test("fits the four compact project-file tables to the drawer canvas on desktop"
   assert.match(styles, /\.lab-v2-document-data \.lab-v2-material-allocation-table \{ min-width: 0;/);
   assert.match(styles, /\.lab-v2-scope-statement \.lab-v2-scope-deliverables-table \{ width: 100%; min-width: 0;/);
   assert.match(styles, /\.lab-v2-document-data \.lab-v2-team-assignment-table \{ min-width: 0;/);
+  assert.match(styles, /\.lab-v2-document-data \.lab-v2-resource-requirement-table \{ min-width: 0;/);
 });
 
 test("retains horizontal scrolling only at genuinely narrow widths", async () => {
@@ -38,4 +40,16 @@ test("retains horizontal scrolling only at genuinely narrow widths", async () =>
   assert.match(narrowRules, /\.lab-v2-document-data \.lab-v2-material-allocation-table \{ min-width: 720px; \}/);
   assert.match(narrowRules, /\.lab-v2-scope-statement \.lab-v2-scope-deliverables-table \{ min-width: 760px; \}/);
   assert.match(narrowRules, /\.lab-v2-document-data \.lab-v2-team-assignment-table \{ min-width: 900px; \}/);
+  assert.match(narrowRules, /\.lab-v2-document-data \.lab-v2-resource-requirement-table \{ min-width: 760px; \}/);
+});
+
+test("keeps the final project file reachable at the bottom of the drawer list", async () => {
+  const [timeline, styles] = await Promise.all([
+    readFile(new URL("../app/lab-timeline-page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(timeline, /selectedDocument\.id === "D32"/);
+  assert.match(styles, /\.lab-v2-document-layout > nav \{ display: flex; min-height: 0; flex-direction: column;/);
+  assert.match(styles, /\.lab-v2-document-list \{ flex: 1 1 auto; min-height: 0; height: auto;[^}]+padding: 0 7px 24px 0;[^}]+overflow-y: auto;/);
 });
