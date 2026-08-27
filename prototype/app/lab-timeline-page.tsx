@@ -399,6 +399,7 @@ type RiskItem = {
   id: string;
   title: string;
   owner: string;
+  ownerStakeholderId?: string;
   category: string;
   impactDimensions: string[];
   discoveredWeek: number;
@@ -408,6 +409,7 @@ type RiskItem = {
   closedWeek: number;
   responseActions: string[];
   postTreatmentResult: string;
+  severityOverride?: string;
   inherent: { probability: number; impact: number };
   residual: { probability: number; impact: number };
 };
@@ -442,6 +444,23 @@ type QualitySeries = {
   metricId: string;
   interpolation: "linear" | "step";
   anchors: Array<{ week: number; value: number | boolean }>;
+};
+
+type QualityMetricDefinition = {
+  id: string;
+  operator: "equals" | "greater_than_or_equal" | "less_than_or_equal";
+  target: number | boolean;
+  unit?: "people" | "ratio" | "seconds" | "score_out_of_5";
+  scope?: "remote_control_enabled";
+};
+
+type QualityPlan = {
+  preMeasurementState: "not_measured";
+  scopeExclusionState: "not_applicable_by_approved_scope_change";
+  hardGates: QualityMetricDefinition[];
+  performanceMetrics: QualityMetricDefinition[];
+  mainlineSeries: QualitySeries[];
+  successRule: "all_applicable_hard_gates_pass";
 };
 
 type NetworkActivity = {
@@ -509,7 +528,7 @@ type MainlineData = {
     initialRisks: RiskItem[];
     mainlineLifecycleEvents: RiskEvent[];
   };
-  quality: { mainlineSeries: QualitySeries[] };
+  quality: QualityPlan;
   baselineWorkload: {
     totalPlannedPersonDays: number;
     weeks: BaselineWeek[];
@@ -876,6 +895,60 @@ const scopeStatusLabels: Record<ScopeStatusEvent["status"], string> = {
   baselined_included: "基线纳入",
   deferred_from_v1_0: "移出 V1.0",
 };
+const qualityMetricLabels: Record<string, string> = {
+  open_high_or_critical_security_findings: "未关闭高危及严重安全发现",
+  blocker_defects: "阻断缺陷",
+  remote_control_audit_revocation_expiry_complete: "远程控制审计、撤销与凭证过期链路",
+  pilot_users_completed: "完成试点的用户",
+  vehicle_status_success_rate: "车况查询成功率",
+  vehicle_status_p95_seconds: "车况查询 P95 响应时间",
+  remote_control_success_rate: "远程控制成功率",
+  core_test_pass_rate: "核心测试通过率",
+  pilot_satisfaction: "试点满意度",
+  service_availability: "服务可用性",
+};
+const qualityMeasurementProfiles: Record<string, { method: string; ownerId: string; evidence: string }> = {
+  open_high_or_critical_security_findings: { method: "按独立安全测试发现项的严重度和关闭状态计数", ownerId: "devsecops", evidence: "D32 / 安全测试" },
+  blocker_defects: { method: "按缺陷等级统计当前未关闭阻断项", ownerId: "qa", evidence: "D32 / 缺陷记录" },
+  remote_control_audit_revocation_expiry_complete: { method: "验证审计、授权撤销和凭证过期链路是否全部通过", ownerId: "devsecops", evidence: "D32 / 安全回归" },
+  pilot_users_completed: { method: "统计完成核心流程的去重试点用户", ownerId: "operations_support", evidence: "D32 / 试点验收" },
+  vehicle_status_success_rate: { method: "车况查询成功请求占有效请求的比例", ownerId: "qa", evidence: "D32 / 性能测试" },
+  vehicle_status_p95_seconds: { method: "统计车况查询端到端响应时间 P95", ownerId: "qa", evidence: "D32 / 性能测试" },
+  remote_control_success_rate: { method: "远程控制成功请求占有效请求的比例", ownerId: "qa", evidence: "D32 / 功能回归" },
+  core_test_pass_rate: { method: "通过用例占已执行用例的比例", ownerId: "qa", evidence: "D32 / 测试轮次" },
+  pilot_satisfaction: { method: "汇总试点用户五分制问卷平均分", ownerId: "product_ba", evidence: "D32 / 试点验收" },
+  service_availability: { method: "可用服务时间占计划服务时间的比例", ownerId: "operations_support", evidence: "D32 / 运营验证" },
+};
+const qualityResultLabels = {
+  not_measured: "尚未测量",
+  not_applicable: "不适用",
+  passed: "达标",
+  failed: "未达标",
+} as const;
+const riskLifecycleLabels: Record<string, string> = {
+  identified: "已识别",
+  assessed: "已评估",
+  response_approved: "应对已批准",
+  monitoring: "监控中",
+  triggered: "已触发",
+  closed: "已关闭",
+};
+const riskControlStatusLabels: Record<string, string> = {
+  prepared: "控制已准备",
+  active_uncontrolled: "已触发 / 未受控",
+  active_partially_controlled: "部分受控",
+  active_controlled: "受控",
+  pending_execution: "待执行",
+};
+const riskImpactDimensionLabels: Record<string, string> = {
+  scope: "范围",
+  schedule: "进度",
+  cost: "成本",
+  quality: "质量",
+  resource: "资源",
+  safety: "安全",
+  stakeholder: "干系人",
+};
 const stakeholderGroupLabels: Record<Stakeholder["group"], string> = {
   governance: "治理",
   core_team: "核心团队",
@@ -893,6 +966,30 @@ function communicationTouchpointSchedule(touchpoint?: CommunicationTouchpoint): 
   if (touchpoint.weeks?.length) return `${communicationCadenceLabels[touchpoint.cadence]} · W${touchpoint.weeks.join("/W")}`;
   if (touchpoint.startWeek && touchpoint.endWeek) return `${communicationCadenceLabels[touchpoint.cadence]} · W${touchpoint.startWeek}–W${touchpoint.endWeek}`;
   return communicationCadenceLabels[touchpoint.cadence];
+}
+
+function formatQualityValue(value: number | boolean | null, unit?: QualityMetricDefinition["unit"]): string {
+  if (value === null) return qualityResultLabels.not_measured;
+  if (typeof value === "boolean") return value ? "已完成" : "未完成";
+  if (unit === "ratio") return `${(value * 100).toFixed(1)}%`;
+  if (unit === "seconds") return `${value.toFixed(1)} 秒`;
+  if (unit === "people") return `${Math.round(value)} 人`;
+  if (unit === "score_out_of_5") return `${value.toFixed(2).replace(/0$/, "")} / 5`;
+  return `${Math.round(value)} 项`;
+}
+
+function qualityTargetLabel(metric: QualityMetricDefinition): string {
+  const operator = metric.operator === "equals" ? "=" : metric.operator === "greater_than_or_equal" ? "≥" : "≤";
+  return `${operator} ${formatQualityValue(metric.target, metric.unit)}`;
+}
+
+function evaluateQualityMetric(metric: QualityMetricDefinition, value: number | boolean | null, notApplicable: boolean): keyof typeof qualityResultLabels {
+  if (notApplicable) return "not_applicable";
+  if (value === null) return "not_measured";
+  if (metric.operator === "equals") return value === metric.target ? "passed" : "failed";
+  if (typeof value !== "number" || typeof metric.target !== "number") return "failed";
+  if (metric.operator === "greater_than_or_equal") return value >= metric.target ? "passed" : "failed";
+  return value <= metric.target ? "passed" : "failed";
 }
 const managementAreas: ManagementArea[] = [
   { id: "integration", index: "01", title: "项目整合管理", shortTitle: "整合", documentIds: ["D03", "D05", "D08", "D09", "D10", "D13"] },
@@ -1014,12 +1111,17 @@ function documentStatus(document: ProjectDocument, events: DocumentEvent[], week
   return "已创建";
 }
 
-function riskSeverity(probability: number, impact: number): string {
+function riskSeverity(probability: number, impact: number, severityOverride?: string): string {
+  if (severityOverride) return "极高";
   const score = probability * impact;
   if (score >= 17) return "极高";
   if (score >= 10) return "高";
   if (score >= 5) return "中";
   return "低";
+}
+
+function latestQualityMeasurement(series: QualitySeries | undefined, week: number): { week: number; value: number | boolean } | null {
+  return series?.anchors.filter((anchor) => anchor.week <= week).at(-1) ?? null;
 }
 
 function requirementStatus(requirement: RequirementItem, week: number): string {
@@ -1733,13 +1835,28 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const riskState = useMemo(() => {
     if (!mainline) return [];
     const lifecycleById = new Map(mainline.risks.initialRisks.map((risk) => [risk.id, "identified"]));
+    const controlStatusById = new Map<string, string | null>();
+    const branchAssessmentById = new Map<string, { probability: number; impact: number }>();
     for (const event of mainline.risks.mainlineLifecycleEvents.filter((item) => item.week <= selectedWeek)) {
-      for (const riskId of event.riskIds) lifecycleById.set(riskId, event.toLifecycleState);
+      for (const riskId of event.riskIds) {
+        lifecycleById.set(riskId, event.toLifecycleState);
+        if (event.controlStatus !== undefined) controlStatusById.set(riskId, event.controlStatus ?? null);
+      }
     }
     if (branch && branchState && selectedWeek === branch.currentWeek) {
       for (const transition of branchState.riskTransitions) {
-        if (typeof transition.riskId === "string" && typeof transition.toLifecycleState === "string") {
-          lifecycleById.set(transition.riskId, transition.toLifecycleState);
+        if (typeof transition.riskId !== "string") continue;
+        const lifecycle = typeof transition.toLifecycleState === "string"
+          ? transition.toLifecycleState
+          : typeof transition.lifecycleState === "string" ? transition.lifecycleState : null;
+        if (lifecycle) lifecycleById.set(transition.riskId, lifecycle);
+        if (typeof transition.controlStatus === "string" || transition.controlStatus === null) controlStatusById.set(transition.riskId, transition.controlStatus);
+        const assessment = transition.assessmentChange ?? transition.assessment;
+        if (assessment && typeof assessment === "object") {
+          const candidate = assessment as Record<string, unknown>;
+          if (typeof candidate.probability === "number" && typeof candidate.impact === "number") {
+            branchAssessmentById.set(transition.riskId, { probability: candidate.probability, impact: candidate.impact });
+          }
         }
       }
     }
@@ -1748,7 +1865,8 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       .map((risk) => ({
         ...risk,
         lifecycle: lifecycleById.get(risk.id) ?? "identified",
-        currentAssessment: risk.responseCompletedWeek <= selectedWeek ? risk.residual : risk.inherent,
+        controlStatus: controlStatusById.get(risk.id) ?? null,
+        currentAssessment: branchAssessmentById.get(risk.id) ?? (risk.responseCompletedWeek <= selectedWeek ? risk.residual : risk.inherent),
       }));
   }, [branch, branchState, mainline, selectedWeek]);
 
@@ -2394,6 +2512,140 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     }),
   ].sort((left, right) => right.week - left.week || right.id.localeCompare(left.id));
   const visibleTestRounds = mainline.documents.testRounds.filter((testRound) => testRound.executionWeek <= selectedWeek);
+  const remoteControlScopeItem = scopeState?.productScopeItems.find((item) => item.id === "PSC-03");
+  const branchRemoteControlDeferred = Boolean(
+    branch
+    && branchState
+    && selectedWeek === branch.currentWeek
+    && branchState.scenario.id === "scenario-3"
+    && branchState.scenario.status === "closed",
+  );
+  const remoteControlApplicable = remoteControlScopeItem?.currentEvent.status !== "deferred_from_v1_0" && !branchRemoteControlDeferred;
+  const qualityMetricDefinitions = [
+    ...mainline.quality.hardGates.map((metric) => ({ ...metric, category: "硬性质量门" })),
+    ...mainline.quality.performanceMetrics.map((metric) => ({ ...metric, category: "绩效指标" })),
+  ];
+  const qualityMeasurementRows = qualityMetricDefinitions.map((metric) => {
+    const series = mainline.quality.mainlineSeries.find((item) => item.metricId === metric.id);
+    const measuredAnchor = latestQualityMeasurement(series, selectedWeek);
+    const notApplicable = metric.scope === "remote_control_enabled" && !remoteControlApplicable;
+    const result = evaluateQualityMetric(metric, measuredAnchor?.value ?? null, notApplicable);
+    const evidenceRound = measuredAnchor
+      ? visibleTestRounds.filter((testRound) => testRound.executionWeek <= measuredAnchor.week).at(-1)
+      : null;
+    const profile = qualityMeasurementProfiles[metric.id];
+    return {
+      ...metric,
+      title: qualityMetricLabels[metric.id] ?? metric.id,
+      profile,
+      measuredWeek: notApplicable ? branchRemoteControlDeferred ? selectedWeek : remoteControlScopeItem?.currentEvent.week ?? null : measuredAnchor?.week ?? null,
+      actual: notApplicable ? null : measuredAnchor?.value ?? null,
+      result,
+      evidence: notApplicable
+        ? branchRemoteControlDeferred ? "个人分支 D16 · 批准远程控制移出 V1.0" : `D16 · ${remoteControlScopeItem?.currentEvent.evidence ?? "批准范围变更"}`
+        : [profile?.evidence, evidenceRound?.id].filter(Boolean).join(" / "),
+    };
+  });
+  const qualityResultCounts = Object.fromEntries(Object.keys(qualityResultLabels).map((result) => [
+    result,
+    qualityMeasurementRows.filter((row) => row.result === result).length,
+  ])) as Record<keyof typeof qualityResultLabels, number>;
+  const qualityReportWeeks = [...new Set([14, 20, 28, 32, selectedWeek])]
+    .filter((week) => week >= 14 && week <= selectedWeek)
+    .sort((left, right) => left - right);
+  const qualityTrendRows = qualityReportWeeks.map((week) => {
+    const remoteControlStatus = week === selectedWeek && branchRemoteControlDeferred ? "deferred_from_v1_0" : [...(mainline.documents.projectScopeStatement.productScopeItems.find((item) => item.id === "PSC-03")?.statusEvents ?? [])]
+      .reverse()
+      .find((event) => event.week <= week)?.status;
+    const results = qualityMetricDefinitions.map((metric) => evaluateQualityMetric(
+      metric,
+      latestQualityMeasurement(mainline.quality.mainlineSeries.find((series) => series.metricId === metric.id), week)?.value ?? null,
+      metric.scope === "remote_control_enabled" && remoteControlStatus === "deferred_from_v1_0",
+    ));
+    const seriousOpenIssues = mainline.documents.issues.filter((issue) => (
+      issue.discoveredWeek <= week
+      && issue.resolvedWeek > week
+      && (issue.severity === "high" || issue.severity === "critical")
+      && ["quality", "performance", "security"].includes(issue.category)
+    )).length;
+    return {
+      week,
+      measured: results.filter((result) => result === "passed" || result === "failed").length,
+      passed: results.filter((result) => result === "passed").length,
+      failed: results.filter((result) => result === "failed").length,
+      notApplicable: results.filter((result) => result === "not_applicable").length,
+      seriousOpenIssues,
+    };
+  });
+  const qualityReportMetricFailures = qualityMeasurementRows.filter((metric) => metric.result === "failed");
+  const qualityReportIssueFailures = visibleIssues.filter((issue) => (
+    issue.resolvedWeek > selectedWeek
+    && (issue.severity === "high" || issue.severity === "critical")
+    && ["quality", "performance", "security"].includes(issue.category)
+  ));
+  const qualityReleaseBlockingIssues = qualityReportIssueFailures.filter((issue) => !(issue.id === "ISS-007" && !remoteControlApplicable));
+  const qualityHardGateRows = qualityMeasurementRows.filter((metric) => metric.category === "硬性质量门");
+  const qualityHardGateEvidenceMissing = qualityHardGateRows.some((metric) => metric.result === "not_measured");
+  const qualityHardGateFailed = qualityHardGateRows.some((metric) => metric.result === "failed");
+  const latestQualityTestRound = visibleTestRounds.at(-1) ?? null;
+  const qualityReleaseRecommendation = qualityReleaseBlockingIssues.length || qualityHardGateFailed || latestQualityTestRound?.result === "failed_gate"
+    ? "存在未关闭严重问题或未通过硬性质量门；受影响能力不得发布，完成修复和复测后重新评审。"
+    : qualityHardGateEvidenceMissing
+      ? "硬性质量门证据尚未齐备；可以继续计划内开发与验证，但不能形成发布批准。"
+      : !remoteControlApplicable
+        ? "只读车况能力可按批准范围发布；远程控制保持关闭，并转入 V1.1 完成安全修复和复测。"
+        : qualityReportMetricFailures.length
+          ? "硬性质量门已通过；其余未达标指标继续改进并在下一阶段门复核。"
+          : selectedWeek >= 32
+            ? "批准范围满足质量门和上线验证要求，可完成正式上线、运营移交与收尾。"
+            : "当前批准范围达到阶段质量要求，可进入下一阶段。";
+  const qualityReportStatus = qualityReleaseBlockingIssues.length || qualityHardGateFailed || latestQualityTestRound?.result === "failed_gate"
+    ? "阻断受影响能力"
+    : qualityHardGateEvidenceMissing ? "证据待齐" : !remoteControlApplicable ? "按批准范围通过" : "阶段通过";
+  const qualityResidualRisks = riskState
+    .filter((risk) => risk.lifecycle !== "closed" && risk.impactDimensions.some((dimension) => dimension === "quality" || dimension === "safety"))
+    .sort((left, right) => right.currentAssessment.probability * right.currentAssessment.impact - left.currentAssessment.probability * left.currentAssessment.impact)
+    .slice(0, 3);
+  const openRiskRows = riskState
+    .filter((risk) => risk.lifecycle !== "closed")
+    .sort((left, right) => {
+      const severityDifference = Number(Boolean(right.severityOverride)) - Number(Boolean(left.severityOverride));
+      return severityDifference || right.currentAssessment.probability * right.currentAssessment.impact - left.currentAssessment.probability * left.currentAssessment.impact;
+    });
+  const highOpenRiskCount = openRiskRows.filter((risk) => ["高", "极高"].includes(riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride))).length;
+  const criticalOpenRiskCount = openRiskRows.filter((risk) => riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride) === "极高").length;
+  const riskReportWeeks = [...new Set([4, 8, 12, 20, 28, 32, selectedWeek])]
+    .filter((week) => week >= 4 && week <= selectedWeek)
+    .sort((left, right) => left - right);
+  const riskTrendRows = riskReportWeeks.map((week) => {
+    const rows = week === selectedWeek ? riskState : (() => {
+      const lifecycleById = new Map(mainline.risks.initialRisks.map((risk) => [risk.id, "identified"]));
+      for (const event of mainline.risks.mainlineLifecycleEvents.filter((item) => item.week <= week)) {
+        for (const riskId of event.riskIds) lifecycleById.set(riskId, event.toLifecycleState);
+      }
+      return mainline.risks.initialRisks.filter((risk) => risk.discoveredWeek <= week).map((risk) => ({
+        ...risk,
+        lifecycle: lifecycleById.get(risk.id) ?? "identified",
+        currentAssessment: risk.responseCompletedWeek <= week ? risk.residual : risk.inherent,
+      }));
+    })();
+    const open = rows.filter((risk) => risk.lifecycle !== "closed");
+    return {
+      week,
+      identified: rows.length,
+      open: open.length,
+      high: open.filter((risk) => ["高", "极高"].includes(riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride))).length,
+      medium: open.filter((risk) => riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride) === "中").length,
+      closed: rows.length - open.length,
+    };
+  });
+  const riskReportConclusion = criticalOpenRiskCount
+    ? "存在极高风险，必须升级治理并维持相关安全与质量门。"
+    : highOpenRiskCount
+      ? "存在高风险，继续执行已批准应对并跟踪其对阶段门的影响。"
+      : openRiskRows.length
+        ? "剩余风险处于中低等级，按既定责任持续监控。"
+        : "所有已识别风险均已关闭，可按项目收尾程序归档。";
   const requirementDetailItems = requirementState.filter((requirement) => requirementPriorityFilter === "ALL" || requirement.priority === requirementPriorityFilter);
   const riskDetailItems = riskState.filter((risk) => {
     if (riskDetailFilter === "OPEN") return risk.lifecycle !== "closed";
@@ -3244,6 +3496,97 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                           </section>
                         </section>
                       )}
+                      {selectedDocument.id === "D18" && (
+                        <section className="lab-v2-document-data lab-v2-quality-document">
+                          <span>质量控制测量结果 · W{selectedWeek}</span>
+                          <div className="lab-v2-quality-metrics">
+                            <span><b>{qualityMeasurementRows.length - qualityResultCounts.not_measured - qualityResultCounts.not_applicable}</b>已测量</span>
+                            <span><b>{qualityResultCounts.passed}</b>达标</span>
+                            <span><b>{qualityResultCounts.failed}</b>未达标</span>
+                            <span><b>{qualityResultCounts.not_applicable}</b>不适用</span>
+                          </div>
+                          <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
+                            <table className="lab-v2-quality-result-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>指标</th><th>类型</th><th>实测值 / 周</th><th>批准阈值</th><th>结论</th><th>责任与证据</th></tr></thead>
+                              <tbody>{qualityMeasurementRows.map((metric) => <tr key={metric.id} className={metric.result}>
+                                <td><strong>{metric.title}</strong><small>{metric.id}</small></td>
+                                <td>{metric.category}</td>
+                                <td>{metric.result === "not_applicable" ? "范围变更后不适用" : formatQualityValue(metric.actual, metric.unit)}<small>{metric.measuredWeek ? `W${metric.measuredWeek}` : "—"}</small></td>
+                                <td>{qualityTargetLabel(metric)}</td>
+                                <td><strong>{qualityResultLabels[metric.result]}</strong></td>
+                                <td>{stakeholderById.get(metric.profile?.ownerId ?? "")?.title ?? metric.profile?.ownerId}<small>{metric.evidence || "D32"}</small></td>
+                              </tr>)}</tbody>
+                            </table>
+                          </div>
+                          <p className="lab-v2-document-note">这里只记录测量值、阈值和结论；测试范围与执行明细见 D32，综合质量判断见 D20。</p>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D19" && (
+                        <section className="lab-v2-document-data lab-v2-quality-document">
+                          <span>质量测量指标 · {selectedWeek < 8 ? "W6 创建 / 待 W8 批准" : "W8 已批准"}</span>
+                          <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
+                            <table className="lab-v2-quality-metric-table">
+                              <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                              <thead><tr><th>指标</th><th>类型</th><th>测量口径</th><th>批准阈值</th><th>责任人</th><th>适用范围 / 证据</th></tr></thead>
+                              <tbody>{qualityMetricDefinitions.map((metric) => {
+                                const profile = qualityMeasurementProfiles[metric.id];
+                                return <tr key={metric.id}>
+                                  <td><strong>{qualityMetricLabels[metric.id] ?? metric.id}</strong><small>{metric.id}</small></td>
+                                  <td>{metric.category}</td>
+                                  <td>{profile?.method}</td>
+                                  <td><strong>{qualityTargetLabel(metric)}</strong></td>
+                                  <td>{stakeholderById.get(profile?.ownerId ?? "")?.title ?? profile?.ownerId}</td>
+                                  <td>{metric.scope === "remote_control_enabled" ? "仅远程控制纳入批准范围时" : "全项目"}<small>{profile?.evidence}</small></td>
+                                </tr>;
+                              })}</tbody>
+                            </table>
+                          </div>
+                          <p className="lab-v2-document-note">D19 保存批准的测量口径与阈值；测试用例和执行明细统一保存在 D32。</p>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D20" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-quality-report">
+                          <div className="lab-v2-report-metrics">
+                            <span><b>{qualityReportStatus}</b>当前质量结论</span>
+                            <span><b>{qualityResultCounts.passed}</b>达标指标</span>
+                            <span><b>{qualityReportMetricFailures.length + qualityReportIssueFailures.length}</b>需处理项</span>
+                            <span><b>{qualityResidualRisks.length}</b>开放质量 / 安全风险</span>
+                          </div>
+                          <section>
+                            <span>阶段质量趋势</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
+                              <table className="lab-v2-quality-trend-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>报告周</th><th>已测量</th><th>达标</th><th>未达标</th><th>范围不适用</th><th>未关闭严重问题</th></tr></thead>
+                                <tbody>{qualityTrendRows.map((row) => <tr key={row.week}><td>W{row.week}</td><td>{row.measured}</td><td>{row.passed}</td><td>{row.failed}</td><td>{row.notApplicable}</td><td>{row.seriousOpenIssues}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <div className="lab-v2-report-grid">
+                            <section>
+                              <span>当前未通过项</span>
+                              {qualityReportMetricFailures.length || qualityReportIssueFailures.length ? <ol className="lab-v2-report-list">
+                                {qualityReportMetricFailures.map((metric) => <li key={metric.id}><b>{metric.id} · {metric.title}</b><p>{formatQualityValue(metric.actual, metric.unit)} / 阈值 {qualityTargetLabel(metric)}</p><small>D18 · W{metric.measuredWeek ?? selectedWeek}</small></li>)}
+                                {qualityReportIssueFailures.map((issue) => <li key={issue.id}><b>{issue.id} · {issue.title}</b><p>{issue.severity === "critical" ? "严重" : "高"}级问题，计划 W{issue.targetResolutionWeek} 完成处置。</p><small>D08 · {stakeholderById.get(issue.ownerStakeholderId)?.title ?? issue.ownerStakeholderId}</small></li>)}
+                              </ol> : <p className="lab-v2-register-empty">当前没有未通过指标或未关闭严重质量问题。</p>}
+                            </section>
+                            <section>
+                              <span>残余风险</span>
+                              {qualityResidualRisks.length ? <ol className="lab-v2-report-list">
+                                {qualityResidualRisks.map((risk) => <li key={risk.id}><b>{risk.id} · {risk.title}</b><p>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride)} · {risk.impactDimensions.map((dimension) => riskImpactDimensionLabels[dimension] ?? dimension).join("、")}</p><small>D26 · {riskLifecycleLabels[risk.lifecycle] ?? risk.lifecycle} · {risk.controlStatus ? riskControlStatusLabels[risk.controlStatus] ?? risk.controlStatus : "持续监控"}</small></li>)}
+                              </ol> : <p className="lab-v2-register-empty">当前没有未关闭的质量或安全风险。</p>}
+                            </section>
+                          </div>
+                          <section className="lab-v2-report-conclusion">
+                            <span>发布建议</span>
+                            <strong>{qualityReportStatus}</strong>
+                            <p>{qualityReleaseRecommendation}</p>
+                            <small>依据：D18 测量结果 / D19 批准阈值 / D08 问题状态 / D16 范围状态 / D26 风险状态 / D32 最近测试结论</small>
+                          </section>
+                          <p className="lab-v2-document-note">D20 只汇总趋势、例外、残余风险和发布建议，不复制 D18 的完整测量表或 D32 的测试执行明细。</p>
+                        </section>
+                      )}
                       {selectedDocument.id === "D21" && (
                         <section className="lab-v2-document-data">
                           <span>需求文件 · W{selectedWeek}</span>
@@ -3339,9 +3682,46 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                             <table className="lab-v2-risk-table">
                               <colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup>
                               <thead><tr><th>编号</th><th>风险</th><th>等级</th><th>影响范围</th><th>发现</th><th>执行措施</th><th>负责人</th><th>关闭</th><th>处理后结果</th></tr></thead>
-                              <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.impactDimensions.join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
+                              <tbody>{riskState.map((risk) => <tr key={risk.id}><td>{risk.id}</td><td>{risk.title}</td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride)}</td><td>{risk.impactDimensions.map((dimension) => riskImpactDimensionLabels[dimension] ?? dimension).join("、")}</td><td>W{risk.discoveredWeek}</td><td>{risk.responseActions.join("；")}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? `W${risk.closedWeek}` : "—"}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : "持续监控中"}</td></tr>)}</tbody>
                             </table>
                           </div>
+                        </section>
+                      )}
+                      {selectedDocument.id === "D27" && (
+                        <section className="lab-v2-document-data lab-v2-document-stack lab-v2-risk-report">
+                          <div className="lab-v2-report-metrics">
+                            <span><b>{riskState.length}</b>已识别风险</span>
+                            <span><b>{openRiskRows.length}</b>当前开放</span>
+                            <span><b>{highOpenRiskCount}</b>高 / 极高</span>
+                            <span><b>{riskState.length - openRiskRows.length}</b>已关闭</span>
+                          </div>
+                          <section>
+                            <span>阶段风险趋势</span>
+                            <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
+                              <table className="lab-v2-risk-trend-table">
+                                <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>报告周</th><th>累计识别</th><th>当前开放</th><th>高 / 极高</th><th>中</th><th>已关闭</th></tr></thead>
+                                <tbody>{riskTrendRows.map((row) => <tr key={row.week}><td>W{row.week}</td><td>{row.identified}</td><td>{row.open}</td><td>{row.high}</td><td>{row.medium}</td><td>{row.closed}</td></tr>)}</tbody>
+                              </table>
+                            </div>
+                          </section>
+                          <section>
+                            <span>当前最高暴露项</span>
+                            {openRiskRows.length ? <div className="lab-v2-data-table-wrap lab-v2-fit-table-wrap">
+                              <table className="lab-v2-risk-focus-table">
+                                <colgroup><col /><col /><col /><col /><col /></colgroup>
+                                <thead><tr><th>风险</th><th>等级 / 分值</th><th>状态</th><th>主要影响</th><th>负责人 / 当前重点</th></tr></thead>
+                                <tbody>{openRiskRows.slice(0, 3).map((risk) => <tr key={risk.id}><td>{risk.id}<small>{risk.title}</small></td><td><strong>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride)}</strong><small>{risk.currentAssessment.probability * risk.currentAssessment.impact}</small></td><td>{riskLifecycleLabels[risk.lifecycle] ?? risk.lifecycle}<small>{risk.controlStatus ? riskControlStatusLabels[risk.controlStatus] ?? risk.controlStatus : "持续监控"}</small></td><td>{risk.impactDimensions.map((dimension) => riskImpactDimensionLabels[dimension] ?? dimension).join("、")}</td><td>{risk.owner}<small>{risk.responseActions[0]}</small></td></tr>)}</tbody>
+                              </table>
+                            </div> : <p className="lab-v2-register-empty">当前没有开放风险。</p>}
+                          </section>
+                          <section className="lab-v2-report-conclusion">
+                            <span>整体风险结论</span>
+                            <strong>{criticalOpenRiskCount ? "需治理升级" : highOpenRiskCount ? "高风险受控跟踪" : openRiskRows.length ? "持续监控" : "可归档"}</strong>
+                            <p>{riskReportConclusion}</p>
+                            <small>当前进度预测 W{forecastCompletionWeek} · 依据 D26 风险状态、D08 问题状态与 D29 进度预测</small>
+                          </section>
+                          <p className="lab-v2-document-note">D27 只汇总风险趋势、最高暴露项和整体结论；风险原因、应对措施及逐项历史保留在 D26。</p>
                         </section>
                       )}
                       {selectedDocument.id === "D28" && (

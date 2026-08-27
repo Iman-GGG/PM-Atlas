@@ -113,6 +113,14 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/assignments/tech_lead/temporaryCoverage", value: "vehicle_interface_coordination" },
       { op: "add", path: "/assignments/pm/approvedChangeId", value: "CR-004" },
     ] : common;
+    case "D20": return state.scenario.id === "scenario-3" ? [...common,
+      { op: "replace", path: "/qualityGates/remote_control/result", value: "failed_blocked" },
+      { op: "replace", path: "/qualityGates/read_only_vehicle_status/result", value: "passed" },
+      { op: "replace", path: "/releaseScope/remote_control/status", value: "deferred_from_v1_0" },
+      { op: "replace", path: "/releaseScope/read_only_vehicle_status/status", value: "approved_for_release" },
+      { op: "add", path: "/releaseRecommendation", value: "release_read_only_on_schedule_disable_remote_control" },
+      { op: "add", path: "/residualRisk/remoteControl", value: "deferred_until_security_gate_passes" },
+    ] : common;
     case "D21": return [...common,
       { op: "add", path: "/requirements/traceabilityCoveragePercent", value: state.totals.requirementsTraceabilityCoveragePercent },
     ];
@@ -130,6 +138,32 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
       { op: "add", path: "/risk/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
       { op: "add", path: "/risk/scenarioStatus", value: state.scenario.status },
     ];
+    case "D27": {
+      const latestTransitions = new Map<string, (typeof state.riskTransitions)[number]>();
+      for (const transition of state.riskTransitions) {
+        if (typeof transition.riskId === "string") latestTransitions.set(transition.riskId, transition);
+      }
+      const riskOperations = [...latestTransitions].flatMap(([riskId, transition]): JsonPatchOperation[] => {
+        const path = `/riskSummary/current/${jsonPointerSegment(riskId)}`;
+        const lifecycle = typeof transition.toLifecycleState === "string"
+          ? transition.toLifecycleState
+          : typeof transition.lifecycleState === "string" ? transition.lifecycleState : null;
+        const operations: JsonPatchOperation[] = [];
+        if (lifecycle) operations.push({ op: "replace", path: `${path}/lifecycleState`, value: lifecycle });
+        if (typeof transition.controlStatus === "string") operations.push({ op: "replace", path: `${path}/controlStatus`, value: transition.controlStatus });
+        return operations;
+      });
+      const managementConclusionByScenario: Record<string, string> = {
+        "scenario-1": "controlled_scope_change_no_current_baseline_impact",
+        "scenario-2": "controlled_one_week_delay_quality_first",
+        "scenario-3": "safe_minimum_scope_delivered_on_schedule",
+      };
+      return [...common,
+        { op: "add", path: "/riskSummary/forecastCompletionWeek", value: state.performance.forecastCompletionWeek },
+        { op: "add", path: "/riskSummary/managementConclusion", value: managementConclusionByScenario[state.scenario.id] ?? "continue_monitoring" },
+        ...riskOperations,
+      ];
+    }
     case "D28": return [...common,
       { op: "replace", path: "/progress/dataDateWeek", value: state.week },
       { op: "replace", path: "/progress/spi", value: state.performance.spi },
