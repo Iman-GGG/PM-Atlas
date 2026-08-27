@@ -1,10 +1,10 @@
 import type { InternalBranchState } from "./settle-round";
 
-export type JsonPatchOperation = {
-  op: "add" | "replace";
-  path: string;
-  value: string | number | boolean;
-};
+export type JsonPatchValue = string | number | boolean | null;
+
+export type JsonPatchOperation =
+  | { op: "add" | "replace"; path: string; value: JsonPatchValue }
+  | { op: "remove"; path: string };
 
 function jsonPointerSegment(value: string): string {
   return value.replace(/~/g, "~0").replace(/\//g, "~1");
@@ -151,6 +151,7 @@ export function buildDocumentPatch(documentId: string, state: InternalBranchStat
         const operations: JsonPatchOperation[] = [];
         if (lifecycle) operations.push({ op: "replace", path: `${path}/lifecycleState`, value: lifecycle });
         if (typeof transition.controlStatus === "string") operations.push({ op: "replace", path: `${path}/controlStatus`, value: transition.controlStatus });
+        if (transition.controlStatus === null) operations.push({ op: "remove", path: `${path}/controlStatus` });
         return operations;
       });
       const managementConclusionByScenario: Record<string, string> = {

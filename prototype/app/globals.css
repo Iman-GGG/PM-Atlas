@@ -8442,6 +8442,36 @@ select {
 .lab-v2-document-summary dl > div { display: grid; grid-template-columns: 130px 1fr; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .lab-v2-document-summary dt { color: var(--muted); }
 .lab-v2-document-summary dd { margin: 0; font-weight: 600; }
+.lab-v2-document-field-diff { margin-top: 28px; border: 1px solid var(--ink); }
+.lab-v2-document-field-diff > header { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 14px; border-bottom: 1px solid var(--ink); }
+.lab-v2-document-field-diff > header > div { display: grid; min-width: 0; gap: 3px; }
+.lab-v2-document-field-diff > header span { font-family: var(--font-geist-mono), monospace; font-size: 8px; font-weight: 800; }
+.lab-v2-document-field-diff > header strong { font-size: 16px; }
+.lab-v2-document-field-diff > header small { color: var(--muted); font-size: 9px; }
+.lab-v2-document-field-diff > header dl { display: flex; flex: 0 0 auto; gap: 4px; margin: 0; }
+.lab-v2-document-field-diff > header dl div { display: grid; min-width: 48px; padding: 7px 9px; text-align: center; background: var(--soft); }
+.lab-v2-document-field-diff > header dt { font: 800 14px/1 var(--font-geist-mono), monospace; }
+.lab-v2-document-field-diff > header dd { margin: 3px 0 0; color: var(--muted); font-size: 8px; }
+.lab-v2-document-field-diff-table .heading,
+.lab-v2-document-field-diff-table article { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(0, 1fr) 34px minmax(0, 1fr); align-items: stretch; }
+.lab-v2-document-field-diff-table .heading { color: var(--muted); background: var(--soft); font-size: 8px; font-weight: 800; }
+.lab-v2-document-field-diff-table .heading span { padding: 8px 10px; }
+.lab-v2-document-field-diff-table article { border-top: 1px solid var(--line); }
+.lab-v2-document-field-diff-table article:first-of-type { border-top: 0; }
+.lab-v2-document-field-diff-table article > div { min-width: 0; padding: 11px 10px; }
+.lab-v2-document-field-diff-table .field { display: grid; align-content: start; gap: 3px; }
+.lab-v2-document-field-diff-table .field b { overflow-wrap: anywhere; font-size: 10px; }
+.lab-v2-document-field-diff-table .field code { overflow-wrap: anywhere; color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 7px; }
+.lab-v2-document-field-diff-table .field small { color: var(--muted); font-size: 8px; }
+.lab-v2-document-field-diff-table .value { display: grid; align-content: center; gap: 4px; border-left: 1px solid var(--line); }
+.lab-v2-document-field-diff-table .value small { color: var(--muted); font-size: 8px; }
+.lab-v2-document-field-diff-table .value strong { overflow-wrap: anywhere; font-size: 10px; line-height: 1.45; }
+.lab-v2-document-field-diff-table .value em { width: fit-content; padding: 3px 5px; color: var(--paper); background: var(--ink); font-size: 7px; font-style: normal; font-weight: 800; }
+.lab-v2-document-field-diff-table article > i { display: grid; place-items: center; color: var(--muted); border-left: 1px solid var(--line); font-family: var(--font-geist-mono), monospace; font-size: 14px; font-style: normal; font-weight: 800; }
+.lab-v2-document-field-diff-table article.added > i { color: var(--ink); }
+.lab-v2-document-field-diff-table article.removed .branch strong { color: var(--muted); text-decoration: line-through; }
+.lab-v2-document-field-diff-empty { margin: 0; padding: 24px 14px; color: var(--muted); text-align: center; }
+.lab-v2-document-field-diff > p { margin: 0; padding: 9px 14px; color: var(--muted); border-top: 1px solid var(--line); font-size: 8px; line-height: 1.45; }
 .lab-v2-data-table-wrap { overflow-x: hidden; border: 1px solid var(--line); }
 .lab-v2-document-data table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
 .lab-v2-document-data .lab-v2-requirement-table { min-width: 0; table-layout: fixed; }
@@ -9042,6 +9072,12 @@ select {
   .lab-v2-document-layout { grid-template-columns: 1fr; overflow-y: auto; }
   .lab-v2-document-layout > nav { height: 310px; border-right: 0; border-bottom: 1px solid var(--line); }
   .lab-v2-document-layout > article { height: auto; padding-left: 0; }
+  .lab-v2-document-field-diff > header { align-items: start; flex-direction: column; }
+  .lab-v2-document-field-diff-table .heading { display: none; }
+  .lab-v2-document-field-diff-table article { grid-template-columns: 1fr; }
+  .lab-v2-document-field-diff-table .value,
+  .lab-v2-document-field-diff-table article > i { border-top: 1px solid var(--line); border-left: 0; }
+  .lab-v2-document-field-diff-table article > i { min-height: 28px; }
   .lab-v2-team-charter-values,
   .lab-v2-team-charter-rules,
   .lab-v2-team-charter-grid,

@@ -38,7 +38,8 @@ import {
   type LabD1,
 } from "./repository";
 import { projectStoredBranchState, settleRound } from "./settle-round";
-import { buildDocumentPatch } from "./document-diff";
+import { compareDocumentPatches } from "./document-comparison";
+import { buildDocumentPatch, type JsonPatchOperation } from "./document-diff";
 
 export type LabApiEnv = {
   DB?: LabD1;
@@ -938,12 +939,23 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to read a project branch."));
     const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
     if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    const runtime = findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash);
+    if (!runtime) return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
     const deltas = await readDocumentDeltas(env.DB!, branch.id, parts[5]);
+    const patches = deltas.map((delta) => ({ ...delta, operations: parseStoredJson<JsonPatchOperation[]>(delta.patchJson, []) }));
+    const mainlineWeek = Math.min(branch.currentWeek, runtime.totalWeeks);
+    const fields = compareDocumentPatches(parts[5], runtime, mainlineWeek, patches);
     return withPrivateCache(jsonResponse({
       documentId: parts[5],
-      mainlineWeek: branch.currentWeek,
+      mainlineWeek,
       branchWeek: branch.currentWeek,
-      patches: deltas.map((delta) => ({ ...delta, operations: parseStoredJson<unknown[]>(delta.patchJson, []) })),
+      patches,
+      fields,
+      summary: {
+        added: fields.filter((field) => field.changeType === "added").length,
+        modified: fields.filter((field) => field.changeType === "modified").length,
+        removed: fields.filter((field) => field.changeType === "removed").length,
+      },
     }));
   }
   if (parts.length === 5 && parts[2] === "branches" && parts[4] === "comparison" && request.method === "GET") {

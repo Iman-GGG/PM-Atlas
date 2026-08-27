@@ -667,7 +667,24 @@ type RoundResult = {
   idempotentReplay: boolean;
 };
 
-type DocumentPatch = { roundNumber: number; week: number; reason: string; operations: Array<{ op: string; path: string; value: string | number | boolean }> };
+type DocumentPatch = { roundNumber: number; week: number; reason: string; operations: Array<{ op: "add" | "replace" | "remove"; path: string; value?: string | number | boolean | null }> };
+type DocumentFieldSide = { exists: boolean; resolved: boolean; value: string | number | boolean | null };
+type DocumentFieldComparison = {
+  path: string;
+  changeType: "added" | "modified" | "removed";
+  roundNumber: number;
+  week: number;
+  reason: string;
+  mainline: DocumentFieldSide;
+  branch: DocumentFieldSide;
+};
+type DocumentDiffResponse = {
+  mainlineWeek: number;
+  branchWeek: number;
+  patches: DocumentPatch[];
+  fields: DocumentFieldComparison[];
+  summary: { added: number; modified: number; removed: number };
+};
 type BranchComparison = {
   forkWeek: number; currentWeek: number; outcomeClassification: string | null;
   mainline: { spi: number; cpi: number; forecastCompletionWeek: number };
@@ -990,6 +1007,139 @@ function evaluateQualityMetric(metric: QualityMetricDefinition, value: number | 
   if (typeof value !== "number" || typeof metric.target !== "number") return "failed";
   if (metric.operator === "greater_than_or_equal") return value >= metric.target ? "passed" : "failed";
   return value <= metric.target ? "passed" : "failed";
+}
+const documentDiffChangeLabels: Record<DocumentFieldComparison["changeType"], string> = {
+  added: "新增",
+  modified: "修改",
+  removed: "删除",
+};
+const documentDiffPathLabels: Record<string, string> = {
+  assumptions: "假设",
+  status: "状态",
+  branchEvidence: "分支证据",
+  changeControl: "变更控制",
+  openItems: "开放事项",
+  scopeControlViolation: "范围控制违规",
+  lessons: "经验教训",
+  title: "标题",
+  recommendation: "建议",
+  outcomeClassification: "路径结论",
+  milestones: "里程碑",
+  currentForecastWeek: "当前预测周",
+  forecastBasis: "预测依据",
+  releaseScope: "发布范围",
+  communication: "沟通",
+  overdueItems: "逾期事项",
+  scheduleStatus: "进度状态",
+  dataDateWeek: "数据日期周",
+  spi: "SPI",
+  cpi: "CPI",
+  forecastCompletionWeek: "预测完工周",
+  forecastVarianceWeeks: "预测偏差周",
+  scheduleBaseline: "进度基线",
+  finishWeek: "完工周",
+  changeStatus: "变更状态",
+  activities: "活动",
+  forecastStatus: "预测状态",
+  recoveryPlan: "恢复计划",
+  strategy: "策略",
+  scopeBaseline: "范围基线",
+  version: "版本",
+  productScope: "产品范围",
+  scopeExclusions: "范围排除项",
+  scopeApproval: "范围审批",
+  assignments: "团队派工",
+  handoverStatus: "交接状态",
+  temporaryCoverage: "临时覆盖",
+  approvedChangeId: "批准变更编号",
+  qualityGates: "质量门",
+  result: "结论",
+  residualRisk: "残余风险",
+  remoteControl: "远程控制",
+  releaseRecommendation: "发布建议",
+  requirements: "需求",
+  traceabilityCoveragePercent: "追踪覆盖率",
+  traceability: "需求追踪",
+  unauthorizedScopeWorkPersonDays: "未授权范围工作人日",
+  availability: "可用性",
+  recoveryStatus: "恢复状态",
+  capacity: "容量",
+  approvedOvertimePersonDays: "批准加班人日",
+  risk: "风险",
+  scenarioStatus: "情景状态",
+  riskSummary: "风险报告",
+  current: "当前状态",
+  lifecycleState: "生命周期",
+  controlStatus: "控制状态",
+  managementConclusion: "管理结论",
+  progress: "进度数据",
+  cumulativePlannedValueCny: "累计 PV",
+  cumulativeEarnedValueCny: "累计 EV",
+  cumulativeActualCostCny: "累计 AC",
+  forecast: "进度预测",
+  completionWeek: "预测完工周",
+  varianceWeeks: "预测偏差周",
+  basis: "预测依据",
+  stakeholders: "干系人",
+  currentEngagement: "当前参与度",
+  engagement: "参与度",
+  overdueCommunicationItems: "逾期沟通事项",
+};
+const documentDiffValueLabels: Record<string, string> = {
+  invalidated: "已失效",
+  validated: "已验证",
+  open: "开放",
+  closed: "已关闭",
+  active: "生效",
+  not_applicable: "不适用",
+  achieved_with_conditions: "有条件达成",
+  at_risk: "存在风险",
+  recovery_plan_active: "恢复计划执行中",
+  unchanged: "未变更",
+  baselined_included: "基线纳入",
+  deferred_from_v1_0: "移出 V1.0",
+  ccb_approved: "CCB 已批准",
+  pending_scope_decision: "等待范围决策",
+  assigned: "已派工",
+  temporarily_unavailable: "临时不可用",
+  restored: "已恢复",
+  backup_active: "替补生效",
+  pending_start: "待启动",
+  structured_handover_complete: "结构化交接完成",
+  structured_handover_in_progress: "结构化交接中",
+  not_required: "无需交接",
+  failed_blocked: "失败并阻断",
+  passed: "通过",
+  approved_for_release: "批准发布",
+  triggered: "已触发",
+  monitoring: "监控中",
+  prepared: "控制已准备",
+  active_controlled: "受控",
+  mainline: "主线",
+  active_uncontrolled: "已触发 / 未受控",
+  active_partially_controlled: "部分受控",
+  pending_execution: "待执行",
+  leading: "领导",
+  supportive: "支持",
+  neutral: "中立",
+  resistant: "抵制",
+  unaware: "未意识到",
+};
+
+function documentDiffFieldLabel(path: string): string {
+  return path.slice(1).split("/").map((segment) => {
+    const decoded = segment.replace(/~1/g, "/").replace(/~0/g, "~");
+    return documentDiffPathLabels[decoded] ?? decoded;
+  }).join(" / ");
+}
+
+function documentDiffValue(side: DocumentFieldSide): string {
+  if (!side.resolved) return "历史主线值不可解析";
+  if (!side.exists) return "字段不存在";
+  if (side.value === null) return "空值";
+  if (typeof side.value === "boolean") return side.value ? "是" : "否";
+  if (typeof side.value === "number") return side.value.toLocaleString("zh-CN");
+  return documentDiffValueLabels[side.value] ?? side.value;
 }
 const managementAreas: ManagementArea[] = [
   { id: "integration", index: "01", title: "项目整合管理", shortTitle: "整合", documentIds: ["D03", "D05", "D08", "D09", "D10", "D13"] },
@@ -1506,6 +1656,9 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
   const [documentPatches, setDocumentPatches] = useState<DocumentPatch[]>([]);
+  const [documentFieldDiffs, setDocumentFieldDiffs] = useState<DocumentFieldComparison[]>([]);
+  const [documentDiffSummary, setDocumentDiffSummary] = useState<DocumentDiffResponse["summary"]>({ added: 0, modified: 0, removed: 0 });
+  const [documentDiffWeeks, setDocumentDiffWeeks] = useState({ mainline: 1, branch: 1 });
   const [branchComparison, setBranchComparison] = useState<BranchComparison | null>(null);
   const [aiReview, setAiReview] = useState<Record<string, unknown> | null>(null);
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
@@ -1559,11 +1712,11 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   };
 
   useEffect(() => {
-    if (!branch || !selectedDocumentId) { setDocumentPatches([]); setBranchComparison(null); return; }
+    if (!branch || !selectedDocumentId) { setDocumentPatches([]); setDocumentFieldDiffs([]); setDocumentDiffSummary({ added: 0, modified: 0, removed: 0 }); setDocumentDiffWeeks({ mainline: 1, branch: 1 }); setBranchComparison(null); return; }
     void Promise.all([
-      apiJson<{ patches: DocumentPatch[] }>(`/api/lab/branches/${encodeURIComponent(branch.id)}/documents/${encodeURIComponent(selectedDocumentId)}`),
+      apiJson<DocumentDiffResponse>(`/api/lab/branches/${encodeURIComponent(branch.id)}/documents/${encodeURIComponent(selectedDocumentId)}`),
       apiJson<BranchComparison>(`/api/lab/branches/${encodeURIComponent(branch.id)}/comparison`),
-    ]).then(([diff, comparison]) => { setDocumentPatches(diff.patches); setBranchComparison(comparison); }).catch(() => {});
+    ]).then(([diff, comparison]) => { setDocumentPatches(diff.patches); setDocumentFieldDiffs(diff.fields); setDocumentDiffSummary(diff.summary); setDocumentDiffWeeks({ mainline: diff.mainlineWeek, branch: diff.branchWeek }); setBranchComparison(comparison); }).catch(() => {});
   }, [branch, selectedDocumentId, branch?.currentRoundNumber]);
 
   useEffect(() => {
@@ -1710,6 +1863,9 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     setRoundResult(null);
     setBranchComparison(null);
     setDocumentPatches([]);
+    setDocumentFieldDiffs([]);
+    setDocumentDiffSummary({ added: 0, modified: 0, removed: 0 });
+    setDocumentDiffWeeks({ mainline: 1, branch: 1 });
     setAiReview(null);
     setActionMessage(null);
     setSelectedWeek(targetWeek ?? selectedWeek);
@@ -3108,7 +3264,22 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                     <div className="lab-v2-document-title"><span>{selectedDocument.id} / W{selectedWeek} 主线版本</span><h3>{selectedDocument.title}</h3><div><b>{selectedDocument.status}</b><i>v{selectedDocument.version}</i><small>创建于 W{selectedDocument.createdWeek}</small></div></div>
                     {selectedDocument.status === "未创建" ? <div className="lab-v2-document-locked"><strong>该文件尚未创建</strong><p>将时间轴拖动到 W{selectedDocument.createdWeek} 后查看首个版本。</p></div> : selectedDocumentContentLocked ? <div className="lab-v2-document-locked"><strong>登录查看具体内容</strong><p>项目文件目录保持开放；登录后可查看当前内容、版本历史、关联文件和个人分支差异。</p><button type="button" onClick={signIn}>登录并解锁项目文件</button></div> : <>
                       <section className="lab-v2-document-summary"><span>当前内容摘要</span><dl><div><dt>文件用途</dt><dd>{selectedDocument.coverage === "dynamic_full_history" ? "动态管理文件，保留完整更新历史" : "支持性文件，在关键阶段形成版本"}</dd></div><div><dt>当前阶段</dt><dd>{projectStage(selectedWeek)}</dd></div><div><dt>最近变更</dt><dd>{selectedDocument.history[selectedDocument.history.length - 1]?.reason ?? `W${selectedDocument.createdWeek} 创建初始版本`}</dd></div><div><dt>版本依据</dt><dd>主线事件、阶段门审批与关联文件变化</dd></div></dl></section>
-                      {branch && documentPatches.length > 0 && <section className="lab-v2-document-summary"><span>主线 ↔ 个人分支字段差异</span><dl>{documentPatches.flatMap((patch) => patch.operations.map((operation) => <div key={`${patch.roundNumber}:${operation.path}`}><dt>W{patch.week} {operation.op}</dt><dd><code>{operation.path}</code> → {String(operation.value)}</dd></div>))}</dl></section>}
+                      {branch && documentPatches.length > 0 && <section className="lab-v2-document-field-diff">
+                        <header>
+                          <div><span>FIELD DIFF / 逐字段比较</span><strong>主线 ↔ 个人分支</strong><small>{documentDiffWeeks.branch > documentDiffWeeks.mainline ? "分支超过 W32 时以主线 W32 归档快照比较" : "同一案例版本、同一周次比较"}；只显示当前仍然存在的业务差异。</small></div>
+                          <dl><div><dt>{documentDiffSummary.added}</dt><dd>新增</dd></div><div><dt>{documentDiffSummary.modified}</dt><dd>修改</dd></div><div><dt>{documentDiffSummary.removed}</dt><dd>删除</dd></div></dl>
+                        </header>
+                        {documentFieldDiffs.length ? <div className="lab-v2-document-field-diff-table">
+                          <div className="heading"><span>字段</span><span>主线 · W{documentDiffWeeks.mainline}</span><i aria-hidden="true" /><span>个人分支 · W{documentDiffWeeks.branch}</span></div>
+                          {documentFieldDiffs.map((field) => <article key={field.path} className={field.changeType}>
+                            <div className="field"><b>{documentDiffFieldLabel(field.path)}</b><code>{field.path}</code><small>W{field.week} · 回合 {field.roundNumber}</small></div>
+                            <div className="value mainline"><small>主线值</small><strong>{documentDiffValue(field.mainline)}</strong></div>
+                            <i aria-label={documentDiffChangeLabels[field.changeType]}>{field.changeType === "added" ? "+" : field.changeType === "removed" ? "−" : "→"}</i>
+                            <div className="value branch"><small>分支值</small><strong>{documentDiffValue(field.branch)}</strong><em>{documentDiffChangeLabels[field.changeType]}</em></div>
+                          </article>)}
+                        </div> : <p className="lab-v2-document-diff-empty">该文件只有分支修订记录；业务字段当前与同周主线一致。</p>}
+                        <p>比较基于该分支绑定的冻结案例版本和内容哈希；分支修订元数据不计入业务差异。</p>
+                      </section>}
                       {selectedDocument.id === "D01" && (
                         <section className="lab-v2-document-data lab-v2-document-stack lab-v2-schedule-control-document">
                           <div className="lab-v2-schedule-control-metrics">

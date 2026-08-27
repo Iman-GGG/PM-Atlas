@@ -11,6 +11,7 @@ function createEnv({
   currentWeek = 9,
   includeExistingBranch = true,
   caseVersion = "v5",
+  documentDeltas = [],
 } = {}) {
   const branch = {
     id: "branch-1",
@@ -44,6 +45,7 @@ function createEnv({
     snapshots: [],
     progress: [],
     drafts: new Map(),
+    documentDeltas: [...documentDeltas],
   };
 
   function prepare(query) {
@@ -76,6 +78,14 @@ function createEnv({
         return null;
       },
       async all() {
+        if (query.includes("FROM lab_document_deltas")) {
+          return {
+            results: state.documentDeltas.filter((delta) => (
+              delta.branchId === bindings[0]
+              && (bindings.length < 2 || delta.documentId === bindings[1])
+            )),
+          };
+        }
         if (query.includes("LEFT JOIN lab_events")) {
           const storedBranch = state.branches.get(bindings[0]);
           if (!storedBranch || storedBranch.identityKey !== bindings[1]) return { results: [] };
@@ -291,6 +301,60 @@ test("loads a historical v4 branch only through its exact frozen content hash", 
   const rejected = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", { headers }, mismatched);
   assert.equal(rejected.status, 409);
   assert.equal((await rejected.json()).error.code, "CASE_VERSION_MISMATCH");
+});
+
+test("returns same-week mainline and branch values for each changed document field", async () => {
+  const manifest = await (await request("/api/lab/cases/car-control/v5")).json();
+  const env = createEnv({
+    contentHash: manifest.contentHash,
+    currentWeek: 26,
+    documentDeltas: [{
+      branchId: "branch-1",
+      documentId: "D16",
+      roundNumber: 1,
+      week: 26,
+      reason: "round_settlement",
+      patchJson: JSON.stringify([
+        { op: "add", path: "/branchMeta/lastSettlementWeek", value: 26 },
+        { op: "replace", path: "/scopeBaseline/version", value: "1.1-branch" },
+        { op: "replace", path: "/productScope/PSC-03/status", value: "deferred_from_v1_0" },
+        { op: "replace", path: "/productScope/PSC-02/status", value: "baselined_included" },
+        { op: "add", path: "/scopeExclusions/EX-05/status", value: "active" },
+      ]),
+    }],
+  });
+  const response = await request("/api/lab/branches/branch-1/documents/D16", {
+    headers: { "oai-authenticated-user-id": "user-123", "oai-authenticated-user-email": "iman@example.com" },
+  }, env);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  const body = await response.json();
+  const byPath = new Map(body.fields.map((field) => [field.path, field]));
+  assert.equal(byPath.get("/scopeBaseline/version").mainline.value, "1.0");
+  assert.equal(byPath.get("/scopeBaseline/version").branch.value, "1.1-branch");
+  assert.equal(byPath.get("/scopeExclusions/EX-05/status").changeType, "added");
+  assert.equal(byPath.has("/productScope/PSC-02/status"), false);
+  assert.deepEqual(body.summary, { added: 1, modified: 2, removed: 0 });
+
+  const afterW32 = createEnv({
+    contentHash: manifest.contentHash,
+    currentWeek: 33,
+    documentDeltas: [{
+      branchId: "branch-1",
+      documentId: "D28",
+      roundNumber: 2,
+      week: 33,
+      reason: "round_settlement",
+      patchJson: JSON.stringify([{ op: "replace", path: "/progress/dataDateWeek", value: 33 }]),
+    }],
+  });
+  const afterResponse = await request("/api/lab/branches/branch-1/documents/D28", {
+    headers: { "oai-authenticated-user-id": "user-123", "oai-authenticated-user-email": "iman@example.com" },
+  }, afterW32);
+  const afterBody = await afterResponse.json();
+  assert.deepEqual([afterBody.mainlineWeek, afterBody.branchWeek], [32, 33]);
+  assert.equal(afterBody.fields[0].mainline.value, 32);
+  assert.equal(afterBody.fields[0].branch.value, 33);
 });
 
 test("reports platform session state without exposing the identity key", async () => {
