@@ -12,6 +12,11 @@ function createEnv({
   includeExistingBranch = true,
   caseVersion = "v5",
   documentDeltas = [],
+  snapshots = [],
+  roundSubmissions = [],
+  currentRoundNumber = 1,
+  branchStatus = "active",
+  outcomeClassification = null,
 } = {}) {
   const branch = {
     id: "branch-1",
@@ -19,11 +24,11 @@ function createEnv({
     caseVersion,
     contentHash,
     currentWeek,
-    currentRoundNumber: 1,
-    status: "active",
+    currentRoundNumber,
+    status: branchStatus,
     forkWeek: 9,
     scenarioId: "scenario-1",
-    outcomeClassification: null,
+    outcomeClassification,
     createdAt: "2026-08-04 12:00:00",
   };
   const events = [
@@ -42,7 +47,8 @@ function createEnv({
     caseVersions: new Map(contentHash ? [[`car-control:${caseVersion}`, contentHash]] : []),
     users: new Map(),
     events: includeExistingBranch ? [...events] : [],
-    snapshots: [],
+    snapshots: [...snapshots],
+    roundSubmissions: [...roundSubmissions],
     progress: [],
     drafts: new Map(),
     documentDeltas: [...documentDeltas],
@@ -75,9 +81,23 @@ function createEnv({
         if (query.includes("FROM lab_round_drafts")) {
           return state.drafts.get(`${bindings[0]}:${bindings[1]}`) ?? null;
         }
+        if (query.includes("FROM lab_state_snapshots")) {
+          return state.snapshots.find((snapshot) => snapshot.branchId === bindings[0] && snapshot.roundNumber === bindings[1]) ?? null;
+        }
         return null;
       },
       async all() {
+        if (query.includes("FROM lab_state_snapshots snapshots")) {
+          return {
+            results: state.snapshots
+              .filter((snapshot) => snapshot.branchId === bindings[0])
+              .sort((left, right) => left.roundNumber - right.roundNumber)
+              .map((snapshot) => {
+                const submission = state.roundSubmissions.find((item) => item.branchId === snapshot.branchId && item.roundNumber === snapshot.roundNumber);
+                return { ...snapshot, ruleResultJson: submission?.ruleResultJson ?? null, submittedAt: submission?.submittedAt ?? null };
+              }),
+          };
+        }
         if (query.includes("FROM lab_document_deltas")) {
           return {
             results: state.documentDeltas.filter((delta) => (
@@ -145,6 +165,7 @@ function createEnv({
       state.snapshots.push({
         id: bindings[0],
         branchId: bindings[1],
+        roundNumber: 0,
         week: bindings[2],
         scenarioId: bindings[3],
         stateJson: bindings[4],
@@ -355,6 +376,54 @@ test("returns same-week mainline and branch values for each changed document fie
   assert.deepEqual([afterBody.mainlineWeek, afterBody.branchWeek], [32, 33]);
   assert.equal(afterBody.fields[0].mainline.value, 32);
   assert.equal(afterBody.fields[0].branch.value, 33);
+});
+
+test("returns a deterministic multi-round Git-style branch path without private rule data", async () => {
+  const manifest = await (await request("/api/lab/cases/car-control/v5")).json();
+  const pathState = (week, spi, cpi, forecastCompletionWeek, status, outcome = null) => JSON.stringify({
+    week,
+    scenario: { id: "scenario-1", status },
+    performance: { spi, cpi, forecastCompletionWeek },
+    totals: {},
+    governance: {},
+    riskTransitions: [],
+    stakeholderTransitions: [],
+    documentRevisions: [],
+    outcomeClassification: outcome,
+  });
+  const env = createEnv({
+    contentHash: manifest.contentHash,
+    currentWeek: 11,
+    currentRoundNumber: 2,
+    branchStatus: "completed",
+    outcomeClassification: "detour_success",
+    snapshots: [
+      { branchId: "branch-1", roundNumber: 0, week: 9, scenarioId: "scenario-1", stateJson: pathState(9, 0.94, 0.98, 34, "open"), stateHash: "fork0000abcdef" },
+      { branchId: "branch-1", roundNumber: 1, week: 10, scenarioId: "scenario-1", stateJson: pathState(10, 0.95, 0.97, 34, "open"), stateHash: "commit01abcdef" },
+      { branchId: "branch-1", roundNumber: 2, week: 11, scenarioId: "scenario-1", stateJson: pathState(11, 0.98, 0.99, 33, "closed", "detour_success"), stateHash: "commit02abcdef" },
+    ],
+    roundSubmissions: [
+      { branchId: "branch-1", roundNumber: 1, submittedAt: "2026-08-28 10:00:00", ruleResultJson: JSON.stringify({ stateDiff: { managementActionsCompletedThisRound: 1 } }) },
+      { branchId: "branch-1", roundNumber: 2, submittedAt: "2026-08-28 10:05:00", ruleResultJson: JSON.stringify({ pathClassification: "detour_success", stateDiff: { managementActionsCompletedThisRound: 2 } }) },
+    ],
+    documentDeltas: [
+      { branchId: "branch-1", documentId: "D05", roundNumber: 1, week: 10, reason: "round_settlement", patchJson: JSON.stringify([{ op: "replace", path: "/changeControl/openItems", value: 1 }]) },
+      { branchId: "branch-1", documentId: "D14", roundNumber: 2, week: 11, reason: "round_settlement", patchJson: JSON.stringify([{ op: "replace", path: "/scheduleStatus/spi", value: 0.98 }, { op: "replace", path: "/scheduleStatus/cpi", value: 0.99 }]) },
+    ],
+  });
+  const response = await request("/api/lab/branches/branch-1/comparison", {
+    headers: { "oai-authenticated-user-id": "user-123", "oai-authenticated-user-email": "iman@example.com" },
+  }, env);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.forkWeek, 9);
+  assert.equal(body.outcomeClassification, "detour_success");
+  assert.deepEqual(body.rounds.map((round) => round.roundNumber), [0, 1, 2]);
+  assert.deepEqual(body.rounds.map((round) => round.mainline.week), [9, 10, 11]);
+  assert.deepEqual(body.rounds[2].documents, [{ documentId: "D14", operationCount: 2 }]);
+  assert.deepEqual(body.summary, { submittedRoundCount: 2, revisedDocumentCount: 2, operationCount: 3 });
+  assert.equal(body.rounds[2].commitHash, "commit02");
+  assert.doesNotMatch(JSON.stringify(body), /stateJson|ruleResultJson|minimumCorrectCardIds|necessaryManagementActions/);
 });
 
 test("reports platform session state without exposing the identity key", async () => {

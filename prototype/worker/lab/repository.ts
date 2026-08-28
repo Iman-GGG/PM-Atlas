@@ -69,6 +69,11 @@ export type StoredStateSnapshot = {
   stateHash: string;
 };
 
+export type StoredBranchPathRound = StoredStateSnapshot & {
+  ruleResultJson: string | null;
+  submittedAt: string | null;
+};
+
 export type StoredRoundSubmission = {
   roundNumber: number;
   scenarioId: string;
@@ -433,6 +438,26 @@ export async function readCurrentStateSnapshot(
     WHERE branch_id = ? AND round_number = ?
     LIMIT 1
   `).bind(branchId, roundNumber).first<StoredStateSnapshot>();
+}
+
+export async function readBranchPathRounds(db: LabD1, branchId: string): Promise<StoredBranchPathRound[]> {
+  const result = await db.prepare(`
+    SELECT
+      snapshots.round_number AS roundNumber,
+      snapshots.week,
+      snapshots.scenario_id AS scenarioId,
+      snapshots.state_json AS stateJson,
+      snapshots.state_hash AS stateHash,
+      submissions.rule_result_json AS ruleResultJson,
+      submissions.submitted_at AS submittedAt
+    FROM lab_state_snapshots snapshots
+    LEFT JOIN lab_round_submissions submissions
+      ON submissions.branch_id = snapshots.branch_id
+      AND submissions.round_number = snapshots.round_number
+    WHERE snapshots.branch_id = ?
+    ORDER BY snapshots.round_number ASC
+  `).bind(branchId).all<StoredBranchPathRound>();
+  return result.results ?? [];
 }
 
 export async function findRoundSubmissionByIdempotency(

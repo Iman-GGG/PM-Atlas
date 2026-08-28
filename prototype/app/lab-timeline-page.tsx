@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import type { AiReview } from "../lib/lab/contracts";
+import { ScenarioOutcomeView } from "./lab-scenario-outcome";
 
 type TakeoverPoint = {
   scenarioId: string;
@@ -685,10 +687,38 @@ type DocumentDiffResponse = {
   fields: DocumentFieldComparison[];
   summary: { added: number; modified: number; removed: number };
 };
+type BranchPathMetric = {
+  week: number;
+  spi: number;
+  cpi: number;
+  forecastCompletionWeek: number;
+  status: string;
+};
+type BranchPathRound = {
+  roundNumber: number;
+  week: number;
+  commitHash: string;
+  submittedAt: string | null;
+  scenarioStatus: string;
+  pathClassification: string | null;
+  mainline: BranchPathMetric;
+  branch: BranchPathMetric;
+  documents: Array<{ documentId: string; operationCount: number }>;
+  completedActions: number;
+  harmfulEffects: number;
+};
 type BranchComparison = {
-  forkWeek: number; currentWeek: number; outcomeClassification: string | null;
-  mainline: { spi: number; cpi: number; forecastCompletionWeek: number };
-  branch: { spi: number; cpi: number; forecastCompletionWeek: number; status: string } | null;
+  caseVersion: string;
+  contentHash: string;
+  forkWeek: number;
+  currentWeek: number;
+  currentRoundNumber: number;
+  branchStatus: string;
+  outcomeClassification: string | null;
+  mainline: BranchPathMetric;
+  branch: BranchPathMetric | null;
+  rounds: BranchPathRound[];
+  summary: { submittedRoundCount: number; revisedDocumentCount: number; operationCount: number };
 };
 
 type OpenedMaterial = {
@@ -806,6 +836,18 @@ const pathClassificationLabels: Record<string, string> = {
   detour_success: "绕路成功",
   delayed_success: "延期成功",
   scenario_failure: "情景失败",
+};
+const branchPathStatusLabels: Record<string, string> = {
+  open: "情景进行中",
+  closed: "情景已闭环",
+  failed: "情景失败",
+  planning: "计划编制",
+  on_track: "按计划推进",
+  at_risk: "存在进度风险",
+  recovery_approved: "恢复方案已批准",
+  recovered: "进度已恢复",
+  completed: "主线已完成",
+  mainline: "主线同期状态",
 };
 function emptyActionChainPools(): ActionChainPools {
   return { evidence_document: [], tool_technique: [], stakeholder: [] };
@@ -1660,8 +1702,10 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const [documentDiffSummary, setDocumentDiffSummary] = useState<DocumentDiffResponse["summary"]>({ added: 0, modified: 0, removed: 0 });
   const [documentDiffWeeks, setDocumentDiffWeeks] = useState({ mainline: 1, branch: 1 });
   const [branchComparison, setBranchComparison] = useState<BranchComparison | null>(null);
-  const [aiReview, setAiReview] = useState<Record<string, unknown> | null>(null);
+  const [aiReview, setAiReview] = useState<AiReview | null>(null);
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
+  const [aiReviewError, setAiReviewError] = useState<string | null>(null);
+  const [outcomeViewOpen, setOutcomeViewOpen] = useState(false);
   const [submittingRound, setSubmittingRound] = useState(false);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialIds, setOpeningMaterialIds] = useState<string[]>([]);
@@ -1674,8 +1718,11 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
 
   useEffect(() => {
     if (openBranchHistoryRequest < 1) return;
-    setDocumentDrawerOpen(false);
-    setBranchHistoryOpen(true);
+    const timer = window.setTimeout(() => {
+      setDocumentDrawerOpen(false);
+      setBranchHistoryOpen(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [openBranchHistoryRequest]);
 
   const loadMaterials = async (branchId: string, nextScenarioId: string) => {
@@ -1699,6 +1746,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       setSelectedWeek(projection.branch.currentWeek);
       setCards(projection.scenario.cards);
       setScenarioTitle(projection.scenario.title);
+      if (projection.branch.status !== "active") setOutcomeViewOpen(true);
     }
   };
 
@@ -1712,12 +1760,30 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   };
 
   useEffect(() => {
-    if (!branch || !selectedDocumentId) { setDocumentPatches([]); setDocumentFieldDiffs([]); setDocumentDiffSummary({ added: 0, modified: 0, removed: 0 }); setDocumentDiffWeeks({ mainline: 1, branch: 1 }); setBranchComparison(null); return; }
-    void Promise.all([
-      apiJson<DocumentDiffResponse>(`/api/lab/branches/${encodeURIComponent(branch.id)}/documents/${encodeURIComponent(selectedDocumentId)}`),
-      apiJson<BranchComparison>(`/api/lab/branches/${encodeURIComponent(branch.id)}/comparison`),
-    ]).then(([diff, comparison]) => { setDocumentPatches(diff.patches); setDocumentFieldDiffs(diff.fields); setDocumentDiffSummary(diff.summary); setDocumentDiffWeeks({ mainline: diff.mainlineWeek, branch: diff.branchWeek }); setBranchComparison(comparison); }).catch(() => {});
-  }, [branch, selectedDocumentId, branch?.currentRoundNumber]);
+    const branchId = branch?.id;
+    if (!branchId || !selectedDocumentId) return;
+    let cancelled = false;
+    void apiJson<DocumentDiffResponse>(`/api/lab/branches/${encodeURIComponent(branchId)}/documents/${encodeURIComponent(selectedDocumentId)}`)
+      .then((diff) => {
+        if (cancelled) return;
+        setDocumentPatches(diff.patches);
+        setDocumentFieldDiffs(diff.fields);
+        setDocumentDiffSummary(diff.summary);
+        setDocumentDiffWeeks({ mainline: diff.mainlineWeek, branch: diff.branchWeek });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [branch?.id, selectedDocumentId, branch?.currentRoundNumber]);
+
+  useEffect(() => {
+    const branchId = branch?.id;
+    if (!branchId) return;
+    let cancelled = false;
+    void apiJson<BranchComparison>(`/api/lab/branches/${encodeURIComponent(branchId)}/comparison`)
+      .then((comparison) => { if (!cancelled) setBranchComparison(comparison); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [branch?.id, branch?.currentRoundNumber]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1755,6 +1821,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
         setScenarioId(restored.scenarioId);
         setScenarioTitle(projection.scenario.title);
         setCards(projection.scenario.cards);
+        if (projection.branch.status !== "active") setOutcomeViewOpen(true);
         await loadMaterials(restored.branchId, restored.scenarioId);
       } catch (caught) {
         if (!cancelled) setError(caught instanceof Error ? caught.message : "无法加载项目实验室");
@@ -1836,6 +1903,8 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       setActionMessage(null);
       setRoundResult(null);
       setAiReview(null);
+      setAiReviewError(null);
+      setOutcomeViewOpen(false);
       window.history.replaceState(
         null,
         "",
@@ -1867,6 +1936,8 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     setDocumentDiffSummary({ added: 0, modified: 0, removed: 0 });
     setDocumentDiffWeeks({ mainline: 1, branch: 1 });
     setAiReview(null);
+    setAiReviewError(null);
+    setOutcomeViewOpen(false);
     setActionMessage(null);
     setSelectedWeek(targetWeek ?? selectedWeek);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#lab-schedule`);
@@ -1874,7 +1945,11 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   };
 
   const switchBranch = (summary: BranchSummary) => {
-    window.location.hash = `lab-schedule?branch=${encodeURIComponent(summary.id)}&scenario=${encodeURIComponent(summary.scenarioId)}`;
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}#lab-schedule?branch=${encodeURIComponent(summary.id)}&scenario=${encodeURIComponent(summary.scenarioId)}`,
+    );
     window.location.reload();
   };
 
@@ -2323,6 +2398,8 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       if (result.scenarioState === "open") {
         setActionChains([]);
         resetActionChainEditor();
+      } else {
+        setOutcomeViewOpen(true);
       }
     } catch (caught) {
       setActionMessage(caught instanceof Error ? caught.message : "行动链提交失败，请重试");
@@ -2334,11 +2411,12 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const requestAiReview = async () => {
     if (!branch || branch.status === "active" || aiReviewLoading) return;
     setAiReviewLoading(true);
+    setAiReviewError(null);
     try {
-      const response = await apiJson<{ review: Record<string, unknown> }>(`/api/lab/branches/${encodeURIComponent(branch.id)}/reviews/scenario`, { method: "POST" });
+      const response = await apiJson<{ review: AiReview }>(`/api/lab/branches/${encodeURIComponent(branch.id)}/reviews/scenario`, { method: "POST" });
       setAiReview(response.review);
     } catch (caught) {
-      setActionMessage(caught instanceof Error ? caught.message : "AI 复盘暂时不可用");
+      setAiReviewError(caught instanceof Error ? caught.message : "AI 复盘暂时不可用");
     } finally { setAiReviewLoading(false); }
   };
 
@@ -3215,10 +3293,77 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       )}
 
       {branch && branchComparison && <section className="lab-v2-branch-workspace">
-        <header><div><span>PATH COMPARISON / Git 式路径比较</span><h2>主线与个人分支</h2><p>从 W{branchComparison.forkWeek} 分叉；项目状态仍仅由服务端确定性规则结算。</p></div><div><strong>{branchComparison.outcomeClassification ?? "进行中"}</strong><span>路径结论</span></div></header>
-        <div className="lab-v2-detail-metrics"><span><b>{branchComparison.mainline.spi.toFixed(2)}</b>主线 SPI</span><span><b>{branchComparison.branch?.spi?.toFixed(2) ?? "—"}</b>分支 SPI</span><span><b>W{branchComparison.mainline.forecastCompletionWeek}</b>主线完工</span><span><b>W{branchComparison.branch?.forecastCompletionWeek ?? "—"}</b>分支预测</span></div>
-        {branch.status !== "active" && <div className="lab-v2-gap"><strong>情景结局与规则复盘</strong><p>{branch.status === "failed" ? "路径未满足终局约束；请依据本回合缺口、文件差异和客观指标复盘。" : "情景已闭环；比较进度、成本、治理和文件更新，识别绕路或延误来源。"}</p><button type="button" disabled={aiReviewLoading} onClick={() => void requestAiReview()}>{aiReviewLoading ? "正在生成 AI 复盘…" : "生成 AI 结构化复盘"}</button>{aiReview && <div><p>{String(aiReview.summary ?? "")}</p><small>{String(aiReview.retrySuggestion ?? "")}</small></div>}<nav className="lab-v2-branch-next-actions"><button type="button" onClick={() => leaveBranch(branch.currentWeek)}>返回主线</button>{nextTakeoverPoint && <button type="button" className="primary" onClick={() => leaveBranch(nextTakeoverPoint.week)}>开始下一情景 · W{nextTakeoverPoint.week}</button>}</nav></div>}
+        <header><div><span>PATH COMPARISON / Git 式路径比较</span><h2>主线与个人分支</h2><p>从 W{branchComparison.forkWeek} 分叉，逐回合比较同期主线、个人提交和项目文件修订。</p></div><div><strong>{pathClassificationLabels[branchComparison.outcomeClassification ?? ""] ?? "进行中"}</strong><span>路径结论</span></div></header>
+        <div className="lab-v2-path-summary" aria-label="分支路径摘要">
+          <span><b>{branchComparison.summary.submittedRoundCount}</b>回合提交</span>
+          <span><b>{branchComparison.summary.revisedDocumentCount}</b>份修订文件</span>
+          <span><b>{branchComparison.summary.operationCount}</b>项字段操作</span>
+        </div>
+        <div className="lab-v2-path-graph">
+          <header><span>GRAPH</span><b>主线</b><b>个人分支</b></header>
+          {branchComparison.rounds.length ? branchComparison.rounds.map((round, index) => {
+            const isFork = round.roundNumber === 0;
+            const isLast = index === branchComparison.rounds.length - 1;
+            return (
+              <article key={`${round.roundNumber}:${round.commitHash}`} className={`${isFork ? "fork" : "commit"} ${isLast ? "last" : ""}`}>
+                <div className="lab-v2-path-rails" aria-hidden="true"><i className="main" /><i className="branch" />{isFork && <em />}</div>
+                <section className="mainline">
+                  <small>MAIN · W{round.mainline.week}</small>
+                  <strong>{isFork ? "主线接手点" : "同期主线快照"}</strong>
+                  <p>SPI {round.mainline.spi.toFixed(2)} · CPI {round.mainline.cpi.toFixed(2)} · 预测 W{round.mainline.forecastCompletionWeek}</p>
+                  <span>{branchPathStatusLabels[round.mainline.status] ?? round.mainline.status}</span>
+                </section>
+                <section className="branch">
+                  <header><small>{isFork ? "FORK" : `COMMIT ${String(round.roundNumber).padStart(2, "0")}`} · W{round.week}</small><code>{round.commitHash}</code></header>
+                  <strong>{isFork ? "创建个人分支" : `提交第 ${round.roundNumber} 回合`}</strong>
+                  <p>SPI {round.branch.spi.toFixed(2)} · CPI {round.branch.cpi.toFixed(2)} · 预测 W{round.branch.forecastCompletionWeek}</p>
+                  <div className="lab-v2-path-round-status">
+                    <span>{pathClassificationLabels[round.pathClassification ?? ""] ?? branchPathStatusLabels[round.scenarioStatus] ?? round.scenarioStatus}</span>
+                    {round.completedActions > 0 && <span>闭环动作 +{round.completedActions}</span>}
+                    {round.harmfulEffects > 0 && <span>不利影响 +{round.harmfulEffects}</span>}
+                  </div>
+                  {!isFork && <div className="lab-v2-path-documents">
+                    {round.documents.length ? round.documents.map((document) => {
+                      const title = documentState.find((item) => item.id === document.documentId)?.title ?? document.documentId;
+                      return <button key={document.documentId} type="button" title={`打开 ${document.documentId} ${title}`} onClick={() => { setSelectedDocumentId(document.documentId); setBranchHistoryOpen(false); setDocumentDrawerOpen(true); }}><b>{document.documentId}</b><span>{title}</span><small>{document.operationCount} 项</small></button>;
+                    }) : <small className="empty">本回合没有项目文件修订</small>}
+                  </div>}
+                </section>
+              </article>
+            );
+          }) : <p className="lab-v2-path-empty">尚未找到可回放的分支快照。</p>}
+          <footer>比较依据：{branchComparison.caseVersion.toUpperCase()} · {branchComparison.contentHash.slice(0, 12)} · 历史分支按绑定的冻结案例包回放。</footer>
+        </div>
+        {branch.status !== "active" && <div className="lab-v2-outcome-callout"><div><span>SCENARIO SETTLED</span><strong>{pathClassificationLabels[branchComparison?.outcomeClassification ?? branchState?.outcomeClassification ?? ""] ?? (branch.status === "failed" ? "情景失败" : "情景已闭环")}</strong><p>查看确定性规则结论、同期主线指标、项目文件证据与可选 AI 结构化复盘。</p></div><button type="button" onClick={() => setOutcomeViewOpen(true)}>查看完整结局与复盘</button></div>}
       </section>}
+
+      {outcomeViewOpen && branch && branch.status !== "active" && (
+        branchComparison ? <ScenarioOutcomeView
+          scenarioTitle={scenarioTitle ?? scenarioLabels[branch.scenarioId] ?? branch.scenarioId}
+          branchStatus={branch.status}
+          comparison={branchComparison}
+          incrementalCostCny={branchState?.totals.incrementalActualCostCny ?? 0}
+          traceabilityCoveragePercent={branchState?.totals.requirementsTraceabilityCoveragePercent ?? 0}
+          aiReview={aiReview}
+          aiReviewLoading={aiReviewLoading}
+          aiReviewError={aiReviewError}
+          documentTitles={Object.fromEntries(documentState.map((document) => [document.id, document.title]))}
+          nextTakeoverWeek={nextTakeoverPoint?.week ?? null}
+          onGenerateAiReview={() => void requestAiReview()}
+          onOpenDocument={(documentId) => {
+            setOutcomeViewOpen(false);
+            setSelectedDocumentId(documentId);
+            setManagementFilter(null);
+            setBranchHistoryOpen(false);
+            setDocumentDrawerOpen(true);
+          }}
+          onClose={() => setOutcomeViewOpen(false)}
+          onReturnMainline={() => leaveBranch(branch.currentWeek)}
+          onStartNextScenario={() => {
+            if (nextTakeoverPoint) leaveBranch(nextTakeoverPoint.week);
+          }}
+        /> : <div className="lab-v2-outcome-page" role="dialog" aria-modal="true" aria-label="正在载入情景结局"><div className="lab-v2-outcome-loading"><i /><strong>正在还原结局证据</strong><span>读取冻结案例包、逐回合路径和文件修订…</span></div></div>
+      )}
 
       <button className={`lab-v2-drawer-tab history ${branchHistoryOpen ? "open" : ""}`} onClick={() => { setDocumentDrawerOpen(false); setBranchHistoryOpen((current) => !current); }}>
         <i className="lab-v2-branch-glyph" aria-hidden="true"><em className="trunk" /><em className="fork" /><em className="node top" /><em className="node middle" /><em className="node bottom" /></i><span>接手记录</span><b>{branches.length}</b>

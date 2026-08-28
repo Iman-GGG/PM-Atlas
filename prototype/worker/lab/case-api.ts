@@ -25,6 +25,7 @@ import {
   listOwnedBranches,
   findStoredCaseVersion,
   readCurrentStateSnapshot,
+  readBranchPathRounds,
   readRoundSubmission,
   readRoundDraft,
   readOwnedBranchContext,
@@ -40,6 +41,8 @@ import {
 import { projectStoredBranchState, settleRound } from "./settle-round";
 import { compareDocumentPatches } from "./document-comparison";
 import { buildDocumentPatch, type JsonPatchOperation } from "./document-diff";
+import { buildBranchPathComparison } from "./path-comparison";
+import { normalizeAiReview } from "./ai-review";
 
 export type LabApiEnv = {
   DB?: LabD1;
@@ -895,6 +898,8 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     const branch = await findOwnedBranch(env.DB!, parts[3], identity.identityKey);
     if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
     if (branch.status === "active") return withPrivateCache(errorResponse(409, "SCENARIO_NOT_SETTLED", "Finish the scenario before requesting its review."));
+    const runtime = findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash);
+    if (!runtime) return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
     const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
     if (!snapshot?.scenarioId) return withPrivateCache(errorResponse(409, "REVIEW_CONTEXT_MISSING", "The settled scenario context is unavailable."));
     const cached = await readAiReview(env.DB!, branch.id, snapshot.stateHash);
@@ -908,24 +913,33 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     } catch {
       // Product analytics must never block the review workflow.
     }
-    if (cached?.status === "completed" && cached.reviewJson) return withPrivateCache(jsonResponse({ status: "completed", review: parseStoredJson(cached.reviewJson, {}) }));
+    const cachedReview = cached?.status === "completed" && cached.reviewJson
+      ? normalizeAiReview(parseStoredJson(cached.reviewJson, {}))
+      : null;
+    if (cachedReview) return withPrivateCache(jsonResponse({ status: "completed", review: cachedReview }));
     if (!env.DEEPSEEK_API_KEY) return withPrivateCache(errorResponse(503, "AI_NOT_CONFIGURED", "The AI review provider is not configured."));
-    const submission = await readRoundSubmission(env.DB!, branch.id, branch.currentRoundNumber);
-    const deltas = await readDocumentDeltas(env.DB!, branch.id);
+    const [submission, userRounds, deltas, pathRounds] = await Promise.all([
+      readRoundSubmission(env.DB!, branch.id, branch.currentRoundNumber),
+      readScenarioActionChainSubmissions(env.DB!, branch.id, snapshot.scenarioId),
+      readDocumentDeltas(env.DB!, branch.id),
+      readBranchPathRounds(env.DB!, branch.id),
+    ]);
     const context = {
       outcome: branch.outcomeClassification ?? branch.status,
       state: projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})),
-      actionChains: submission ? parseStoredJson<Record<string, unknown>>(submission.ruleResultJson, {}) : {},
+      userRounds: userRounds.map((round) => ({ roundNumber: round.roundNumber, submission: parseStoredJson<Record<string, unknown>>(round.submissionJson, {}) })),
+      finalRuleResult: submission ? parseStoredJson<Record<string, unknown>>(submission.ruleResultJson, {}) : {},
+      pathComparison: buildBranchPathComparison(runtime, branch, pathRounds, deltas),
       documentPatches: deltas.map((delta) => ({ documentId: delta.documentId, operations: parseStoredJson(delta.patchJson, []) })),
     };
-    const system = "你是项目管理学习复盘助手。只依据提供的用户可见事实；不得猜测隐藏规则，不得改变结算结果。返回严格 JSON，字段为 summary, strengths, improvements, mainlineDifferences, capabilityProfile, recommendedKnowledgeIds, retrySuggestion。三个 finding 数组的元素为 {claim,evidenceRefs,impact}；capabilityProfile 五项值只能是 mature/developing/needs-practice。中文、简洁、可行动。";
+    const system = "你是项目管理学习复盘助手。只依据提供的用户可见事实；不得猜测隐藏规则，不得改变结算结果。返回严格 JSON，且只包含 summary, strengths, improvements, mainlineDifferences, capabilityProfile, recommendedKnowledgeIds, retrySuggestion。三个 finding 数组的元素必须为 {claim,evidenceRefs,impact}，每项至少一个 evidenceRefs；capabilityProfile 必须包含 signalRecognition, riskAndRootCauseDiagnosis, actionCompletenessAndMinimality, timingAndTradeoff, communicationAndGovernance，值只能是 mature/developing/needs-practice。recommendedKnowledgeIds 只放事实包能支持的知识编号。中文、简洁、可行动。";
     try {
       const upstream = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", temperature: 0.2, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: JSON.stringify(context) }] }) });
       if (!upstream.ok) throw new Error(`upstream_${upstream.status}`);
       const payload = await upstream.json() as { choices?: Array<{ message?: { content?: string } }> };
       const reviewJson = payload.choices?.[0]?.message?.content;
-      const review = reviewJson ? parseStoredJson<Record<string, unknown>>(reviewJson, {}) : {};
-      if (typeof review.summary !== "string" || !review.capabilityProfile || typeof review.capabilityProfile !== "object") throw new Error("invalid_review_shape");
+      const review = normalizeAiReview(reviewJson ? parseStoredJson(reviewJson, {}) : {});
+      if (!review) throw new Error("invalid_review_shape");
       await saveAiReview(env.DB!, { id: await stableId("ai-review", `${branch.id}\u0000${snapshot.stateHash}`), branchId: branch.id, scenarioId: snapshot.scenarioId, stateHash: snapshot.stateHash, status: "completed", reviewJson: JSON.stringify(review), errorCode: null });
       return withPrivateCache(jsonResponse({ status: "completed", review }));
     } catch (caught) {
@@ -965,17 +979,11 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
     const runtime = findLabCaseRuntimePackage(branch.caseId, branch.caseVersion, branch.contentHash);
     if (!runtime) return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
-    const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
-    const state = snapshot ? projectStoredBranchState(parseStoredJson<Record<string, unknown>>(snapshot.stateJson, {})) : null;
-    const mainlineWeek = (runtime.plans.baselineWorkload.weeks as StateEffect[])
-      .find((week) => Number(week.week) === branch.currentWeek) ?? {};
-    return withPrivateCache(jsonResponse({
-      forkWeek: branch.currentWeek - branch.currentRoundNumber,
-      currentWeek: branch.currentWeek,
-      outcomeClassification: branch.status === "active" ? null : state?.outcomeClassification ?? null,
-      mainline: { spi: mainlineWeek.spi ?? 1, cpi: mainlineWeek.cpi ?? 1, forecastCompletionWeek: 32 },
-      branch: state ? { spi: (state.performance as Record<string, unknown>).spi, cpi: (state.performance as Record<string, unknown>).cpi, forecastCompletionWeek: (state.performance as Record<string, unknown>).forecastCompletionWeek, status: (state.scenario as Record<string, unknown>).status } : null,
-    }));
+    const [rounds, deltas] = await Promise.all([
+      readBranchPathRounds(env.DB!, branch.id),
+      readDocumentDeltas(env.DB!, branch.id),
+    ]);
+    return withPrivateCache(jsonResponse(buildBranchPathComparison(runtime, branch, rounds, deltas)));
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return errorResponse(405, "METHOD_NOT_ALLOWED", "Only GET and HEAD are supported.", { allow: "GET, HEAD" });
