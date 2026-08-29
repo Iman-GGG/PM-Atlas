@@ -23,6 +23,8 @@ function createEnv({
     caseId: "car-control",
     caseVersion,
     contentHash,
+    parentBranchId: null,
+    branchName: null,
     currentWeek,
     currentRoundNumber,
     status: branchStatus,
@@ -156,11 +158,18 @@ function createEnv({
           caseId: bindings[2],
           caseVersion: bindings[3],
           contentHash: caseHash,
-          currentWeek: bindings[5],
+          parentBranchId: bindings[4],
+          branchName: bindings[5],
+          forkWeek: bindings[6],
+          currentWeek: bindings[7],
           currentRoundNumber: 0,
+          lockVersion: 0,
           status: "active",
         });
       }
+    } else if (query.includes("UPDATE lab_branches") && query.includes("SET branch_name")) {
+      const storedBranch = state.branches.get(bindings[1]);
+      if (storedBranch?.identityKey === bindings[2]) state.branches.set(bindings[1], { ...storedBranch, branchName: bindings[0] });
     } else if (query.includes("INSERT OR IGNORE INTO lab_state_snapshots")) {
       state.snapshots.push({
         id: bindings[0],
@@ -573,6 +582,100 @@ test("creates a v5 branch when an immutable v4 case record already exists", asyn
   assert.equal(response.status, 201);
   assert.equal((await response.json()).branch.caseVersion, "v5");
   assert.equal(env.__state.caseVersions.get("car-control:v4"), "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353");
+});
+
+test("creates a new v5 retry branch without mutating the settled source", async () => {
+  const env = createEnv({
+    caseVersion: "v4",
+    contentHash: "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353",
+    currentWeek: 11,
+    currentRoundNumber: 2,
+    branchStatus: "completed",
+    outcomeClassification: "detour_success",
+    snapshots: [{
+      branchId: "branch-1",
+      roundNumber: 2,
+      week: 11,
+      scenarioId: "scenario-1",
+      stateJson: "{}",
+      stateHash: "settled-source-hash",
+    }],
+  });
+  const headers = {
+    "content-type": "application/json",
+    "oai-authenticated-user-id": "user-123",
+    "oai-authenticated-user-email": "iman@example.com",
+  };
+  const response = await request("/api/lab/cases/car-control/v5/branches", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      scenarioId: "scenario-1",
+      idempotencyKey: "retry-scenario-001",
+      retryFromBranchId: "branch-1",
+      branchName: "减少重复动作",
+    }),
+  }, env);
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.notEqual(body.branch.id, "branch-1");
+  assert.equal(body.branch.caseVersion, "v5");
+  assert.equal(body.branch.parentBranchId, "branch-1");
+  assert.equal(body.branch.branchName, "减少重复动作");
+  assert.equal(body.branch.currentWeek, 9);
+  assert.equal(env.__state.branches.get("branch-1").status, "completed");
+  assert.equal(env.__state.branches.get("branch-1").caseVersion, "v4");
+  assert.equal(env.__state.snapshots.some((snapshot) => snapshot.branchId === "branch-1" && snapshot.stateHash === "settled-source-hash"), true);
+
+  const secondResponse = await request("/api/lab/cases/car-control/v5/branches", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      scenarioId: "scenario-1",
+      idempotencyKey: "retry-scenario-002",
+      retryFromBranchId: body.branch.id,
+    }),
+  }, env);
+  assert.equal(secondResponse.status, 409, "an active retry must not be used as another retry source");
+  assert.equal((await secondResponse.json()).error.code, "RETRY_SOURCE_ACTIVE");
+});
+
+test("renames only an owned branch and allows clearing the custom name", async () => {
+  const env = createEnv();
+  const headers = {
+    "content-type": "application/json",
+    "oai-authenticated-user-id": "user-123",
+    "oai-authenticated-user-email": "iman@example.com",
+  };
+  const renamed = await request("/api/lab/branches/branch-1", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ branchName: "第二次：先处理根因" }),
+  }, env);
+  assert.equal(renamed.status, 200);
+  assert.equal((await renamed.json()).branch.branchName, "第二次：先处理根因");
+
+  const cleared = await request("/api/lab/branches/branch-1", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ branchName: "   " }),
+  }, env);
+  assert.equal(cleared.status, 200);
+  assert.equal((await cleared.json()).branch.branchName, null);
+
+  const tooLong = await request("/api/lab/branches/branch-1", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ branchName: "分".repeat(41) }),
+  }, env);
+  assert.equal(tooLong.status, 400);
+
+  const intruder = await request("/api/lab/branches/branch-1", {
+    method: "PATCH",
+    headers: { ...headers, "oai-authenticated-user-id": "intruder", "oai-authenticated-user-email": "intruder@example.com" },
+    body: JSON.stringify({ branchName: "越权命名" }),
+  }, env);
+  assert.equal(intruder.status, 404);
 });
 
 test("requires login and a valid takeover request when creating a branch", async () => {

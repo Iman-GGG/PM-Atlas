@@ -32,6 +32,7 @@ import {
   readScenarioActionChainSubmissions,
   readDocumentDeltas,
   readAiReview,
+  renameOwnedBranch,
   saveAiReview,
   recordMaterialView,
   saveRoundDraft,
@@ -388,20 +389,31 @@ async function stableId(prefix: string, value: string): Promise<string> {
 async function parseCreateBranchBody(request: Request): Promise<{
   scenarioId: string;
   idempotencyKey: string;
+  retryFromBranchId: string | null;
+  branchName: string | null;
 } | null> {
-  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
-  if (contentType !== "application/json") return null;
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 4096) return null;
-  try {
-    const body = await request.json() as Record<string, unknown>;
-    if (typeof body.scenarioId !== "string" || typeof body.idempotencyKey !== "string") return null;
-    if (!/^scenario-[a-z0-9-]{1,48}$/.test(body.scenarioId)) return null;
-    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(body.idempotencyKey)) return null;
-    return { scenarioId: body.scenarioId, idempotencyKey: body.idempotencyKey };
-  } catch {
-    return null;
-  }
+  const body = await parseJsonRequest(request);
+  if (!body || typeof body.scenarioId !== "string" || typeof body.idempotencyKey !== "string") return null;
+  if (!/^scenario-[a-z0-9-]{1,48}$/.test(body.scenarioId)) return null;
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(body.idempotencyKey)) return null;
+  if (body.retryFromBranchId !== undefined && (typeof body.retryFromBranchId !== "string" || !/^branch-[a-z0-9-]{1,64}$/.test(body.retryFromBranchId))) return null;
+  if (body.branchName !== undefined && typeof body.branchName !== "string") return null;
+  const branchName = typeof body.branchName === "string" ? body.branchName.trim() : "";
+  if (branchName && (Array.from(branchName).length > 40 || /[\u0000-\u001f\u007f]/.test(branchName))) return null;
+  return {
+    scenarioId: body.scenarioId,
+    idempotencyKey: body.idempotencyKey,
+    retryFromBranchId: typeof body.retryFromBranchId === "string" ? body.retryFromBranchId : null,
+    branchName: branchName || null,
+  };
+}
+
+async function parseRenameBranchBody(request: Request): Promise<{ branchName: string | null } | null> {
+  const body = await parseJsonRequest(request);
+  if (!body || typeof body.branchName !== "string") return null;
+  const branchName = body.branchName.trim();
+  if (Array.from(branchName).length > 40 || /[\u0000-\u001f\u007f]/.test(branchName)) return null;
+  return { branchName: branchName || null };
 }
 
 async function createBranch(request: Request, env: LabApiEnv, caseId: string, caseVersion: string): Promise<Response> {
@@ -432,7 +444,22 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
     return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The stored case version differs from this deployment."));
   }
 
-  const branchScope = `${identity.identityKey}\u0000${caseId}\u0000${caseVersion}\u0000${body.scenarioId}\u0000${body.idempotencyKey}`;
+  let retrySource: Awaited<ReturnType<typeof findOwnedBranch>> = null;
+  if (body.retryFromBranchId) {
+    retrySource = await findOwnedBranch(env.DB, body.retryFromBranchId, identity.identityKey);
+    if (!retrySource) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    if (retrySource.status !== "completed" && retrySource.status !== "failed") return withPrivateCache(errorResponse(409, "RETRY_SOURCE_ACTIVE", "Finish the current attempt before retrying from its takeover point."));
+    if (retrySource.caseId !== caseId) return withPrivateCache(errorResponse(409, "RETRY_SOURCE_MISMATCH", "The retry source belongs to another case."));
+    if (!findLabCaseRuntimePackage(retrySource.caseId, retrySource.caseVersion, retrySource.contentHash)) {
+      return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The retry source case package is not available in this deployment."));
+    }
+    const retrySnapshot = await readCurrentStateSnapshot(env.DB, retrySource.id, retrySource.currentRoundNumber);
+    if (!retrySnapshot || retrySnapshot.scenarioId !== body.scenarioId) {
+      return withPrivateCache(errorResponse(409, "RETRY_SOURCE_MISMATCH", "The retry source belongs to another scenario."));
+    }
+  }
+
+  const branchScope = `${identity.identityKey}\u0000${caseId}\u0000${caseVersion}\u0000${body.scenarioId}\u0000${body.retryFromBranchId ?? ""}\u0000${body.idempotencyKey}`;
   const branchId = await stableId("branch", branchScope);
   const existingBranch = await findOwnedBranch(env.DB, branchId, identity.identityKey);
   if (existingBranch) {
@@ -472,6 +499,7 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
     availableMaterialIds: materialIds,
     entrySignals: runtime.learningPolicies.eventDiscovery.entrySignals,
     cardsUnlocked: false,
+    retryFromBranchId: retrySource?.id ?? null,
   };
 
   await createBranchRecords(env.DB, {
@@ -483,6 +511,8 @@ async function createBranch(request: Request, env: LabApiEnv, caseId: string, ca
     displayName: identity.displayName,
     progressId: await stableId("progress", `${identity.identityKey}\u0000${caseId}\u0000${caseVersion}`),
     branchId,
+    parentBranchId: retrySource ? retrySource.parentBranchId ?? retrySource.id : null,
+    branchName: body.branchName,
     scenarioId: scenario.id,
     forkWeek: scenario.week,
     snapshotId: `${branchId}:snapshot:0`,
@@ -825,6 +855,17 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
   } catch {
     return errorResponse(400, "INVALID_PATH", "The request path is not valid UTF-8.");
+  }
+  if (parts.length === 4 && parts[2] === "branches") {
+    if (request.method !== "PATCH") return errorResponse(405, "METHOD_NOT_ALLOWED", "Only PATCH is supported.", { allow: "PATCH" });
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to rename a project branch."));
+    if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
+    const body = await parseRenameBranchBody(request);
+    if (!body) return withPrivateCache(errorResponse(400, "INVALID_BRANCH_NAME", "Branch names must be at most 40 characters and contain no control characters."));
+    const branch = await renameOwnedBranch(env.DB, parts[3], identity.identityKey, body.branchName);
+    if (!branch) return withPrivateCache(errorResponse(404, "BRANCH_NOT_FOUND", "Project branch not found."));
+    return withPrivateCache(jsonResponse({ branch }));
   }
   if (parts.length === 6 && parts[2] === "cases" && parts[5] === "branches") {
     if (request.method === "GET" || request.method === "HEAD") {

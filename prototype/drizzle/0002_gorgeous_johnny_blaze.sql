@@ -1,0 +1,1 @@
+ALTER TABLE `lab_branches` ADD `branch_name` text;

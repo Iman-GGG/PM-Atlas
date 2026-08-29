@@ -32,7 +32,7 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
   assert.match(timeline, /summary\.caseVersion\.toUpperCase\(\)/);
   assert.match(timeline, /projection\.branch\.caseVersion !== caseVersion/);
   assert.match(timeline, /projection\.branch\.caseVersion}\/mainline\?sections=/);
-  assert.match(timeline, /JSON\.stringify\(\{ scenarioId: point\.scenarioId, idempotencyKey \}\)/);
+  assert.match(timeline, /JSON\.stringify\(\{ scenarioId: point\.scenarioId, idempotencyKey, \.\.\.\(retryFromBranchId/);
   assert.match(timeline, /\/materials\/\$\{encodeURIComponent\(material\.id\)\}\/view/);
   assert.match(timeline, /materials\?\.materials\.map/);
   assert.match(timeline, /openedMaterialCache\[material\.id\]/);

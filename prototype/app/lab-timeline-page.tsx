@@ -551,6 +551,8 @@ type MainlineResponse = {
 type BranchContext = {
   id: string;
   caseVersion: string;
+  parentBranchId: string | null;
+  branchName: string | null;
   currentWeek: number;
   currentRoundNumber: number;
   status: string;
@@ -1706,6 +1708,12 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
   const [aiReviewError, setAiReviewError] = useState<string | null>(null);
   const [outcomeViewOpen, setOutcomeViewOpen] = useState(false);
+  const [retryingBranchId, setRetryingBranchId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const [editingBranchNameId, setEditingBranchNameId] = useState<string | null>(null);
+  const [branchNameDraft, setBranchNameDraft] = useState("");
+  const [renamingBranchId, setRenamingBranchId] = useState<string | null>(null);
+  const [branchNameError, setBranchNameError] = useState<string | null>(null);
   const [submittingRound, setSubmittingRound] = useState(false);
   const [loadingScenarioId, setLoadingScenarioId] = useState<string | null>(null);
   const [openingMaterialIds, setOpeningMaterialIds] = useState<string[]>([]);
@@ -1866,25 +1874,33 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     };
   }, [mainline]);
 
-  const takeover = async (point: TakeoverPoint) => {
+  const takeover = async (point: TakeoverPoint, options?: { retryFromBranchId?: string }) => {
     setSelectedWeek(point.week);
     if (!authenticated) {
       signIn();
       return;
     }
-    setLoadingScenarioId(point.scenarioId);
-    setError(null);
+    const retryFromBranchId = options?.retryFromBranchId;
+    if (retryFromBranchId) {
+      setRetryingBranchId(retryFromBranchId);
+      setRetryError(null);
+    } else {
+      setLoadingScenarioId(point.scenarioId);
+      setError(null);
+    }
     try {
-      let idempotencyKey = idempotencyKeys.current.get(point.scenarioId);
+      const idempotencyScope = retryFromBranchId ? `${point.scenarioId}:retry:${retryFromBranchId}` : point.scenarioId;
+      let idempotencyKey = idempotencyKeys.current.get(idempotencyScope);
       if (!idempotencyKey) {
         idempotencyKey = crypto.randomUUID();
-        idempotencyKeys.current.set(point.scenarioId, idempotencyKey);
+        idempotencyKeys.current.set(idempotencyScope, idempotencyKey);
       }
       const created = await apiJson<BranchCreation>(`/api/lab/cases/${caseId}/${caseVersion}/branches`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ scenarioId: point.scenarioId, idempotencyKey }),
+        body: JSON.stringify({ scenarioId: point.scenarioId, idempotencyKey, ...(retryFromBranchId ? { retryFromBranchId } : {}) }),
       });
+      idempotencyKeys.current.delete(idempotencyScope);
       setBranch(created.branch);
       setBranchState(null);
       setScenarioId(created.scenario.id);
@@ -1904,6 +1920,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       setRoundResult(null);
       setAiReview(null);
       setAiReviewError(null);
+      setRetryError(null);
       setOutcomeViewOpen(false);
       window.history.replaceState(
         null,
@@ -1913,9 +1930,12 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       await loadMaterials(created.branch.id, created.scenario.id);
       await refreshBranches();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "无法创建个人分支");
+      const message = caught instanceof Error ? caught.message : "无法创建个人分支";
+      if (retryFromBranchId) setRetryError(message);
+      else setError(message);
     } finally {
-      setLoadingScenarioId(null);
+      if (retryFromBranchId) setRetryingBranchId(null);
+      else setLoadingScenarioId(null);
     }
   };
 
@@ -1937,6 +1957,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     setDocumentDiffWeeks({ mainline: 1, branch: 1 });
     setAiReview(null);
     setAiReviewError(null);
+    setRetryError(null);
     setOutcomeViewOpen(false);
     setActionMessage(null);
     setSelectedWeek(targetWeek ?? selectedWeek);
@@ -1951,6 +1972,27 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       `${window.location.pathname}${window.location.search}#lab-schedule?branch=${encodeURIComponent(summary.id)}&scenario=${encodeURIComponent(summary.scenarioId)}`,
     );
     window.location.reload();
+  };
+
+  const saveBranchName = async (summary: BranchSummary) => {
+    if (renamingBranchId) return;
+    setRenamingBranchId(summary.id);
+    setBranchNameError(null);
+    try {
+      const response = await apiJson<{ branch: BranchContext }>(`/api/lab/branches/${encodeURIComponent(summary.id)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ branchName: branchNameDraft }),
+      });
+      setBranches((current) => current.map((item) => item.id === summary.id ? { ...item, branchName: response.branch.branchName } : item));
+      setBranch((current) => current?.id === summary.id ? { ...current, branchName: response.branch.branchName } : current);
+      setEditingBranchNameId(null);
+      setBranchNameDraft("");
+    } catch (caught) {
+      setBranchNameError(caught instanceof Error ? caught.message : "分支名称保存失败");
+    } finally {
+      setRenamingBranchId(null);
+    }
   };
 
   const openMaterial = async (material: MaterialSummary) => {
@@ -2019,6 +2061,18 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const nextTakeoverPoint = branch
     ? manifest?.takeoverPoints.find((point) => point.week > branch.currentWeek) ?? null
     : null;
+  const branchGroups = useMemo(() => {
+    const grouped = new Map<string, BranchSummary[]>();
+    for (const summary of branches) grouped.set(summary.scenarioId, [...(grouped.get(summary.scenarioId) ?? []), summary]);
+    return [...grouped.entries()].map(([groupScenarioId, attempts]) => {
+      const chronological = attempts.sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
+      return {
+        scenarioId: groupScenarioId,
+        forkWeek: chronological[0]?.forkWeek ?? 1,
+        attempts: chronological.map((summary, index) => ({ summary, attemptNumber: index + 1 })).reverse(),
+      };
+    }).sort((left, right) => left.forkWeek - right.forkWeek || left.scenarioId.localeCompare(right.scenarioId));
+  }, [branches]);
   const currentWeekHasLabel = milestones.some((milestone) => milestone.week === selectedWeek)
     || manifest?.takeoverPoints.some((point) => point.week === selectedWeek);
 
@@ -3124,7 +3178,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
       {branch && (
         <section className="lab-v2-branch-workspace">
           <header>
-            <div><span>PERSONAL BRANCH / W{branch.currentWeek} / ROUND {branch.currentRoundNumber}</span><h2>{scenarioTitle}</h2><p>事件材料需要逐项打开；系统只呈现客观事实，不提示正确答案。</p></div>
+            <div><span>PERSONAL BRANCH / W{branch.currentWeek} / ROUND {branch.currentRoundNumber}</span><h2>{branch.branchName ?? scenarioTitle}</h2><p>{branch.branchName ? `${scenarioTitle} · ` : ""}事件材料需要逐项打开；系统只呈现客观事实，不提示正确答案。</p></div>
             <div><strong>{materials?.openedCount ?? 0}/{materials?.totalCount ?? 0}</strong><span>材料已查看</span><small>{branch.status !== "active" ? "情景结算完成" : materials?.cardsUnlocked ? "三类卡池已解锁" : "继续观察线索"}</small></div>
           </header>
           <div className="lab-v2-material-layout">
@@ -3339,7 +3393,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
 
       {outcomeViewOpen && branch && branch.status !== "active" && (
         branchComparison ? <ScenarioOutcomeView
-          scenarioTitle={scenarioTitle ?? scenarioLabels[branch.scenarioId] ?? branch.scenarioId}
+          scenarioTitle={scenarioTitle ?? scenarioLabels[scenarioId ?? ""] ?? scenarioId ?? "当前情景"}
           branchStatus={branch.status}
           comparison={branchComparison}
           incrementalCostCny={branchState?.totals.incrementalActualCostCny ?? 0}
@@ -3347,9 +3401,16 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
           aiReview={aiReview}
           aiReviewLoading={aiReviewLoading}
           aiReviewError={aiReviewError}
+          retrying={retryingBranchId === branch.id}
+          retryError={retryError}
           documentTitles={Object.fromEntries(documentState.map((document) => [document.id, document.title]))}
           nextTakeoverWeek={nextTakeoverPoint?.week ?? null}
           onGenerateAiReview={() => void requestAiReview()}
+          onRetryScenario={() => {
+            const point = manifest.takeoverPoints.find((item) => item.scenarioId === scenarioId);
+            if (point) void takeover(point, { retryFromBranchId: branch.id });
+            else setRetryError("当前情景的接手点已不可用");
+          }}
           onOpenDocument={(documentId) => {
             setOutcomeViewOpen(false);
             setSelectedDocumentId(documentId);
@@ -3371,9 +3432,24 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
 
       {branchHistoryOpen && <div className="lab-v2-drawer-backdrop" onClick={() => setBranchHistoryOpen(false)}>
         <aside className="lab-v2-branch-history-drawer" onClick={(event) => event.stopPropagation()}>
-          <header><div><span>TAKEOVER HISTORY</span><h2>接手记录</h2><p>每次接手形成独立分支；点击记录可切换并回看当时的行动和结局。</p></div><button type="button" onClick={() => setBranchHistoryOpen(false)}>关闭</button></header>
+          <header><div><span>TAKEOVER HISTORY</span><h2>接手记录</h2><p>按情景归集每次独立尝试；可命名、切换并回看当时的行动和结局。</p></div><button type="button" onClick={() => setBranchHistoryOpen(false)}>关闭</button></header>
           {branch && <button className="lab-v2-history-mainline" type="button" onClick={() => { setBranchHistoryOpen(false); leaveBranch(branch.currentWeek); }}>返回项目主线</button>}
-          <div className="lab-v2-branch-history-list">{branches.length ? branches.map((summary) => <button key={summary.id} type="button" className={branch?.id === summary.id ? "active" : ""} onClick={() => switchBranch(summary)}><i>W{summary.forkWeek}</i><span><strong>{scenarioLabels[summary.scenarioId] ?? summary.scenarioId}</strong><small>{summary.caseVersion.toUpperCase()} · {summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></span><b>{branch?.id === summary.id ? "当前" : "打开"}</b></button>) : <p>还没有接手记录。请先在 W9、W17 或 W25 从主线创建分支。</p>}</div>
+          {branchNameError && <p className="lab-v2-branch-name-error">{branchNameError}</p>}
+          <div className="lab-v2-branch-history-list">{branchGroups.length ? branchGroups.map((group) => <section key={group.scenarioId} className="lab-v2-branch-history-group">
+            <header><i>W{group.forkWeek}</i><span><strong>{scenarioLabels[group.scenarioId] ?? group.scenarioId}</strong><small>{group.attempts.length} 次尝试</small></span></header>
+            <div>{group.attempts.map(({ summary, attemptNumber }) => <article key={summary.id} className={branch?.id === summary.id ? "active" : ""}>
+              {editingBranchNameId === summary.id ? <form onSubmit={(event) => { event.preventDefault(); void saveBranchName(summary); }}>
+                <input autoFocus maxLength={40} value={branchNameDraft} onChange={(event) => setBranchNameDraft(event.target.value)} aria-label="分支名称" placeholder={`第 ${attemptNumber} 次尝试`} />
+                <button type="submit" disabled={renamingBranchId === summary.id}>{renamingBranchId === summary.id ? "保存中" : "保存"}</button>
+                <button type="button" onClick={() => { setEditingBranchNameId(null); setBranchNameDraft(""); }}>取消</button>
+              </form> : <>
+                <button type="button" className="lab-v2-branch-history-open" onClick={() => switchBranch(summary)}>
+                  <i>{attemptNumber}</i><span><strong>{summary.branchName ?? `第 ${attemptNumber} 次尝试`}</strong><small>{summary.parentBranchId ? "重试" : "首次接手"} · {summary.caseVersion.toUpperCase()} · {summary.status === "active" ? `进行中 · 回合 ${summary.currentRoundNumber}` : summary.status === "completed" ? `已完成 · ${pathClassificationLabels[summary.outcomeClassification ?? ""] ?? "已闭环"}` : "已失败 · 可回看"}</small></span><b>{branch?.id === summary.id ? "当前" : "打开"}</b>
+                </button>
+                <button type="button" className="lab-v2-branch-history-rename" aria-label={`命名第 ${attemptNumber} 次尝试`} onClick={() => { setBranchNameError(null); setEditingBranchNameId(summary.id); setBranchNameDraft(summary.branchName ?? ""); }}>命名</button>
+              </>}
+            </article>)}</div>
+          </section>) : <p>还没有接手记录。请先在 W9、W17 或 W25 从主线创建分支。</p>}</div>
         </aside>
       </div>}
 

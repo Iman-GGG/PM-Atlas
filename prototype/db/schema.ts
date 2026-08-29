@@ -94,6 +94,7 @@ export const labBranches = sqliteTable(
     parentBranchId: text("parent_branch_id").references((): AnySQLiteColumn => labBranches.id, {
       onDelete: "set null",
     }),
+    branchName: text("branch_name"),
     forkWeek: integer("fork_week").notNull(),
     forkRoundNumber: integer("fork_round_number").notNull().default(0),
     currentWeek: integer("current_week").notNull(),

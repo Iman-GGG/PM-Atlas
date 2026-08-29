@@ -21,6 +21,7 @@ type OutcomeRound = {
 export type ScenarioOutcomeComparison = {
   caseVersion: string;
   contentHash: string;
+  forkWeek: number;
   currentWeek: number;
   outcomeClassification: string | null;
   mainline: OutcomeMetric;
@@ -38,9 +39,12 @@ type ScenarioOutcomeViewProps = {
   aiReview: AiReview | null;
   aiReviewLoading: boolean;
   aiReviewError: string | null;
+  retrying: boolean;
+  retryError: string | null;
   documentTitles: Record<string, string>;
   nextTakeoverWeek: number | null;
   onGenerateAiReview: () => void;
+  onRetryScenario: () => void;
   onOpenDocument: (documentId: string) => void;
   onClose: () => void;
   onReturnMainline: () => void;
@@ -108,9 +112,12 @@ export function ScenarioOutcomeView({
   aiReview,
   aiReviewLoading,
   aiReviewError,
+  retrying,
+  retryError,
   documentTitles,
   nextTakeoverWeek,
   onGenerateAiReview,
+  onRetryScenario,
   onOpenDocument,
   onClose,
   onReturnMainline,
@@ -189,9 +196,11 @@ export function ScenarioOutcomeView({
           </> : !aiReviewLoading && !aiReviewError && <p className="lab-v2-ai-review-empty">规则复盘已经可以独立使用。需要更细的学习建议时，再生成 AI 结构化复盘。</p>}
         </section>
 
+        {retryError && <p className="lab-v2-outcome-retry-error">{retryError}</p>}
         <footer className="lab-v2-outcome-actions">
           <button type="button" onClick={onReturnMainline}>返回项目主线</button>
           {nextTakeoverWeek !== null && <button type="button" className="primary" onClick={onStartNextScenario}>开始下一情景 · W{nextTakeoverWeek}</button>}
+          <button type="button" className="primary" disabled={retrying} onClick={onRetryScenario}>{retrying ? "正在创建新分支…" : `从 W${comparison.forkWeek} 重新尝试 · 新建 V5 分支`}</button>
           <button type="button" onClick={onClose}>继续查看当前分支</button>
         </footer>
       </div>

@@ -19,6 +19,8 @@ export type OwnedBranch = {
   caseId: string;
   caseVersion: string;
   contentHash: string;
+  parentBranchId: string | null;
+  branchName: string | null;
   currentWeek: number;
   currentRoundNumber: number;
   lockVersion: number;
@@ -102,6 +104,8 @@ export async function findOwnedBranch(db: LabD1, branchId: string, identityKey: 
       b.case_id AS caseId,
       b.case_version AS caseVersion,
       cv.content_hash AS contentHash,
+      b.parent_branch_id AS parentBranchId,
+      b.branch_name AS branchName,
       b.current_week AS currentWeek,
       b.current_round_number AS currentRoundNumber,
       b.lock_version AS lockVersion,
@@ -128,6 +132,8 @@ export async function listOwnedBranches(
       b.case_id AS caseId,
       b.case_version AS caseVersion,
       cv.content_hash AS contentHash,
+      b.parent_branch_id AS parentBranchId,
+      b.branch_name AS branchName,
       b.fork_week AS forkWeek,
       b.current_week AS currentWeek,
       b.current_round_number AS currentRoundNumber,
@@ -159,6 +165,8 @@ export async function listOwnedCaseBranches(
       b.case_id AS caseId,
       b.case_version AS caseVersion,
       cv.content_hash AS contentHash,
+      b.parent_branch_id AS parentBranchId,
+      b.branch_name AS branchName,
       b.fork_week AS forkWeek,
       b.current_week AS currentWeek,
       b.current_round_number AS currentRoundNumber,
@@ -190,6 +198,8 @@ export async function readOwnedBranchContext(
       b.case_id AS caseId,
       b.case_version AS caseVersion,
       cv.content_hash AS contentHash,
+      b.parent_branch_id AS parentBranchId,
+      b.branch_name AS branchName,
       b.current_week AS currentWeek,
       b.current_round_number AS currentRoundNumber,
       b.lock_version AS lockVersion,
@@ -218,6 +228,8 @@ export async function readOwnedBranchContext(
       caseId: first.caseId,
       caseVersion: first.caseVersion,
       contentHash: first.contentHash,
+      parentBranchId: first.parentBranchId,
+      branchName: first.branchName,
       currentWeek: first.currentWeek,
       currentRoundNumber: first.currentRoundNumber,
       lockVersion: first.lockVersion,
@@ -261,6 +273,8 @@ export type CreateBranchRecords = {
   displayName: string;
   progressId: string;
   branchId: string;
+  parentBranchId: string | null;
+  branchName: string | null;
   scenarioId: string;
   forkWeek: number;
   snapshotId: string;
@@ -293,14 +307,16 @@ export async function createBranchRecords(db: LabD1, records: CreateBranchRecord
     `).bind(records.progressId, records.userId, records.caseId, records.caseVersion, records.forkWeek),
     db.prepare(`
       INSERT OR IGNORE INTO lab_branches (
-        id, user_id, case_id, case_version, fork_week, fork_round_number,
+        id, user_id, case_id, case_version, parent_branch_id, branch_name, fork_week, fork_round_number,
         current_week, current_round_number, lock_version, status
-      ) VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, 'active')
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, 0, 'active')
     `).bind(
       records.branchId,
       records.userId,
       records.caseId,
       records.caseVersion,
+      records.parentBranchId,
+      records.branchName,
       records.forkWeek,
       records.forkWeek,
     ),
@@ -327,6 +343,21 @@ export async function createBranchRecords(db: LabD1, records: CreateBranchRecord
       records.eventPayloadJson,
     ),
   ]);
+}
+
+export async function renameOwnedBranch(
+  db: LabD1,
+  branchId: string,
+  identityKey: string,
+  branchName: string | null,
+): Promise<OwnedBranch | null> {
+  await db.prepare(`
+    UPDATE lab_branches
+    SET branch_name = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND user_id = (SELECT id FROM lab_users WHERE identity_key = ? LIMIT 1)
+  `).bind(branchName, branchId, identityKey).run();
+  return findOwnedBranch(db, branchId, identityKey);
 }
 
 export type RecordMaterialView = {
