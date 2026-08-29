@@ -268,6 +268,70 @@ test("persists an idempotent takeover branch against the real migration", async 
       : table === "lab_state_snapshots" ? 2 : table === "lab_round_drafts" ? 0 : 1;
     assert.equal(count, expected, `${table} should contain the expected idempotent records`);
   }
+
+  database.prepare("INSERT INTO lab_users (id, identity_key, display_name) VALUES (?, ?, ?)")
+    .run("other-user", "oai-user:other-user", "Other User");
+  database.prepare(`
+    INSERT INTO lab_branches (id, user_id, case_id, case_version, fork_week, current_week, status)
+    VALUES (?, ?, 'car-control', 'v5', 9, 9, 'active')
+  `).run("other-branch", "other-user");
+
+  const invalidDeletion = await worker.fetch(
+    new Request("http://localhost/api/lab/me/data", {
+      method: "DELETE",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify({ confirmation: "删除" }),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(invalidDeletion.status, 400);
+
+  const deleted = await worker.fetch(
+    new Request("http://localhost/api/lab/me/data", {
+      method: "DELETE",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify({ confirmation: "DELETE_LAB_DATA" }),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(deleted.status, 200);
+  assert.deepEqual(await deleted.json(), {
+    deleted: true,
+    hadStoredData: true,
+    deletedBranchCount: 1,
+  });
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM lab_users").get().count, 1);
+  assert.equal(database.prepare("SELECT identity_key AS identityKey FROM lab_users").get().identityKey, "oai-user:other-user");
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM lab_branches").get().count, 1);
+  assert.equal(database.prepare("SELECT id FROM lab_branches").get().id, "other-branch");
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM lab_case_versions").get().count, 1, "shared frozen case versions must remain");
+  for (const table of [
+    "lab_progress",
+    "lab_state_snapshots",
+    "lab_events",
+    "lab_round_drafts",
+    "lab_round_submissions",
+    "lab_document_deltas",
+    "lab_ai_reviews",
+    "lab_user_activity_days",
+    "lab_analytics_events",
+  ]) {
+    assert.equal(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count, 0, `${table} must not retain deleted-user data`);
+  }
+
+  const idempotentDeletion = await worker.fetch(
+    new Request("http://localhost/api/lab/me/data", {
+      method: "DELETE",
+      headers: { ...authHeaders, "content-type": "application/json" },
+      body: JSON.stringify({ confirmation: "DELETE_LAB_DATA" }),
+    }),
+    env,
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(idempotentDeletion.status, 200);
+  assert.equal((await idempotentDeletion.json()).hadStoredData, false);
   database.close();
 });
 

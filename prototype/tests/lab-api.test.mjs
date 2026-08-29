@@ -472,6 +472,28 @@ test("rejects protected scenario reads without platform identity", async () => {
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
 });
 
+test("requires platform identity and explicit confirmation before deleting lab data", async () => {
+  const anonymous = await request("/api/lab/me/data", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ confirmation: "DELETE_LAB_DATA" }),
+  });
+  assert.equal(anonymous.status, 401);
+  assert.match(anonymous.headers.get("cache-control") ?? "", /no-store/);
+
+  const invalidConfirmation = await request("/api/lab/me/data", {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json",
+      "oai-authenticated-user-id": "user-123",
+      "oai-authenticated-user-email": "iman@example.com",
+    },
+    body: JSON.stringify({ confirmation: "删除" }),
+  });
+  assert.equal(invalidConfirmation.status, 400);
+  assert.equal((await invalidConfirmation.json()).error.code, "DELETION_CONFIRMATION_REQUIRED");
+});
+
 test("creates an idempotent branch from a configured takeover point", async () => {
   const env = createEnv({ includeExistingBranch: false });
   const options = {

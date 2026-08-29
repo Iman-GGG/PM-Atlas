@@ -15,15 +15,23 @@ test("wires the project lab schedule page to mainline, takeover, and material AP
     readFile(timelineSource, "utf8"),
   ]);
 
-  assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage openBranchHistoryRequest=\{branchHistoryRequest\} \/>/);
+  assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage openBranchHistoryRequest=\{branchHistoryRequest\} resetLabDataRequest=\{labDataResetRequest\} \/>/);
   assert.match(app, /function AccountMenu/);
   assert.match(app, /\/api\/lab\/session/);
   assert.match(app, /\/signout-with-chatgpt\?return_to=/);
   assert.match(app, /onOpenTakeoverHistory/);
   assert.match(app, /session\.analyticsAdmin/);
   assert.match(app, /href="\/stats"/);
+  assert.match(app, /删除我的实验室数据/);
+  assert.match(app, /输入“删除”确认/);
+  assert.match(app, /fetch\("\/api\/lab\/me\/data"/);
+  assert.match(app, /confirmation: "DELETE_LAB_DATA"/);
+  assert.match(timeline, /if \(resetLabDataRequest < 1\) return/);
+  assert.match(timeline, /setBranches\(\[\]\)/);
+  assert.match(timeline, /setSelectedKnowledgeReference\(null\)/);
   assert.match(app, /隐私与统计说明/);
   assert.match(app, /不记录页面输入、行动链具体内容或原始 IP/);
+  assert.match(app, /可从账号菜单永久删除个人实验室数据/);
   assert.match(app, /if \(nextSection === "lab"\)[\s\S]*switchPage\("schedule"\)/);
   assert.match(app, /section === "lab" && page !== "schedule"/);
   assert.match(timeline, /\/mainline\?sections=\$\{mainlineSections\}/);
@@ -151,7 +159,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.doesNotMatch(styles, /\.lab-v2-timeline-panel[^{]*\{[^}]*position: sticky/);
   assert.match(styles, /\.lab-v2-gantt[^}]*overflow: hidden/);
   assert.match(styles, /\.lab-v2-card-candidates/);
-  assert.match(styles, /\.lab-v2-card-candidates > section > button[^}]*width: fit-content[^}]*border-radius: 999px/);
+  assert.match(styles, /\.lab-v2-card-candidate[^}]*width: fit-content[^}]*border-radius: 999px/);
   assert.match(styles, /\.lab-v2-action-chain-composer/);
   assert.match(styles, /\.lab-v2-chain-pools/);
   assert.match(styles, /\.lab-v2-chain-pool > div > button[^}]*width: fit-content[^}]*border-radius: 999px/);

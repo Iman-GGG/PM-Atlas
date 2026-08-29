@@ -18,6 +18,7 @@ import {
 import {
   createBranchRecords,
   commitRoundRecords,
+  deleteOwnedLabData,
   findRoundSubmissionByIdempotency,
   findLabUser,
   findOwnedBranch,
@@ -198,6 +199,35 @@ function findScenarioMaterial(runtime: LabCaseRuntimePackage, scenarioId: string
 
 function findScenario(runtime: LabCaseRuntimePackage, scenarioId: string) {
   return runtime.scenarios.find(({ id }) => id === scenarioId) ?? null;
+}
+
+function displayKnowledgeReferenceId(referenceId: string): string | null {
+  if (/^D\d{2}$/.test(referenceId)) return referenceId;
+  const toolMatch = /^tool:(\d{3})$/.exec(referenceId);
+  return toolMatch ? `T${toolMatch[1]}` : null;
+}
+
+function scenarioKnowledgeReferences(scenario: ScenarioDefinition | null) {
+  if (!scenario) return [];
+  const references = scenario.cards.flatMap((card) => {
+    const id = displayKnowledgeReferenceId(card.referenceId);
+    return id ? [{ id, title: card.title }] : [];
+  });
+  return [...new Map(references.map((item) => [item.id, item])).values()];
+}
+
+function keepSupportedKnowledgeReferences(review: NonNullable<ReturnType<typeof normalizeAiReview>>, allowedIds: Set<string>) {
+  return {
+    ...review,
+    recommendedKnowledgeIds: [...new Set(review.recommendedKnowledgeIds.flatMap((value) => {
+      const normalized = /^tool:(\d{3})$/i.test(value)
+        ? `T${value.slice(-3)}`
+        : /^(?:T\d{3}|D\d{2})$/i.test(value)
+          ? value.toUpperCase()
+          : value;
+      return allowedIds.has(normalized) ? [normalized] : [];
+    }))],
+  };
 }
 
 function materialSummary(group: string, material: Record<string, unknown>, opened: boolean) {
@@ -414,6 +444,11 @@ async function parseRenameBranchBody(request: Request): Promise<{ branchName: st
   const branchName = body.branchName.trim();
   if (Array.from(branchName).length > 40 || /[\u0000-\u001f\u007f]/.test(branchName)) return null;
   return { branchName: branchName || null };
+}
+
+async function confirmsLabDataDeletion(request: Request): Promise<boolean> {
+  const body = await parseJsonRequest(request);
+  return body?.confirmation === "DELETE_LAB_DATA";
 }
 
 async function createBranch(request: Request, env: LabApiEnv, caseId: string, caseVersion: string): Promise<Response> {
@@ -856,6 +891,23 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
   } catch {
     return errorResponse(400, "INVALID_PATH", "The request path is not valid UTF-8.");
   }
+  if (parts.length === 4 && parts[2] === "me" && parts[3] === "data") {
+    if (request.method !== "DELETE") {
+      return errorResponse(405, "METHOD_NOT_ALLOWED", "Only DELETE is supported.", { allow: "DELETE" });
+    }
+    const identity = await getPlatformIdentity(request);
+    if (!identity) return withPrivateCache(errorResponse(401, "AUTHENTICATION_REQUIRED", "Sign in with ChatGPT to delete your project lab data."));
+    if (!env.DB) return withPrivateCache(errorResponse(503, "DATABASE_UNAVAILABLE", "Project progress storage is unavailable."));
+    if (!(await confirmsLabDataDeletion(request))) {
+      return withPrivateCache(errorResponse(400, "DELETION_CONFIRMATION_REQUIRED", "Explicit confirmation is required to delete project lab data."));
+    }
+    const result = await deleteOwnedLabData(env.DB, identity.identityKey);
+    return withPrivateCache(jsonResponse({
+      deleted: true,
+      hadStoredData: result.deleted,
+      deletedBranchCount: result.deletedBranchCount,
+    }));
+  }
   if (parts.length === 4 && parts[2] === "branches") {
     if (request.method !== "PATCH") return errorResponse(405, "METHOD_NOT_ALLOWED", "Only PATCH is supported.", { allow: "PATCH" });
     const identity = await getPlatformIdentity(request);
@@ -943,6 +995,8 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     if (!runtime) return withPrivateCache(errorResponse(409, "CASE_VERSION_MISMATCH", "The branch case package is not available in this deployment."));
     const snapshot = await readCurrentStateSnapshot(env.DB!, branch.id, branch.currentRoundNumber);
     if (!snapshot?.scenarioId) return withPrivateCache(errorResponse(409, "REVIEW_CONTEXT_MISSING", "The settled scenario context is unavailable."));
+    const knowledgeReferences = scenarioKnowledgeReferences(findScenario(runtime, snapshot.scenarioId));
+    const allowedKnowledgeIds = new Set(knowledgeReferences.map((item) => item.id));
     const cached = await readAiReview(env.DB!, branch.id, snapshot.stateHash);
     try {
       await recordAnalyticsEvent(env.DB!, identity, {
@@ -954,8 +1008,11 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
     } catch {
       // Product analytics must never block the review workflow.
     }
-    const cachedReview = cached?.status === "completed" && cached.reviewJson
+    const cachedReviewCandidate = cached?.status === "completed" && cached.reviewJson
       ? normalizeAiReview(parseStoredJson(cached.reviewJson, {}))
+      : null;
+    const cachedReview = cachedReviewCandidate
+      ? keepSupportedKnowledgeReferences(cachedReviewCandidate, allowedKnowledgeIds)
       : null;
     if (cachedReview) return withPrivateCache(jsonResponse({ status: "completed", review: cachedReview }));
     if (!env.DEEPSEEK_API_KEY) return withPrivateCache(errorResponse(503, "AI_NOT_CONFIGURED", "The AI review provider is not configured."));
@@ -972,15 +1029,17 @@ export async function handleLabApi(request: Request, env: LabApiEnv): Promise<Re
       finalRuleResult: submission ? parseStoredJson<Record<string, unknown>>(submission.ruleResultJson, {}) : {},
       pathComparison: buildBranchPathComparison(runtime, branch, pathRounds, deltas),
       documentPatches: deltas.map((delta) => ({ documentId: delta.documentId, operations: parseStoredJson(delta.patchJson, []) })),
+      knowledgeReferences,
     };
-    const system = "你是项目管理学习复盘助手。只依据提供的用户可见事实；不得猜测隐藏规则，不得改变结算结果。返回严格 JSON，且只包含 summary, strengths, improvements, mainlineDifferences, capabilityProfile, recommendedKnowledgeIds, retrySuggestion。三个 finding 数组的元素必须为 {claim,evidenceRefs,impact}，每项至少一个 evidenceRefs；capabilityProfile 必须包含 signalRecognition, riskAndRootCauseDiagnosis, actionCompletenessAndMinimality, timingAndTradeoff, communicationAndGovernance，值只能是 mature/developing/needs-practice。recommendedKnowledgeIds 只放事实包能支持的知识编号。中文、简洁、可行动。";
+    const system = "你是项目管理学习复盘助手。只依据提供的用户可见事实；不得猜测隐藏规则，不得改变结算结果。返回严格 JSON，且只包含 summary, strengths, improvements, mainlineDifferences, capabilityProfile, recommendedKnowledgeIds, retrySuggestion。三个 finding 数组的元素必须为 {claim,evidenceRefs,impact}，每项至少一个 evidenceRefs；capabilityProfile 必须包含 signalRecognition, riskAndRootCauseDiagnosis, actionCompletenessAndMinimality, timingAndTradeoff, communicationAndGovernance，值只能是 mature/developing/needs-practice。recommendedKnowledgeIds 只能从 knowledgeReferences 的 id 中原样选择，不得自造编号。中文、简洁、可行动。";
     try {
       const upstream = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", temperature: 0.2, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: JSON.stringify(context) }] }) });
       if (!upstream.ok) throw new Error(`upstream_${upstream.status}`);
       const payload = await upstream.json() as { choices?: Array<{ message?: { content?: string } }> };
       const reviewJson = payload.choices?.[0]?.message?.content;
-      const review = normalizeAiReview(reviewJson ? parseStoredJson(reviewJson, {}) : {});
-      if (!review) throw new Error("invalid_review_shape");
+      const reviewCandidate = normalizeAiReview(reviewJson ? parseStoredJson(reviewJson, {}) : {});
+      if (!reviewCandidate) throw new Error("invalid_review_shape");
+      const review = keepSupportedKnowledgeReferences(reviewCandidate, allowedKnowledgeIds);
       await saveAiReview(env.DB!, { id: await stableId("ai-review", `${branch.id}\u0000${snapshot.stateHash}`), branchId: branch.id, scenarioId: snapshot.scenarioId, stateHash: snapshot.stateHash, status: "completed", reviewJson: JSON.stringify(review), errorCode: null });
       return withPrivateCache(jsonResponse({ status: "completed", review }));
     } catch (caught) {

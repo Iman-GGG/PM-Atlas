@@ -1,6 +1,7 @@
 "use client";
 
 import type { AiReview, ReviewFinding, ReviewLevel } from "../lib/lab/contracts";
+import { knowledgeReferenceExists } from "./knowledge-entry-drawer";
 
 type OutcomeMetric = {
   week: number;
@@ -44,6 +45,7 @@ type ScenarioOutcomeViewProps = {
   documentTitles: Record<string, string>;
   nextTakeoverWeek: number | null;
   onGenerateAiReview: () => void;
+  onOpenKnowledge: (referenceId: string) => void;
   onRetryScenario: () => void;
   onOpenDocument: (documentId: string) => void;
   onClose: () => void;
@@ -117,6 +119,7 @@ export function ScenarioOutcomeView({
   documentTitles,
   nextTakeoverWeek,
   onGenerateAiReview,
+  onOpenKnowledge,
   onRetryScenario,
   onOpenDocument,
   onClose,
@@ -190,7 +193,9 @@ export function ScenarioOutcomeView({
               })}</div>
             </section>
             <div className="lab-v2-review-next">
-              <section><span>KNOWLEDGE REFERENCES</span><h3>建议复习的知识条目</h3>{aiReview.recommendedKnowledgeIds.length ? <div>{aiReview.recommendedKnowledgeIds.map((id) => <code key={id}>{id}</code>)}</div> : <p>本次没有新增知识条目建议。</p>}</section>
+              <section><span>KNOWLEDGE REFERENCES</span><h3>建议复习的知识条目</h3>{aiReview.recommendedKnowledgeIds.length ? <div>{aiReview.recommendedKnowledgeIds.map((id) => knowledgeReferenceExists(id)
+                ? <button key={id} type="button" className="lab-v2-knowledge-code" onClick={() => onOpenKnowledge(id)}>{id}</button>
+                : <code key={id} title="知识库未收录此编号">{id}</code>)}</div> : <p>本次没有新增知识条目建议。</p>}</section>
               <section><span>RETRY SUGGESTION</span><h3>下一次尝试</h3><p>{aiReview.retrySuggestion}</p></section>
             </div>
           </> : !aiReviewLoading && !aiReviewError && <p className="lab-v2-ai-review-empty">规则复盘已经可以独立使用。需要更细的学习建议时，再生成 AI 结构化复盘。</p>}

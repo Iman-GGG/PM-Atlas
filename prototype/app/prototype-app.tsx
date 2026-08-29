@@ -72,10 +72,28 @@ function currentReturnPath() {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
-function AccountMenu({ onOpenTakeoverHistory }: { onOpenTakeoverHistory: () => void }) {
+function AccountMenu({
+  onOpenTakeoverHistory,
+  onLabDataDeleted,
+}: {
+  onOpenTakeoverHistory: () => void;
+  onLabDataDeleted: () => void;
+}) {
   const [session, setSession] = useState<AccountSession | null>(null);
   const [open, setOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const closeDeleteDialog = () => {
+    if (deleting) return;
+    setDeleteDialogOpen(false);
+    setDeleteConfirmation("");
+    setDeleteError(null);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +132,48 @@ function AccountMenu({ onOpenTakeoverHistory }: { onOpenTakeoverHistory: () => v
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!deleteDialogOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || deleting) return;
+      setDeleteDialogOpen(false);
+      setDeleteConfirmation("");
+      setDeleteError(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [deleteDialogOpen, deleting]);
+
+  useEffect(() => {
+    if (!deleteSuccess) return;
+    const timer = window.setTimeout(() => setDeleteSuccess(false), 4200);
+    return () => window.clearTimeout(timer);
+  }, [deleteSuccess]);
+
+  const deleteLabData = async () => {
+    if (deleteConfirmation !== "删除" || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const response = await fetch("/api/lab/me/data", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { accept: "application/json", "content-type": "application/json" },
+        body: JSON.stringify({ confirmation: "DELETE_LAB_DATA" }),
+      });
+      const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      if (!response.ok) throw new Error(payload?.error?.message || "实验室数据删除失败");
+      setDeleteDialogOpen(false);
+      setDeleteConfirmation("");
+      setDeleteSuccess(true);
+      onLabDataDeleted();
+    } catch (caught) {
+      setDeleteError(caught instanceof Error ? caught.message : "实验室数据删除失败");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (!session) {
     return <span className="account-status-loading" aria-label="正在确认登录状态"><i /></span>;
@@ -161,9 +221,34 @@ function AccountMenu({ onOpenTakeoverHistory }: { onOpenTakeoverHistory: () => v
             <a role="menuitem" href={`/signout-with-chatgpt?return_to=${encodeURIComponent(currentReturnPath())}`}>
               <span><strong>退出登录</strong><small>返回当前页面的公开浏览状态</small></span><b aria-hidden="true">→</b>
             </a>
+            <button type="button" role="menuitem" className="account-danger-action" onClick={() => { setOpen(false); setDeleteDialogOpen(true); }}>
+              <span><strong>删除我的实验室数据</strong><small>永久删除个人分支、复盘与使用记录</small></span><b aria-hidden="true">×</b>
+            </button>
           </div>
         </div>
       )}
+      {deleteDialogOpen && (
+        <div className="account-delete-backdrop" onClick={closeDeleteDialog}>
+          <section className="account-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="account-delete-title" onClick={(event) => event.stopPropagation()}>
+            <span>IRREVERSIBLE ACTION</span>
+            <h2 id="account-delete-title">删除我的实验室数据？</h2>
+            <p>这会永久删除你的接手分支、回合与草稿、材料查看记录、项目文件差异、AI 复盘、进度和相关统计。</p>
+            <p className="account-delete-boundary">不会删除 ChatGPT 账号、公开知识库或其他用户的数据。删除后无法恢复。</p>
+            <label>
+              <span>输入“删除”确认</span>
+              <input autoFocus value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} disabled={deleting} autoComplete="off" />
+            </label>
+            {deleteError && <p className="account-delete-error" role="alert">{deleteError}</p>}
+            <div>
+              <button type="button" onClick={closeDeleteDialog} disabled={deleting}>取消</button>
+              <button type="button" className="danger" onClick={() => void deleteLabData()} disabled={deleteConfirmation !== "删除" || deleting}>
+                {deleting ? "正在删除…" : "永久删除实验室数据"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {deleteSuccess && <div className="account-delete-success" role="status"><i>✓</i>你的实验室数据已删除</div>}
     </div>
   );
 }
@@ -175,6 +260,7 @@ function AppHeader({
   canExport,
   page,
   onOpenTakeoverHistory,
+  onLabDataDeleted,
 }: {
   section: PrimarySection;
   setSection: (section: PrimarySection) => void;
@@ -182,6 +268,7 @@ function AppHeader({
   canExport: boolean;
   page: ProductPage;
   onOpenTakeoverHistory: () => void;
+  onLabDataDeleted: () => void;
 }) {
   return (
     <header className="app-header">
@@ -204,7 +291,7 @@ function AppHeader({
         <button className={`button button-dark button-small ${canExport ? "" : "header-export-hidden"}`} onClick={onExport}>
           导出 Word
         </button>
-        <AccountMenu onOpenTakeoverHistory={onOpenTakeoverHistory} />
+        <AccountMenu onOpenTakeoverHistory={onOpenTakeoverHistory} onLabDataDeleted={onLabDataDeleted} />
       </div>
     </header>
   );
@@ -857,6 +944,7 @@ export function PrototypeApp() {
   const [page, setPage] = useState<ProductPage>("overview");
   const [toast, setToast] = useState<string | null>(null);
   const [branchHistoryRequest, setBranchHistoryRequest] = useState(0);
+  const [labDataResetRequest, setLabDataResetRequest] = useState(0);
 
   useEffect(() => {
     const applyHash = () => {
@@ -907,6 +995,7 @@ export function PrototypeApp() {
         canExport={section === "lab" && page !== "overview" && page !== "schedule"}
         page={page}
         onOpenTakeoverHistory={openTakeoverHistory}
+        onLabDataDeleted={() => setLabDataResetRequest((current) => current + 1)}
       />
       {section === "lab" && page !== "schedule" && (
         <>
@@ -924,7 +1013,7 @@ export function PrototypeApp() {
       ) : page === "risk" ? (
         <RiskPage />
       ) : page === "schedule" ? (
-        <LabTimelinePage openBranchHistoryRequest={branchHistoryRequest} />
+        <LabTimelinePage openBranchHistoryRequest={branchHistoryRequest} resetLabDataRequest={labDataResetRequest} />
       ) : page === "stakeholder" ? (
         <StakeholderPage />
       ) : (
@@ -937,7 +1026,7 @@ export function PrototypeApp() {
         </div>
         <details className="privacy-statistics-note">
           <summary>隐私与统计说明</summary>
-          <p>未登录浏览不建立分析身份。登录后，本站使用平台提供的账号标识记录访问日期、分支创建、情景材料首次查看和 AI 复盘使用，仅用于汇总产品分析；不记录页面输入、行动链具体内容或原始 IP。</p>
+          <p>未登录浏览不建立分析身份。登录后，本站使用平台提供的账号标识记录访问日期、分支创建、情景材料首次查看和 AI 复盘使用，仅用于汇总产品分析；不记录页面输入、行动链具体内容或原始 IP。可从账号菜单永久删除个人实验室数据。</p>
         </details>
       </footer>
       {toast && <div className="toast" role="status"><i>✓</i>{toast}</div>}

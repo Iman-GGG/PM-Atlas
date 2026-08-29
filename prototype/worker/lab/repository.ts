@@ -264,6 +264,42 @@ export async function findLabUser(db: LabD1, identityKey: string): Promise<Store
   `).bind(identityKey).first<StoredLabUser>();
 }
 
+export type DeletedLabData = {
+  deleted: boolean;
+  deletedBranchCount: number;
+};
+
+export async function deleteOwnedLabData(db: LabD1, identityKey: string): Promise<DeletedLabData> {
+  const user = await findLabUser(db, identityKey);
+  if (!user) return { deleted: false, deletedBranchCount: 0 };
+
+  const branchCount = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM lab_branches
+    WHERE user_id = ?
+  `).bind(user.id).first<{ count: number }>();
+  const ownedBranch = "branch_id IN (SELECT id FROM lab_branches WHERE user_id = ?)";
+
+  await db.batch([
+    db.prepare(`DELETE FROM lab_ai_reviews WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare(`DELETE FROM lab_document_deltas WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare(`DELETE FROM lab_events WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare(`DELETE FROM lab_state_snapshots WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare(`DELETE FROM lab_round_submissions WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare(`DELETE FROM lab_round_drafts WHERE ${ownedBranch}`).bind(user.id),
+    db.prepare("DELETE FROM lab_analytics_events WHERE user_id = ?").bind(user.id),
+    db.prepare("DELETE FROM lab_user_activity_days WHERE user_id = ?").bind(user.id),
+    db.prepare("DELETE FROM lab_progress WHERE user_id = ?").bind(user.id),
+    db.prepare("DELETE FROM lab_branches WHERE user_id = ?").bind(user.id),
+    db.prepare("DELETE FROM lab_users WHERE id = ? AND identity_key = ?").bind(user.id, identityKey),
+  ]);
+
+  return {
+    deleted: true,
+    deletedBranchCount: Number(branchCount?.count ?? 0),
+  };
+}
+
 export type CreateBranchRecords = {
   caseId: string;
   caseVersion: string;

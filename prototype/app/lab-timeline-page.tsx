@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { AiReview } from "../lib/lab/contracts";
+import { KnowledgeEntryDrawer, knowledgeReferenceExists } from "./knowledge-entry-drawer";
 import { ScenarioOutcomeView } from "./lab-scenario-outcome";
 
 type TakeoverPoint = {
@@ -1669,7 +1670,13 @@ function DashboardCard({
   );
 }
 
-export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHistoryRequest?: number }) {
+export function LabTimelinePage({
+  openBranchHistoryRequest = 0,
+  resetLabDataRequest = 0,
+}: {
+  openBranchHistoryRequest?: number;
+  resetLabDataRequest?: number;
+}) {
   const [manifest, setManifest] = useState<CaseManifest | null>(null);
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [mainline, setMainline] = useState<MainlineData | null>(null);
@@ -1708,6 +1715,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
   const [aiReviewError, setAiReviewError] = useState<string | null>(null);
   const [outcomeViewOpen, setOutcomeViewOpen] = useState(false);
+  const [selectedKnowledgeReference, setSelectedKnowledgeReference] = useState<string | null>(null);
   const [retryingBranchId, setRetryingBranchId] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
   const [editingBranchNameId, setEditingBranchNameId] = useState<string | null>(null);
@@ -1732,6 +1740,69 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
     }, 0);
     return () => window.clearTimeout(timer);
   }, [openBranchHistoryRequest]);
+
+  useEffect(() => {
+    if (resetLabDataRequest < 1) return;
+    const timer = window.setTimeout(() => {
+      setSelectedWeek(1);
+      setSelectedWidget(null);
+      setDocumentDrawerOpen(false);
+      setBranchHistoryOpen(false);
+      setManagementFilter(null);
+      setBranch(null);
+      setBranches([]);
+      setBranchState(null);
+      setScenarioId(null);
+      setScenarioTitle(null);
+      setMaterials(null);
+      setSelectedMaterialId(null);
+      setOpenedMaterialCache({});
+      setCards([]);
+      setActionChains([]);
+      setActionTarget("");
+      setActionChainPools(emptyActionChainPools());
+      setEditingActionChainId(null);
+      setDraftStatus("idle");
+      setDraftUpdatedAt(null);
+      setDraftLoadedKey(null);
+      setActionMessage(null);
+      setRoundResult(null);
+      setDocumentPatches([]);
+      setDocumentFieldDiffs([]);
+      setDocumentDiffSummary({ added: 0, modified: 0, removed: 0 });
+      setDocumentDiffWeeks({ mainline: 1, branch: 1 });
+      setBranchComparison(null);
+      setAiReview(null);
+      setAiReviewLoading(false);
+      setAiReviewError(null);
+      setOutcomeViewOpen(false);
+      setSelectedKnowledgeReference(null);
+      setRetryingBranchId(null);
+      setRetryError(null);
+      setEditingBranchNameId(null);
+      setBranchNameDraft("");
+      setRenamingBranchId(null);
+      setBranchNameError(null);
+      setSubmittingRound(false);
+      setLoadingScenarioId(null);
+      setOpeningMaterialIds([]);
+      setError(null);
+      idempotencyKeys.current.clear();
+      roundIdempotencyKeys.current.clear();
+      draftLoadingKeyRef.current = null;
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#lab-schedule`);
+      void Promise.all([
+        apiJson<CaseManifest>(`/api/lab/cases/${caseId}/${caseVersion}`),
+        apiJson<MainlineResponse>(`/api/lab/cases/${caseId}/${caseVersion}/mainline?sections=${mainlineSections}`),
+      ]).then(([nextManifest, mainlineResponse]) => {
+        setManifest(nextManifest);
+        setMainline(mainlineResponse.sections);
+      }).catch(() => {
+        setError("实验室数据已删除，但主线需要重新载入");
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [resetLabDataRequest]);
 
   const loadMaterials = async (branchId: string, nextScenarioId: string) => {
     const list = await apiJson<MaterialList>(
@@ -3273,10 +3344,16 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
                       {cardsByColumn[column].map((card) => {
                         const selected = actionChainPools[column].includes(card.id);
                         const usageCount = actionChains.filter((chain) => actionChainCardIds(chain, column).includes(card.id)).length;
+                        const hasKnowledgeEntry = knowledgeReferenceExists(card.referenceId);
                         return (
-                          <button key={card.id} type="button" disabled={branch.status !== "active"} className={selected ? "selected" : ""} onClick={() => toggleCardSelection(card)}>
-                            <small>{cardDisplayId(card)}</small><strong>{card.title}</strong><i>{selected ? "已加入本链" : usageCount ? `已用于 ${usageCount} 条 · 再次加入` : "+ 加入本链"}</i>
-                          </button>
+                          <div key={card.id} className={`lab-v2-card-candidate ${selected ? "selected" : ""}`}>
+                            {hasKnowledgeEntry
+                              ? <button type="button" className="knowledge-reference" title={`打开 ${cardDisplayId(card)} 正式知识条目`} aria-label={`打开 ${cardDisplayId(card)} ${card.title}正式知识条目`} onClick={() => setSelectedKnowledgeReference(card.referenceId)}><small>{cardDisplayId(card)}</small></button>
+                              : <small className="reference-label">{cardDisplayId(card)}</small>}
+                            <button type="button" className="card-choice" disabled={branch.status !== "active"} onClick={() => toggleCardSelection(card)}>
+                              <strong>{card.title}</strong><i>{selected ? "已加入本链" : usageCount ? `已用于 ${usageCount} 条 · 再次加入` : "+ 加入本链"}</i>
+                            </button>
+                          </div>
                         );
                       })}
                     </section>
@@ -3406,6 +3483,7 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
           documentTitles={Object.fromEntries(documentState.map((document) => [document.id, document.title]))}
           nextTakeoverWeek={nextTakeoverPoint?.week ?? null}
           onGenerateAiReview={() => void requestAiReview()}
+          onOpenKnowledge={(referenceId) => setSelectedKnowledgeReference(referenceId)}
           onRetryScenario={() => {
             const point = manifest.takeoverPoints.find((item) => item.scenarioId === scenarioId);
             if (point) void takeover(point, { retryFromBranchId: branch.id });
@@ -4287,6 +4365,8 @@ export function LabTimelinePage({ openBranchHistoryRequest = 0 }: { openBranchHi
           </section>
         </div>
       )}
+
+      {selectedKnowledgeReference && <KnowledgeEntryDrawer referenceId={selectedKnowledgeReference} onClose={() => setSelectedKnowledgeReference(null)} />}
     </main>
   );
 }
