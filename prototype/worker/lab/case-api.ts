@@ -61,6 +61,7 @@ const sectionNames = [
   "risks",
   "quality",
   "baselineWorkload",
+  "iterations",
 ] as const;
 type SectionName = (typeof sectionNames)[number];
 const sectionNameSet = new Set<string>(sectionNames);
@@ -101,8 +102,9 @@ function parseSections(url: URL): SectionName[] | null {
   return [...new Set(requested)] as SectionName[];
 }
 
-function projectSection(runtime: LabCaseRuntimePackage, section: SectionName, week: number | null): StateEffect {
-  const source = runtime.plans[section] as StateEffect;
+function projectSection(runtime: LabCaseRuntimePackage, section: SectionName, week: number | null): StateEffect | undefined {
+  const source = runtime.plans[section] as StateEffect | undefined;
+  if (source === undefined) return undefined;
   if (week === null) return source;
 
   if (section === "baselineWorkload") {

@@ -27,7 +27,7 @@ function actionChain(id, title, cardIds) {
 function initialState() {
   return {
     caseId: "car-control",
-    caseVersion: "v5",
+    caseVersion: "v6",
     contentHash: publicLabCaseBaseline.contentHash,
     mode: "learning",
     week: 9,

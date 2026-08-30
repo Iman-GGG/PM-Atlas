@@ -80,7 +80,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   };
 
   const first = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v5/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v6/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -197,7 +197,7 @@ test("persists an idempotent takeover branch against the real migration", async 
   assert.equal((await roundReplay.json()).idempotentReplay, true);
 
   const replay = await worker.fetch(
-    new Request("http://localhost/api/lab/cases/car-control/v5/branches", requestInit),
+    new Request("http://localhost/api/lab/cases/car-control/v6/branches", requestInit),
     env,
     { waitUntil() {}, passThroughOnException() {} },
   );
@@ -273,7 +273,7 @@ test("persists an idempotent takeover branch against the real migration", async 
     .run("other-user", "oai-user:other-user", "Other User");
   database.prepare(`
     INSERT INTO lab_branches (id, user_id, case_id, case_version, fork_week, current_week, status)
-    VALUES (?, ?, 'car-control', 'v5', 9, 9, 'active')
+    VALUES (?, ?, 'car-control', 'v6', 9, 9, 'active')
   `).run("other-branch", "other-user");
 
   const invalidDeletion = await worker.fetch(

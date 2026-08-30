@@ -1,0 +1,6976 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": [
+    "content/lab-cases/car-control/v5/workload-plan.json",
+    "content/lab-cases/car-control/v5/schedule-plan.json",
+    "content/lab-cases/car-control/v5/stakeholder-plan.json",
+    "content/lab-cases/car-control/v5/document-plan.json"
+  ],
+  "caseId": "car-control",
+  "caseVersion": "v6",
+  "totalPlannedPersonDays": 1024,
+  "totalActivities": 35,
+  "budgetAtCompletionCny": 2600000,
+  "plannedLaborCostCny": 1600000,
+  "plannedNonLaborCostCny": 1000000,
+  "resourceSchedulingSummary": {
+    "bufferedPersonDays": 150,
+    "bufferedPersonDaysByDistance": {
+      "1": 63,
+      "2": 39,
+      "3": 48
+    },
+    "overtime": [
+      {
+        "week": 18,
+        "roleId": "backend",
+        "personDays": 1
+      }
+    ]
+  },
+  "scheduleNetwork": {
+    "deadlineWeek": 32,
+    "calculatedProjectFinishWeek": 32,
+    "criticalActivityIds": [
+      "WBS-1.1",
+      "WBS-2.1",
+      "WBS-3.1",
+      "WBS-3.2",
+      "WBS-8.2",
+      "WBS-9.2",
+      "WBS-9.3",
+      "WBS-9.4",
+      "WBS-10.1",
+      "WBS-10.2",
+      "WBS-10.3",
+      "WBS-11.1",
+      "WBS-11.2",
+      "WBS-11.3"
+    ],
+    "activities": [
+      {
+        "activityId": "WBS-1.1",
+        "duration": 2,
+        "earliestStart": 1,
+        "earliestFinish": 2,
+        "expectedDuration": 2,
+        "durationVariance": 0.1111,
+        "latestStart": 1,
+        "latestFinish": 2,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-2.1",
+        "duration": 3,
+        "earliestStart": 1,
+        "earliestFinish": 3,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 1,
+        "latestFinish": 3,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-2.2",
+        "duration": 3,
+        "earliestStart": 3,
+        "earliestFinish": 5,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 5,
+        "latestFinish": 7,
+        "totalFloat": 2,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-2.3",
+        "duration": 2,
+        "earliestStart": 6,
+        "earliestFinish": 7,
+        "expectedDuration": 2,
+        "durationVariance": 0.1111,
+        "latestStart": 8,
+        "latestFinish": 9,
+        "totalFloat": 2,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-3.1",
+        "duration": 3,
+        "earliestStart": 3,
+        "earliestFinish": 5,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 3,
+        "latestFinish": 5,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-3.2",
+        "duration": 4,
+        "earliestStart": 5,
+        "earliestFinish": 8,
+        "expectedDuration": 4.17,
+        "durationVariance": 0.25,
+        "latestStart": 5,
+        "latestFinish": 8,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-3.3",
+        "duration": 3,
+        "earliestStart": 8,
+        "earliestFinish": 10,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 11,
+        "latestFinish": 13,
+        "totalFloat": 3,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-4.1",
+        "duration": 3,
+        "earliestStart": 8,
+        "earliestFinish": 10,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 10,
+        "latestFinish": 12,
+        "totalFloat": 2,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-4.2",
+        "duration": 3,
+        "earliestStart": 10,
+        "earliestFinish": 12,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 14,
+        "latestFinish": 16,
+        "totalFloat": 4,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-4.3",
+        "duration": 2,
+        "earliestStart": 13,
+        "earliestFinish": 14,
+        "expectedDuration": 2,
+        "durationVariance": 0.1111,
+        "latestStart": 17,
+        "latestFinish": 18,
+        "totalFloat": 4,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-5.1",
+        "duration": 3,
+        "earliestStart": 11,
+        "earliestFinish": 13,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 13,
+        "latestFinish": 15,
+        "totalFloat": 2,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-5.2",
+        "duration": 3,
+        "earliestStart": 13,
+        "earliestFinish": 15,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 15,
+        "latestFinish": 17,
+        "totalFloat": 2,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-5.3",
+        "duration": 2,
+        "earliestStart": 16,
+        "earliestFinish": 17,
+        "expectedDuration": 2.17,
+        "durationVariance": 0.25,
+        "latestStart": 18,
+        "latestFinish": 19,
+        "totalFloat": 2,
+        "freeFloat": 2,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-6.1",
+        "duration": 3,
+        "earliestStart": 9,
+        "earliestFinish": 11,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 12,
+        "latestFinish": 14,
+        "totalFloat": 3,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-6.2",
+        "duration": 4,
+        "earliestStart": 12,
+        "earliestFinish": 15,
+        "expectedDuration": 4.17,
+        "durationVariance": 0.25,
+        "latestStart": 15,
+        "latestFinish": 18,
+        "totalFloat": 3,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-6.3",
+        "duration": 4,
+        "earliestStart": 12,
+        "earliestFinish": 15,
+        "expectedDuration": 4.17,
+        "durationVariance": 0.25,
+        "latestStart": 15,
+        "latestFinish": 18,
+        "totalFloat": 3,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-6.4",
+        "duration": 3,
+        "earliestStart": 16,
+        "earliestFinish": 18,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 19,
+        "latestFinish": 21,
+        "totalFloat": 3,
+        "freeFloat": 3,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-7.1",
+        "duration": 4,
+        "earliestStart": 11,
+        "earliestFinish": 14,
+        "expectedDuration": 4.17,
+        "durationVariance": 0.25,
+        "latestStart": 17,
+        "latestFinish": 20,
+        "totalFloat": 6,
+        "freeFloat": 3,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-7.2",
+        "duration": 6,
+        "earliestStart": 12,
+        "earliestFinish": 17,
+        "expectedDuration": 6,
+        "durationVariance": 0.4444,
+        "latestStart": 15,
+        "latestFinish": 20,
+        "totalFloat": 3,
+        "freeFloat": 0,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-7.3",
+        "duration": 4,
+        "earliestStart": 18,
+        "earliestFinish": 21,
+        "expectedDuration": 4,
+        "durationVariance": 0.4444,
+        "latestStart": 21,
+        "latestFinish": 24,
+        "totalFloat": 3,
+        "freeFloat": 3,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-8.1",
+        "duration": 3,
+        "earliestStart": 5,
+        "earliestFinish": 7,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 6,
+        "latestFinish": 8,
+        "totalFloat": 1,
+        "freeFloat": 1,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-8.2",
+        "duration": 10,
+        "earliestStart": 9,
+        "earliestFinish": 18,
+        "expectedDuration": 10.17,
+        "durationVariance": 0.6944,
+        "latestStart": 9,
+        "latestFinish": 18,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-8.3",
+        "duration": 4,
+        "earliestStart": 20,
+        "earliestFinish": 23,
+        "expectedDuration": 4,
+        "durationVariance": 0.4444,
+        "latestStart": 29,
+        "latestFinish": 32,
+        "totalFloat": 9,
+        "freeFloat": 9,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-9.1",
+        "duration": 3,
+        "earliestStart": 15,
+        "earliestFinish": 17,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 30,
+        "latestFinish": 32,
+        "totalFloat": 15,
+        "freeFloat": 15,
+        "isCritical": false
+      },
+      {
+        "activityId": "WBS-9.2",
+        "duration": 3,
+        "earliestStart": 20,
+        "earliestFinish": 22,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 20,
+        "latestFinish": 22,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-9.3",
+        "duration": 3,
+        "earliestStart": 22,
+        "earliestFinish": 24,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 22,
+        "latestFinish": 24,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-9.4",
+        "duration": 2,
+        "earliestStart": 25,
+        "earliestFinish": 26,
+        "expectedDuration": 2,
+        "durationVariance": 0.1111,
+        "latestStart": 25,
+        "latestFinish": 26,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-10.1",
+        "duration": 3,
+        "earliestStart": 23,
+        "earliestFinish": 25,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 23,
+        "latestFinish": 25,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-10.2",
+        "duration": 3,
+        "earliestStart": 25,
+        "earliestFinish": 27,
+        "expectedDuration": 3.17,
+        "durationVariance": 0.25,
+        "latestStart": 25,
+        "latestFinish": 27,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-10.3",
+        "duration": 2,
+        "earliestStart": 28,
+        "earliestFinish": 29,
+        "expectedDuration": 2.17,
+        "durationVariance": 0.25,
+        "latestStart": 28,
+        "latestFinish": 29,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-11.1",
+        "duration": 3,
+        "earliestStart": 25,
+        "earliestFinish": 27,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 25,
+        "latestFinish": 27,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-11.2",
+        "duration": 3,
+        "earliestStart": 27,
+        "earliestFinish": 29,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 27,
+        "latestFinish": 29,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      },
+      {
+        "activityId": "WBS-11.3",
+        "duration": 3,
+        "earliestStart": 30,
+        "earliestFinish": 32,
+        "expectedDuration": 3,
+        "durationVariance": 0.1111,
+        "latestStart": 30,
+        "latestFinish": 32,
+        "totalFloat": 0,
+        "freeFloat": 0,
+        "isCritical": true
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "sprint": null,
+      "plannedTeamPersonDays": 24,
+      "plannedLaborCostCny": 37850,
+      "plannedNonLaborCostCny": 20000,
+      "plannedValueCny": 57850,
+      "cumulativePlannedValueCny": 57850,
+      "spi": 0.9975,
+      "cpi": 1.0025,
+      "cumulativeEarnedValueCny": 57705,
+      "cumulativeActualCostCny": 57561,
+      "nonLaborCosts": [
+        {
+          "categoryId": "cloud_tools_devices",
+          "title": "云服务、设备与开发工具",
+          "amountCny": 20000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 4,
+        "tech_lead": 3,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 8,
+        "WBS-2.0": 13,
+        "WBS-3.0": 3,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 1,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 1,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "sprint": null,
+      "plannedTeamPersonDays": 26,
+      "plannedLaborCostCny": 40350,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 40350,
+      "cumulativePlannedValueCny": 98200,
+      "spi": 0.995,
+      "cpi": 1.005,
+      "cumulativeEarnedValueCny": 97709,
+      "cumulativeActualCostCny": 97223,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 4,
+        "tech_lead": 3,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 0,
+        "qa": 2,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 9,
+        "WBS-2.0": 6,
+        "WBS-3.0": 11,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 2,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 2,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 2,
+          "distanceFromWindow": 3,
+          "allocationTiming": "preparation",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-1.1",
+          "workPackageId": "WBS-1.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 2,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 2,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 2,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "sprint": null,
+      "plannedTeamPersonDays": 28,
+      "plannedLaborCostCny": 44600,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 44600,
+      "cumulativePlannedValueCny": 142800,
+      "spi": 0.9925,
+      "cpi": 1.0075,
+      "cumulativeEarnedValueCny": 141729,
+      "cumulativeActualCostCny": 140674,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 4,
+        "qa": 1,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 4,
+        "WBS-2.0": 12,
+        "WBS-3.0": 11,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 1,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.1",
+          "workPackageId": "WBS-2.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 3,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 3,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 3,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "sprint": null,
+      "plannedTeamPersonDays": 30,
+      "plannedLaborCostCny": 47550,
+      "plannedNonLaborCostCny": 80000,
+      "plannedValueCny": 127550,
+      "cumulativePlannedValueCny": 270350,
+      "spi": 0.99,
+      "cpi": 1.01,
+      "cumulativeEarnedValueCny": 267647,
+      "cumulativeActualCostCny": 264997,
+      "nonLaborCosts": [
+        {
+          "categoryId": "vehicle_vendor",
+          "title": "车端接口供应商",
+          "amountCny": 80000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 4,
+        "qa": 1,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 2,
+        "WBS-2.0": 15,
+        "WBS-3.0": 10,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 3,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 4,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 4,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 4,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 4,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "sprint": null,
+      "plannedTeamPersonDays": 32,
+      "plannedLaborCostCny": 50825,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 50825,
+      "cumulativePlannedValueCny": 321175,
+      "spi": 0.9875,
+      "cpi": 1.0125,
+      "cumulativeEarnedValueCny": 317160,
+      "cumulativeActualCostCny": 313244,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 2,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 0,
+        "WBS-2.0": 5,
+        "WBS-3.0": 18,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 9,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 3,
+          "allocationTiming": "preparation",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-3.1",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 5,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "sprint": null,
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 53375,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 53375,
+      "cumulativePlannedValueCny": 374550,
+      "spi": 0.985,
+      "cpi": 1.015,
+      "cumulativeEarnedValueCny": 368932,
+      "cumulativeActualCostCny": 363480,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 3,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 18,
+        "WBS-3.0": 8,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 5,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 6,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.2",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 6,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 7,
+      "sprint": null,
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 52950,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 52950,
+      "cumulativePlannedValueCny": 427500,
+      "spi": 0.9825,
+      "cpi": 1.0175,
+      "cumulativeEarnedValueCny": 420019,
+      "cumulativeActualCostCny": 412795,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 4,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 11,
+        "WBS-3.0": 10,
+        "WBS-4.0": 3,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 7,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 7,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 7,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 7,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 7,
+          "distanceFromWindow": 3,
+          "allocationTiming": "preparation",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 7,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 7,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 4
+        }
+      ]
+    },
+    {
+      "week": 8,
+      "sprint": null,
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 53325,
+      "plannedNonLaborCostCny": 20000,
+      "plannedValueCny": 73325,
+      "cumulativePlannedValueCny": 500825,
+      "spi": 0.98,
+      "cpi": 1.02,
+      "cumulativeEarnedValueCny": 490809,
+      "cumulativeActualCostCny": 481185,
+      "nonLaborCosts": [
+        {
+          "categoryId": "risk_uncertainty",
+          "title": "风险应对与不确定性预算",
+          "amountCny": 20000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 5,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 4,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 8,
+        "WBS-3.0": 6,
+        "WBS-4.0": 12,
+        "WBS-5.0": 1,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 4,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-2.3",
+          "workPackageId": "WBS-2.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.1",
+          "workPackageId": "WBS-8.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 8,
+          "distanceFromWindow": 3,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 8,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 8,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 9,
+      "sprint": "S1",
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 52925,
+      "plannedNonLaborCostCny": 30000,
+      "plannedValueCny": 82925,
+      "cumulativePlannedValueCny": 583750,
+      "spi": 0.985,
+      "cpi": 1.0175,
+      "cumulativeEarnedValueCny": 574994,
+      "cumulativeActualCostCny": 565105,
+      "nonLaborCosts": [
+        {
+          "categoryId": "cloud_tools_devices",
+          "title": "云服务、设备与开发工具",
+          "amountCny": 30000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 7,
+        "WBS-4.0": 9,
+        "WBS-5.0": 0,
+        "WBS-6.0": 12,
+        "WBS-7.0": 0,
+        "WBS-8.0": 5,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-3.2",
+          "workPackageId": "WBS-3.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 9,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 10,
+      "sprint": "S1",
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 52550,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 52550,
+      "cumulativePlannedValueCny": 636300,
+      "spi": 0.99,
+      "cpi": 1.015,
+      "cumulativeEarnedValueCny": 629937,
+      "cumulativeActualCostCny": 620628,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 4,
+        "WBS-4.0": 15,
+        "WBS-5.0": 0,
+        "WBS-6.0": 5,
+        "WBS-7.0": 0,
+        "WBS-8.0": 7,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.1",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 10,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        }
+      ]
+    },
+    {
+      "week": 11,
+      "sprint": "S2",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 54225,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 54225,
+      "cumulativePlannedValueCny": 690525,
+      "spi": 0.995,
+      "cpi": 1.0125,
+      "cumulativeEarnedValueCny": 687072,
+      "cumulativeActualCostCny": 678590,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 4,
+        "WBS-4.0": 5,
+        "WBS-5.0": 12,
+        "WBS-6.0": 5,
+        "WBS-7.0": 6,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 11,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        }
+      ]
+    },
+    {
+      "week": 12,
+      "sprint": "S2",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 53850,
+      "plannedNonLaborCostCny": 170000,
+      "plannedValueCny": 223850,
+      "cumulativePlannedValueCny": 914375,
+      "spi": 1,
+      "cpi": 1.01,
+      "cumulativeEarnedValueCny": 914375,
+      "cumulativeActualCostCny": 905322,
+      "nonLaborCosts": [
+        {
+          "categoryId": "vehicle_vendor",
+          "title": "车端接口供应商",
+          "amountCny": 120000
+        },
+        {
+          "categoryId": "security_quality",
+          "title": "安全测试与专项质量",
+          "amountCny": 20000
+        },
+        {
+          "categoryId": "risk_uncertainty",
+          "title": "风险应对与不确定性预算",
+          "amountCny": 30000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 5,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 4,
+        "WBS-2.0": 0,
+        "WBS-3.0": 3,
+        "WBS-4.0": 2,
+        "WBS-5.0": 7,
+        "WBS-6.0": 14,
+        "WBS-7.0": 5,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 12,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        }
+      ]
+    },
+    {
+      "week": 13,
+      "sprint": "S3",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 54225,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 54225,
+      "cumulativePlannedValueCny": 968600,
+      "spi": 0.9975,
+      "cpi": 1.0088,
+      "cumulativeEarnedValueCny": 966179,
+      "cumulativeActualCostCny": 957798,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 20,
+        "WBS-5.0": 7,
+        "WBS-6.0": 3,
+        "WBS-7.0": 2,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 13,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 14,
+      "sprint": "S3",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 56075,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 56075,
+      "cumulativePlannedValueCny": 1024675,
+      "spi": 0.995,
+      "cpi": 1.0075,
+      "cumulativeEarnedValueCny": 1019552,
+      "cumulativeActualCostCny": 1011962,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 1,
+        "WBS-4.0": 8,
+        "WBS-5.0": 7,
+        "WBS-6.0": 6,
+        "WBS-7.0": 11,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-3.3",
+          "workPackageId": "WBS-3.0",
+          "week": 14,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 14,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.1",
+          "workPackageId": "WBS-6.0",
+          "week": 14,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 14,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 15,
+      "sprint": "S4",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 56075,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 56075,
+      "cumulativePlannedValueCny": 1080750,
+      "spi": 0.9925,
+      "cpi": 1.0063,
+      "cumulativeEarnedValueCny": 1072644,
+      "cumulativeActualCostCny": 1065982,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 4,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 8,
+        "WBS-6.0": 12,
+        "WBS-7.0": 12,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 15,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 15,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        }
+      ]
+    },
+    {
+      "week": 16,
+      "sprint": "S4",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 55700,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 55700,
+      "cumulativePlannedValueCny": 1136450,
+      "spi": 0.99,
+      "cpi": 1.005,
+      "cumulativeEarnedValueCny": 1125086,
+      "cumulativeActualCostCny": 1119489,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 5,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 2,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 3,
+        "WBS-5.0": 10,
+        "WBS-6.0": 11,
+        "WBS-7.0": 6,
+        "WBS-8.0": 4,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.2",
+          "workPackageId": "WBS-4.0",
+          "week": 16,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.1",
+          "workPackageId": "WBS-5.0",
+          "week": 16,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 16,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 17,
+      "sprint": "S5",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 56075,
+      "plannedNonLaborCostCny": 40000,
+      "plannedValueCny": 96075,
+      "cumulativePlannedValueCny": 1232525,
+      "spi": 0.9875,
+      "cpi": 1.0037,
+      "cumulativeEarnedValueCny": 1217118,
+      "cumulativeActualCostCny": 1212571,
+      "nonLaborCosts": [
+        {
+          "categoryId": "cloud_tools_devices",
+          "title": "云服务、设备与开发工具",
+          "amountCny": 40000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 3,
+        "WBS-5.0": 12,
+        "WBS-6.0": 9,
+        "WBS-7.0": 2,
+        "WBS-8.0": 3,
+        "WBS-9.0": 6,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-4.3",
+          "workPackageId": "WBS-4.0",
+          "week": 17,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 17,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 17,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 17,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 18,
+      "sprint": "S5",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 55950,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 55950,
+      "cumulativePlannedValueCny": 1288475,
+      "spi": 0.985,
+      "cpi": 1.0025,
+      "cumulativeEarnedValueCny": 1269148,
+      "cumulativeActualCostCny": 1265983,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 6,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 8,
+        "WBS-6.0": 6,
+        "WBS-7.0": 7,
+        "WBS-8.0": 3,
+        "WBS-9.0": 11,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 1,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 18,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 18,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-7.1",
+          "workPackageId": "WBS-7.0",
+          "week": 18,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 18,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 18,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 19,
+      "sprint": "S6",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 56075,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 56075,
+      "cumulativePlannedValueCny": 1344550,
+      "spi": 0.9825,
+      "cpi": 1.0012,
+      "cumulativeEarnedValueCny": 1321020,
+      "cumulativeActualCostCny": 1319371,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 8,
+        "WBS-6.0": 15,
+        "WBS-7.0": 3,
+        "WBS-8.0": 2,
+        "WBS-9.0": 7,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 19,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.2",
+          "workPackageId": "WBS-5.0",
+          "week": 19,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.2",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 19,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 20,
+      "sprint": "S6",
+      "plannedTeamPersonDays": 36,
+      "plannedLaborCostCny": 56075,
+      "plannedNonLaborCostCny": 160000,
+      "plannedValueCny": 216075,
+      "cumulativePlannedValueCny": 1560625,
+      "spi": 0.98,
+      "cpi": 1,
+      "cumulativeEarnedValueCny": 1529413,
+      "cumulativeActualCostCny": 1529413,
+      "nonLaborCosts": [
+        {
+          "categoryId": "vehicle_vendor",
+          "title": "车端接口供应商",
+          "amountCny": 120000
+        },
+        {
+          "categoryId": "risk_uncertainty",
+          "title": "风险应对与不确定性预算",
+          "amountCny": 40000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 4,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 2,
+        "WBS-6.0": 5,
+        "WBS-7.0": 11,
+        "WBS-8.0": 2,
+        "WBS-9.0": 12,
+        "WBS-10.0": 0,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 20,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 20,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 20,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 20,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 20,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.2",
+          "workPackageId": "WBS-8.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 20,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 21,
+      "sprint": "S7",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 54400,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 54400,
+      "cumulativePlannedValueCny": 1615025,
+      "spi": 0.9825,
+      "cpi": 1.0012,
+      "cumulativeEarnedValueCny": 1586762,
+      "cumulativeActualCostCny": 1584781,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 4,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 2
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 6,
+        "WBS-6.0": 10,
+        "WBS-7.0": 4,
+        "WBS-8.0": 5,
+        "WBS-9.0": 8,
+        "WBS-10.0": 1,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 21,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 21,
+          "distanceFromWindow": 2,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-5.3",
+          "workPackageId": "WBS-5.0",
+          "week": 21,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 21,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 21,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        }
+      ]
+    },
+    {
+      "week": 22,
+      "sprint": "S7",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 54800,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 54800,
+      "cumulativePlannedValueCny": 1669825,
+      "spi": 0.985,
+      "cpi": 1.0025,
+      "cumulativeEarnedValueCny": 1644778,
+      "cumulativeActualCostCny": 1640676,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 5,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 4
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 0,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 11,
+        "WBS-7.0": 3,
+        "WBS-8.0": 4,
+        "WBS-9.0": 16,
+        "WBS-10.0": 1,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 22,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 22,
+          "distanceFromWindow": 1,
+          "allocationTiming": "preparation",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.3",
+          "workPackageId": "WBS-6.0",
+          "week": 22,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.1",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 22,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        }
+      ]
+    },
+    {
+      "week": 23,
+      "sprint": "S8",
+      "plannedTeamPersonDays": 35,
+      "plannedLaborCostCny": 54625,
+      "plannedNonLaborCostCny": 60000,
+      "plannedValueCny": 114625,
+      "cumulativePlannedValueCny": 1784450,
+      "spi": 0.9875,
+      "cpi": 1.0037,
+      "cumulativeEarnedValueCny": 1762144,
+      "cumulativeActualCostCny": 1755561,
+      "nonLaborCosts": [
+        {
+          "categoryId": "security_quality",
+          "title": "安全测试与专项质量",
+          "amountCny": 60000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 5,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 9,
+        "WBS-7.0": 8,
+        "WBS-8.0": 3,
+        "WBS-9.0": 4,
+        "WBS-10.0": 8,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 23,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 23,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 23,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-7.2",
+          "workPackageId": "WBS-7.0",
+          "week": 23,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 23,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 23,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 24,
+      "sprint": "S8",
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 53075,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 53075,
+      "cumulativePlannedValueCny": 1837525,
+      "spi": 0.99,
+      "cpi": 1.005,
+      "cumulativeEarnedValueCny": 1819150,
+      "cumulativeActualCostCny": 1810100,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 5,
+        "backend": 4,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 3,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 3,
+        "WBS-7.0": 8,
+        "WBS-8.0": 5,
+        "WBS-9.0": 7,
+        "WBS-10.0": 8,
+        "WBS-11.0": 0
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 24,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 24,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-6.4",
+          "workPackageId": "WBS-6.0",
+          "week": 24,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 24,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-7.3",
+          "workPackageId": "WBS-7.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-8.3",
+          "workPackageId": "WBS-8.0",
+          "week": 24,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        }
+      ]
+    },
+    {
+      "week": 25,
+      "sprint": "S9",
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 53375,
+      "plannedNonLaborCostCny": 60000,
+      "plannedValueCny": 113375,
+      "cumulativePlannedValueCny": 1950900,
+      "spi": 0.9925,
+      "cpi": 1.0063,
+      "cumulativeEarnedValueCny": 1936268,
+      "cumulativeActualCostCny": 1924241,
+      "nonLaborCosts": [
+        {
+          "categoryId": "cloud_tools_devices",
+          "title": "云服务、设备与开发工具",
+          "amountCny": 40000
+        },
+        {
+          "categoryId": "pilot_training_support",
+          "title": "试点、培训与支持",
+          "amountCny": 20000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 5,
+        "mobile": 4,
+        "backend": 4,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 0,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 23,
+        "WBS-10.0": 7,
+        "WBS-11.0": 4
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.2",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 25,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        }
+      ]
+    },
+    {
+      "week": 26,
+      "sprint": "S9",
+      "plannedTeamPersonDays": 34,
+      "plannedLaborCostCny": 53375,
+      "plannedNonLaborCostCny": 60000,
+      "plannedValueCny": 113375,
+      "cumulativePlannedValueCny": 2064275,
+      "spi": 0.995,
+      "cpi": 1.0075,
+      "cumulativeEarnedValueCny": 2053954,
+      "cumulativeActualCostCny": 2038664,
+      "nonLaborCosts": [
+        {
+          "categoryId": "security_quality",
+          "title": "安全测试与专项质量",
+          "amountCny": 60000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 5,
+        "mobile": 4,
+        "backend": 4,
+        "vehicle_integration": 5,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 2,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 15,
+        "WBS-10.0": 6,
+        "WBS-11.0": 11
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 26,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 26,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 26,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 27,
+      "sprint": "S10",
+      "plannedTeamPersonDays": 33,
+      "plannedLaborCostCny": 51725,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 51725,
+      "cumulativePlannedValueCny": 2116000,
+      "spi": 0.9975,
+      "cpi": 1.0088,
+      "cumulativeEarnedValueCny": 2110710,
+      "cumulativeActualCostCny": 2092401,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 5,
+        "mobile": 4,
+        "backend": 4,
+        "vehicle_integration": 4,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 1,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 2,
+        "WBS-10.0": 10,
+        "WBS-11.0": 20
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.3",
+          "workPackageId": "WBS-9.0",
+          "week": 27,
+          "distanceFromWindow": 2,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.1",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 27,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 28,
+      "sprint": "S10",
+      "plannedTeamPersonDays": 32,
+      "plannedLaborCostCny": 49975,
+      "plannedNonLaborCostCny": 160000,
+      "plannedValueCny": 209975,
+      "cumulativePlannedValueCny": 2325975,
+      "spi": 1,
+      "cpi": 1.01,
+      "cumulativeEarnedValueCny": 2325975,
+      "cumulativeActualCostCny": 2302946,
+      "nonLaborCosts": [
+        {
+          "categoryId": "vehicle_vendor",
+          "title": "车端接口供应商",
+          "amountCny": 80000
+        },
+        {
+          "categoryId": "pilot_training_support",
+          "title": "试点、培训与支持",
+          "amountCny": 40000
+        },
+        {
+          "categoryId": "risk_uncertainty",
+          "title": "风险应对与不确定性预算",
+          "amountCny": 40000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 3,
+        "tech_lead": 4,
+        "mobile": 4,
+        "backend": 3,
+        "vehicle_integration": 4,
+        "qa": 5,
+        "devsecops": 5
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 4,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 20,
+        "WBS-11.0": 8
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 5
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-10.1",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 28,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        }
+      ]
+    },
+    {
+      "week": 29,
+      "sprint": null,
+      "plannedTeamPersonDays": 24,
+      "plannedLaborCostCny": 37425,
+      "plannedNonLaborCostCny": 0,
+      "plannedValueCny": 37425,
+      "cumulativePlannedValueCny": 2363400,
+      "spi": 1,
+      "cpi": 1.0125,
+      "cumulativeEarnedValueCny": 2363400,
+      "cumulativeActualCostCny": 2334222,
+      "nonLaborCosts": [],
+      "rolePersonDays": {
+        "pm": 3,
+        "ba": 3,
+        "tech_lead": 3,
+        "mobile": 3,
+        "backend": 3,
+        "vehicle_integration": 3,
+        "qa": 3,
+        "devsecops": 3
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 2,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 1,
+        "WBS-10.0": 4,
+        "WBS-11.0": 17
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.2",
+          "workPackageId": "WBS-10.0",
+          "week": 29,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-9.4",
+          "workPackageId": "WBS-9.0",
+          "week": 29,
+          "distanceFromWindow": 3,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 29,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 30,
+      "sprint": null,
+      "plannedTeamPersonDays": 22,
+      "plannedLaborCostCny": 35100,
+      "plannedNonLaborCostCny": 60000,
+      "plannedValueCny": 95100,
+      "cumulativePlannedValueCny": 2458500,
+      "spi": 1,
+      "cpi": 1.015,
+      "cumulativeEarnedValueCny": 2458500,
+      "cumulativeActualCostCny": 2422167,
+      "nonLaborCosts": [
+        {
+          "categoryId": "security_quality",
+          "title": "安全测试与专项质量",
+          "amountCny": 60000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 2,
+        "tech_lead": 4,
+        "mobile": 1,
+        "backend": 1,
+        "vehicle_integration": 3,
+        "qa": 3,
+        "devsecops": 4
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 2,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 14,
+        "WBS-11.0": 6
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 30,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 30,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.2",
+          "workPackageId": "WBS-11.0",
+          "week": 30,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        }
+      ]
+    },
+    {
+      "week": 31,
+      "sprint": null,
+      "plannedTeamPersonDays": 20,
+      "plannedLaborCostCny": 31325,
+      "plannedNonLaborCostCny": 50000,
+      "plannedValueCny": 81325,
+      "cumulativePlannedValueCny": 2539825,
+      "spi": 1,
+      "cpi": 1.0175,
+      "cumulativeEarnedValueCny": 2539825,
+      "cumulativeActualCostCny": 2496143,
+      "nonLaborCosts": [
+        {
+          "categoryId": "cloud_tools_devices",
+          "title": "云服务、设备与开发工具",
+          "amountCny": 20000
+        },
+        {
+          "categoryId": "pilot_training_support",
+          "title": "试点、培训与支持",
+          "amountCny": 30000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 2,
+        "tech_lead": 3,
+        "mobile": 1,
+        "backend": 3,
+        "vehicle_integration": 3,
+        "qa": 3,
+        "devsecops": 1
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 7,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 1,
+        "WBS-11.0": 12
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-10.3",
+          "workPackageId": "WBS-10.0",
+          "week": 31,
+          "distanceFromWindow": 1,
+          "allocationTiming": "closeout",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-1.2",
+          "workPackageId": "WBS-1.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 31,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        }
+      ]
+    },
+    {
+      "week": 32,
+      "sprint": null,
+      "plannedTeamPersonDays": 19,
+      "plannedLaborCostCny": 30175,
+      "plannedNonLaborCostCny": 30000,
+      "plannedValueCny": 60175,
+      "cumulativePlannedValueCny": 2600000,
+      "spi": 1,
+      "cpi": 1.02,
+      "cumulativeEarnedValueCny": 2600000,
+      "cumulativeActualCostCny": 2549020,
+      "nonLaborCosts": [
+        {
+          "categoryId": "pilot_training_support",
+          "title": "试点、培训与支持",
+          "amountCny": 10000
+        },
+        {
+          "categoryId": "risk_uncertainty",
+          "title": "风险应对与不确定性预算",
+          "amountCny": 20000
+        }
+      ],
+      "rolePersonDays": {
+        "pm": 4,
+        "ba": 2,
+        "tech_lead": 4,
+        "mobile": 3,
+        "backend": 2,
+        "vehicle_integration": 1,
+        "qa": 2,
+        "devsecops": 1
+      },
+      "workPackagePersonDays": {
+        "WBS-1.0": 9,
+        "WBS-2.0": 0,
+        "WBS-3.0": 0,
+        "WBS-4.0": 0,
+        "WBS-5.0": 0,
+        "WBS-6.0": 0,
+        "WBS-7.0": 0,
+        "WBS-8.0": 0,
+        "WBS-9.0": 0,
+        "WBS-10.0": 0,
+        "WBS-11.0": 10
+      },
+      "overtimePersonDays": {
+        "pm": 0,
+        "ba": 0,
+        "tech_lead": 0,
+        "mobile": 0,
+        "backend": 0,
+        "vehicle_integration": 0,
+        "qa": 0,
+        "devsecops": 0
+      },
+      "allocations": [
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "ba",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "backend",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "devsecops",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        },
+        {
+          "type": "allocation",
+          "roleId": "mobile",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 3
+        },
+        {
+          "type": "allocation",
+          "roleId": "pm",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 4
+        },
+        {
+          "type": "allocation",
+          "roleId": "qa",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-1.3",
+          "workPackageId": "WBS-1.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "occurrence",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "tech_lead",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 2
+        },
+        {
+          "type": "allocation",
+          "roleId": "vehicle_integration",
+          "activityId": "WBS-11.3",
+          "workPackageId": "WBS-11.0",
+          "week": 32,
+          "distanceFromWindow": 0,
+          "allocationTiming": "core",
+          "personDays": 1
+        }
+      ]
+    }
+  ]
+}

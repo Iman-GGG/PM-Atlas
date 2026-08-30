@@ -205,7 +205,7 @@ export function ScenarioOutcomeView({
         <footer className="lab-v2-outcome-actions">
           <button type="button" onClick={onReturnMainline}>返回项目主线</button>
           {nextTakeoverWeek !== null && <button type="button" className="primary" onClick={onStartNextScenario}>开始下一情景 · W{nextTakeoverWeek}</button>}
-          <button type="button" className="primary" disabled={retrying} onClick={onRetryScenario}>{retrying ? "正在创建新分支…" : `从 W${comparison.forkWeek} 重新尝试 · 新建 V5 分支`}</button>
+          <button type="button" className="primary" disabled={retrying} onClick={onRetryScenario}>{retrying ? "正在创建新分支…" : `从 W${comparison.forkWeek} 重新尝试 · 新建 V6 分支`}</button>
           <button type="button" onClick={onClose}>继续查看当前分支</button>
         </footer>
       </div>

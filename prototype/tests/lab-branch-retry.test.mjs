@@ -13,7 +13,7 @@ test("adds one backward-compatible branch-name column without duplicating retry 
   assert.doesNotMatch(schema, /attempt_number|retry_sequence/);
 });
 
-test("groups attempts by scenario and exposes naming plus new-v5 retry actions", async () => {
+test("groups attempts by scenario and exposes naming plus new-v6 retry actions", async () => {
   const [pageSource, outcomeSource, cssSource] = await Promise.all([
     readFile(new URL("../app/lab-timeline-page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/lab-scenario-outcome.tsx", import.meta.url), "utf8"),
@@ -24,7 +24,7 @@ test("groups attempts by scenario and exposes naming plus new-v5 retry actions",
   assert.match(pageSource, /method: "PATCH"/);
   assert.match(pageSource, /retryFromBranchId/);
   assert.match(pageSource, /branch\.branchName \?\?/);
-  assert.match(outcomeSource, /从 W\$\{comparison\.forkWeek\} 重新尝试 · 新建 V5 分支/);
+  assert.match(outcomeSource, /从 W\$\{comparison\.forkWeek\} 重新尝试 · 新建 V6 分支/);
   assert.match(cssSource, /\.lab-v2-branch-history-group/);
   assert.doesNotMatch(cssSource, /\.lab-v2-branch-history-list > button/);
 });

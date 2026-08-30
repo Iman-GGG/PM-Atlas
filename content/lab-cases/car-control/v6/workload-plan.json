@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "caseId": "car-control",
+  "caseVersion": "v6",
+  "totalWeeks": 32,
+  "personDaysPerPersonWeek": 5,
+  "budgetAtCompletionCny": 2600000,
+  "roles": [
+    { "id": "pm", "title": "项目经理", "plannedPersonDays": 128, "standardDayRateCny": 1650 },
+    { "id": "ba", "title": "产品/业务分析师", "plannedPersonDays": 112, "standardDayRateCny": 1300 },
+    { "id": "tech_lead", "title": "技术负责人", "plannedPersonDays": 136, "standardDayRateCny": 1850 },
+    { "id": "mobile", "title": "移动端工程师", "plannedPersonDays": 144, "standardDayRateCny": 1550 },
+    { "id": "backend", "title": "后端工程师", "plannedPersonDays": 144, "standardDayRateCny": 1550 },
+    { "id": "vehicle_integration", "title": "车端接口集成工程师", "plannedPersonDays": 136, "standardDayRateCny": 1650 },
+    { "id": "qa", "title": "测试工程师", "plannedPersonDays": 128, "standardDayRateCny": 1250 },
+    { "id": "devsecops", "title": "DevOps/安全工程师", "plannedPersonDays": 96, "standardDayRateCny": 1675 }
+  ],
+  "workPackages": [
+    { "id": "WBS-1.0", "title": "项目治理与管理", "startWeek": 1, "endWeek": 32 },
+    { "id": "WBS-2.0", "title": "用户研究、需求与范围基线", "startWeek": 1, "endWeek": 8 },
+    { "id": "WBS-3.0", "title": "技术架构、接口与安全基线", "startWeek": 3, "endWeek": 12 },
+    { "id": "WBS-4.0", "title": "账号、身份与车辆绑定", "startWeek": 8, "endWeek": 14 },
+    { "id": "WBS-5.0", "title": "车辆状态查询能力", "startWeek": 11, "endWeek": 18 },
+    { "id": "WBS-6.0", "title": "远程控制能力", "startWeek": 9, "endWeek": 22 },
+    { "id": "WBS-7.0", "title": "通知、审计与运营后台", "startWeek": 11, "endWeek": 24 },
+    { "id": "WBS-8.0", "title": "供应商接口与履约管理", "startWeek": 5, "endWeek": 24 },
+    { "id": "WBS-9.0", "title": "集成、自动化与系统测试", "startWeek": 17, "endWeek": 26 },
+    { "id": "WBS-10.0", "title": "安全测试与缺陷修复", "startWeek": 23, "endWeek": 30 },
+    { "id": "WBS-11.0", "title": "试点、上线、移交与复盘", "startWeek": 25, "endWeek": 32 }
+  ],
+  "roleWorkPackagePersonDays": {
+    "pm": { "WBS-1.0": 64, "WBS-2.0": 24, "WBS-3.0": 4, "WBS-4.0": 2, "WBS-5.0": 2, "WBS-6.0": 4, "WBS-7.0": 2, "WBS-8.0": 16, "WBS-9.0": 2, "WBS-10.0": 2, "WBS-11.0": 6 },
+    "ba": { "WBS-1.0": 8, "WBS-2.0": 20, "WBS-3.0": 0, "WBS-4.0": 8, "WBS-5.0": 6, "WBS-6.0": 8, "WBS-7.0": 40, "WBS-8.0": 0, "WBS-9.0": 2, "WBS-10.0": 0, "WBS-11.0": 20 },
+    "tech_lead": { "WBS-1.0": 8, "WBS-2.0": 8, "WBS-3.0": 14, "WBS-4.0": 8, "WBS-5.0": 8, "WBS-6.0": 12, "WBS-7.0": 10, "WBS-8.0": 16, "WBS-9.0": 28, "WBS-10.0": 16, "WBS-11.0": 8 },
+    "mobile": { "WBS-1.0": 0, "WBS-2.0": 8, "WBS-3.0": 28, "WBS-4.0": 24, "WBS-5.0": 20, "WBS-6.0": 28, "WBS-7.0": 8, "WBS-8.0": 0, "WBS-9.0": 8, "WBS-10.0": 4, "WBS-11.0": 16 },
+    "backend": { "WBS-1.0": 0, "WBS-2.0": 24, "WBS-3.0": 26, "WBS-4.0": 20, "WBS-5.0": 20, "WBS-6.0": 20, "WBS-7.0": 6, "WBS-8.0": 0, "WBS-9.0": 9, "WBS-10.0": 4, "WBS-11.0": 15 },
+    "vehicle_integration": { "WBS-1.0": 0, "WBS-2.0": 0, "WBS-3.0": 12, "WBS-4.0": 0, "WBS-5.0": 20, "WBS-6.0": 28, "WBS-7.0": 0, "WBS-8.0": 32, "WBS-9.0": 24, "WBS-10.0": 8, "WBS-11.0": 12 },
+    "qa": { "WBS-1.0": 8, "WBS-2.0": 0, "WBS-3.0": 4, "WBS-4.0": 14, "WBS-5.0": 10, "WBS-6.0": 24, "WBS-7.0": 16, "WBS-8.0": 4, "WBS-9.0": 31, "WBS-10.0": 8, "WBS-11.0": 9 },
+    "devsecops": { "WBS-1.0": 8, "WBS-2.0": 4, "WBS-3.0": 8, "WBS-4.0": 4, "WBS-5.0": 2, "WBS-6.0": 12, "WBS-7.0": 6, "WBS-8.0": 4, "WBS-9.0": 8, "WBS-10.0": 38, "WBS-11.0": 2 }
+  },
+  "weeklyTeamPersonDays": [24, 26, 28, 30, 32, 34, 34, 34, 34, 34, 35, 35, 35, 36, 36, 36, 36, 36, 36, 36, 35, 35, 35, 34, 34, 34, 33, 32, 24, 22, 20, 19],
+  "plannedNonLaborCosts": [
+    { "id": "vehicle_vendor", "title": "车端接口供应商", "entries": [{ "week": 4, "amountCny": 80000 }, { "week": 12, "amountCny": 120000 }, { "week": 20, "amountCny": 120000 }, { "week": 28, "amountCny": 80000 }] },
+    { "id": "security_quality", "title": "安全测试与专项质量", "entries": [{ "week": 12, "amountCny": 20000 }, { "week": 23, "amountCny": 60000 }, { "week": 26, "amountCny": 60000 }, { "week": 30, "amountCny": 60000 }] },
+    { "id": "cloud_tools_devices", "title": "云服务、设备与开发工具", "entries": [{ "week": 1, "amountCny": 20000 }, { "week": 9, "amountCny": 30000 }, { "week": 17, "amountCny": 40000 }, { "week": 25, "amountCny": 40000 }, { "week": 31, "amountCny": 20000 }] },
+    { "id": "pilot_training_support", "title": "试点、培训与支持", "entries": [{ "week": 25, "amountCny": 20000 }, { "week": 28, "amountCny": 40000 }, { "week": 31, "amountCny": 30000 }, { "week": 32, "amountCny": 10000 }] },
+    { "id": "risk_uncertainty", "title": "风险应对与不确定性预算", "entries": [{ "week": 8, "amountCny": 20000 }, { "week": 12, "amountCny": 30000 }, { "week": 20, "amountCny": 40000 }, { "week": 28, "amountCny": 40000 }, { "week": 32, "amountCny": 20000 }] }
+  ],
+  "mainlinePerformanceAnchors": [
+    { "week": 0, "spi": 1.0, "cpi": 1.0 },
+    { "week": 8, "spi": 0.98, "cpi": 1.02 },
+    { "week": 12, "spi": 1.0, "cpi": 1.01 },
+    { "week": 20, "spi": 0.98, "cpi": 1.0 },
+    { "week": 28, "spi": 1.0, "cpi": 1.01 },
+    { "week": 32, "spi": 1.0, "cpi": 1.02 }
+  ]
+}

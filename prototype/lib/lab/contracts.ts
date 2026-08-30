@@ -173,6 +173,7 @@ export type PrivateLabCasePackage = LabCasePackageIdentity & {
     requirementPlan: StateEffect;
     riskPlan: StateEffect;
     qualityPlan: StateEffect;
+    iterationPlan: StateEffect;
     scenarioPlan: ScenarioPlan;
     baselineWorkload: StateEffect;
   };
@@ -194,6 +195,8 @@ export type PublicLabCaseBaseline = LabCasePackageIdentity & {
     requirements: StateEffect;
     risks: StateEffect;
     quality: StateEffect;
+    /** Added in car-control:v6; frozen v1-v5 packages intentionally omit it. */
+    iterations?: StateEffect;
     baselineWorkload: StateEffect;
   };
   learningPolicies: {

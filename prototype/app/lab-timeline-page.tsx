@@ -34,6 +34,36 @@ type BaselineWeek = {
   workPackagePersonDays: Record<string, number>;
 };
 
+type IterationTask = {
+  id: string;
+  title: string;
+  scheduleActivityId: string;
+  requirementIds: string[];
+  storyPoints: number;
+  completedWorkday: number;
+};
+
+type IterationSprint = {
+  id: string;
+  startWeek: number;
+  endWeek: number;
+  goal: string;
+  tasks: IterationTask[];
+};
+
+type IterationPlan = {
+  policy: {
+    firstSprintWeek: number;
+    lastSprintWeek: number;
+    sprintLengthWeeks: number;
+    workdaysPerWeek: number;
+    estimationUnit: "story_point";
+    remainingWorkRule: string;
+    weeklyDataDateRule: string;
+  };
+  sprints: IterationSprint[];
+};
+
 type WorkPackage = {
   id: string;
   title: string;
@@ -532,6 +562,7 @@ type MainlineData = {
     mainlineLifecycleEvents: RiskEvent[];
   };
   quality: QualityPlan;
+  iterations?: IterationPlan;
   baselineWorkload: {
     totalPlannedPersonDays: number;
     weeks: BaselineWeek[];
@@ -772,8 +803,8 @@ type ManagementArea = {
 };
 
 const caseId = "car-control";
-const caseVersion = "v5";
-const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,baselineWorkload";
+const caseVersion = "v6";
+const mainlineSections = "workload,schedule,stakeholders,documents,requirements,risks,quality,iterations,baselineWorkload";
 const milestones = [
   { week: 1, label: "启动" },
   { week: 8, label: "范围基线" },
@@ -1386,7 +1417,10 @@ function WorkloadBars({ weeks, selectedWeek }: { weeks: BaselineWeek[]; selected
   );
 }
 
-function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek: boolean }) {
+function SprintBurndown({ sprint, elapsedWorkdays }: { sprint: IterationSprint | null; elapsedWorkdays: number }) {
+  if (!sprint) {
+    return <div className="lab-v2-burndown-empty">当前周没有进行中的迭代任务</div>;
+  }
   const width = 260;
   const height = 88;
   const horizontalPadding = 8;
@@ -1394,26 +1428,18 @@ function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek:
   const bottomPadding = 18;
   const chartWidth = width - horizontalPadding * 2;
   const chartHeight = height - topPadding - bottomPadding;
-  const totalWork = 34;
-  const x = (day: number) => horizontalPadding + day / 12 * chartWidth;
+  const totalWork = sprint.tasks.reduce((total, task) => total + task.storyPoints, 0);
+  const totalWorkdays = 10;
+  const x = (day: number) => horizontalPadding + day / totalWorkdays * chartWidth;
   const y = (remaining: number) => topPadding + (1 - remaining / totalWork) * chartHeight;
-  const idealPath = `M ${x(0)} ${y(34)} L ${x(5)} ${y(17)} L ${x(7)} ${y(17)} L ${x(12)} ${y(0)}`;
-  const checkpoints = [
-    { day: 0, remaining: 34 },
-    { day: 1, remaining: 31 },
-    { day: 2, remaining: 28 },
-    { day: 3, remaining: 24 },
-    { day: 4, remaining: 20 },
-    { day: 5, remaining: 17 },
-    { day: 7, remaining: 17 },
-    { day: 8, remaining: 13 },
-    { day: 9, remaining: 10 },
-    { day: 10, remaining: 7 },
-    { day: 11, remaining: 3 },
-    { day: 12, remaining: 0 },
-  ];
-  const elapsedDay = started ? secondWeek ? 12 : 5 : 0;
-  const visibleCheckpoints = checkpoints.filter((point) => point.day <= elapsedDay);
+  const idealPath = `M ${x(0)} ${y(totalWork)} L ${x(totalWorkdays)} ${y(0)}`;
+  const checkpoints = Array.from({ length: totalWorkdays + 1 }, (_, day) => ({
+    day,
+    remaining: sprint.tasks
+      .filter((task) => task.completedWorkday > day)
+      .reduce((total, task) => total + task.storyPoints, 0),
+  }));
+  const visibleCheckpoints = checkpoints.filter((point) => point.day <= elapsedWorkdays);
   const actualPath = visibleCheckpoints.slice(1).reduce(
     (path, point) => `${path} H ${x(point.day)} V ${y(point.remaining)}`,
     `M ${x(visibleCheckpoints[0].day)} ${y(visibleCheckpoints[0].remaining)}`,
@@ -1421,13 +1447,13 @@ function SprintBurndown({ started, secondWeek }: { started: boolean; secondWeek:
   const currentPoint = visibleCheckpoints.at(-1) ?? checkpoints[0];
 
   return (
-    <svg className="lab-v2-burndown" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="两周迭代燃尽图，虚线为理想燃尽，实线为实际阶梯燃尽">
+    <svg className="lab-v2-burndown" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${sprint.id} 迭代燃尽图，总计 ${totalWork} 故事点，当前剩余 ${currentPoint.remaining} 点；虚线为理想燃尽，实线按任务完成日派生`}>
       <path className="ideal" d={idealPath} />
       <path className="actual" d={actualPath} />
       <circle cx={x(currentPoint.day)} cy={y(currentPoint.remaining)} r="3" />
-      <text x={x(0)} y={height - 3}>起点</text>
-      <text className="weekend" x={(x(5) + x(7)) / 2} y={height - 3}>周末</text>
-      <text className="end" x={x(12)} y={height - 3}>清零</text>
+      <text x={x(0)} y={height - 3}>第1周</text>
+      <text className="weekend" x={x(5)} y={height - 3}>第2周</text>
+      <text className="end" x={x(10)} y={height - 3}>结束</text>
     </svg>
   );
 }
@@ -3012,9 +3038,34 @@ export function LabTimelinePage({
     if (riskDetailFilter === "HIGH") return risk.lifecycle !== "closed" && risk.currentAssessment.probability * risk.currentAssessment.impact >= 10;
     return true;
   });
-  const currentSprintNumber = selectedWeek < 9 ? 0 : Math.min(10, Math.floor((selectedWeek - 9) / 2) + 1);
-  const sprintProgress = selectedWeek < 9 ? 0 : ((selectedWeek - 9) % 2 + 1) / 2;
-  const sprintRemaining = Math.round(34 * (1 - sprintProgress));
+  const currentSprint = mainline.iterations?.sprints.find((sprint) => sprint.startWeek <= selectedWeek && sprint.endWeek >= selectedWeek) ?? null;
+  const elapsedSprintWorkdays = currentSprint && mainline.iterations
+    ? Math.min(
+        mainline.iterations.policy.sprintLengthWeeks * mainline.iterations.policy.workdaysPerWeek,
+        (selectedWeek - currentSprint.startWeek + 1) * mainline.iterations.policy.workdaysPerWeek,
+      )
+    : 0;
+  const sprintTotalPoints = currentSprint?.tasks.reduce((total, task) => total + task.storyPoints, 0) ?? 0;
+  const sprintCompletedTasks = currentSprint?.tasks.filter((task) => task.completedWorkday <= elapsedSprintWorkdays) ?? [];
+  const sprintRemaining = currentSprint?.tasks
+    .filter((task) => task.completedWorkday > elapsedSprintWorkdays)
+    .reduce((total, task) => total + task.storyPoints, 0) ?? 0;
+  const iterationStatus = currentSprint
+    ? {
+        value: currentSprint.id,
+        note: `剩余 ${sprintRemaining} 点 · 完成 ${sprintCompletedTasks.length}/${currentSprint.tasks.length} 项`,
+        facts: [
+          `${currentSprint.id} 目标：${currentSprint.goal}`,
+          `任务 ${currentSprint.tasks.length} 项 · 总计 ${sprintTotalPoints} 故事点`,
+          `截至第 ${elapsedSprintWorkdays} 个工作日：完成 ${sprintCompletedTasks.length} 项，剩余 ${sprintRemaining} 点`,
+          "燃尽值由迭代任务完成日派生，不使用活动人日或固定演示曲线",
+        ],
+      }
+    : !mainline.iterations
+      ? { value: "无任务数据", note: "该冻结版本未记录迭代任务", facts: ["该历史案例版本没有迭代任务权威数据，因此不绘制模拟燃尽曲线。"] }
+      : selectedWeek < mainline.iterations.policy.firstSprintWeek
+        ? { value: "未开始", note: "W9 进入首个开发迭代", facts: ["S1–S10 从 W9 开始，每个迭代持续两周。", mainline.iterations.policy.remainingWorkRule] }
+        : { value: "已结束", note: "S10 已于 W28 结束", facts: ["S1–S10 的迭代任务已归档。", "W29–W32 属于试点、上线、移交与收尾阶段，没有虚构新的开发迭代。"] };
   const primaryWorkPackageId = Object.entries(weekState.workPackagePersonDays)
     .filter(([workPackageId, personDays]) => workPackageId !== "WBS-1.0" && personDays > 0)
     .sort((left, right) => right[1] - left[1])[0]?.[0]
@@ -3034,7 +3085,7 @@ export function LabTimelinePage({
     raci: [`当前工作包 ${currentRaci.workPackageId}`, `A：${stakeholderNames(currentRaci.A).join("、")}`, `R：${stakeholderNames(currentRaci.R).join("、")}`],
     "risk-matrix": [`本周累计发现 ${riskState.length} 项`, `开放风险 ${openRiskCount} 项，已关闭 ${completedRiskCount} 项`, `高影响开放风险 ${riskState.filter((risk) => risk.lifecycle !== "closed" && risk.currentAssessment.impact >= 4).length} 项`],
     requirements: [`当前已发现需求 ${requirementTotal} 项`, `已基线 ${requirementBaselined}，候选 ${requirementCandidates}`, `开发完成 ${requirementCompleted}，已验证 ${requirementVerified}`, `阻断缺陷 ${typeof blockerDefects === "number" ? Math.round(blockerDefects) : 0} 个`],
-    burndown: [currentSprintNumber ? `当前 S${currentSprintNumber}` : "尚未进入迭代", `迭代剩余 ${sprintRemaining} 点`, `当前周 W${selectedWeek}`],
+    burndown: iterationStatus.facts,
     ccb: [`累计变更 ${visibleChangeItems.length} 项`, `当前待办 ${openChangeItems.length} 项`, `已关闭 ${closedChangeItems.length} 项`, latestChangeItem ? `最近决议：${changeDecisionLabels[latestChangeItem.decision]}` : "尚无变更请求"],
     network: [`当前关键活动 ${criticalNow.length} 项`, `关键活动总数 ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length}`, `主线预测完工 W${mainline.baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek}`],
     wbs: [`工作包总数 ${mainline.workload.workPackages.length}`, `进行中 ${activeWorkPackages.length}`, `已完成 ${mainline.workload.workPackages.filter((item) => item.endWeek < selectedWeek).length}`],
@@ -3211,8 +3262,8 @@ export function LabTimelinePage({
           <div className="lab-v2-legend"><span>已验证 {requirementVerified}</span><span>开发完成 {requirementCompleted}</span><span>总计 {requirementTotal}</span></div>
         </DashboardCard>
 
-        <DashboardCard id="burndown" eyebrow="ITERATION" title="当前迭代燃尽图" value={currentSprintNumber ? `S${currentSprintNumber}` : "未开始"} note={currentSprintNumber ? `剩余 ${sprintRemaining} 点` : "W9 进入首个开发迭代"} onOpen={setSelectedWidget}>
-          <SprintBurndown started={currentSprintNumber > 0} secondWeek={sprintProgress === 1} />
+        <DashboardCard id="burndown" eyebrow="ITERATION" title="当前迭代燃尽图" value={iterationStatus.value} note={iterationStatus.note} onOpen={setSelectedWidget}>
+          <SprintBurndown sprint={currentSprint} elapsedWorkdays={elapsedSprintWorkdays} />
         </DashboardCard>
         <DashboardCard id="ccb" eyebrow="GOVERNANCE" title="CCB 待办项" className="ccb-widget" titleAccessory={<CcbMemberIndicator members={ccbMembers} />} value={String(openChangeItems.length)} note={`${visibleChangeItems.length} 项累计变更 · ${closedChangeItems.length} 项已关闭`} onOpen={setSelectedWidget}>
           <div className="lab-v2-ccb-list">

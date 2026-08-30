@@ -10,7 +10,7 @@ function createEnv({
   contentHash = "",
   currentWeek = 9,
   includeExistingBranch = true,
-  caseVersion = "v5",
+  caseVersion = "v6",
   documentDeltas = [],
   snapshots = [],
   roundSubmissions = [],
@@ -232,7 +232,7 @@ async function request(path, options = {}, env = createEnv()) {
 }
 
 test("serves a public case manifest without private scenario content", async () => {
-  const response = await request("/api/lab/cases/car-control/v5");
+  const response = await request("/api/lab/cases/car-control/v6");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("cache-control") ?? "", /^public,/);
   const body = await response.json();
@@ -244,20 +244,33 @@ test("serves a public case manifest without private scenario content", async () 
 });
 
 test("filters public mainline data by section and week", async () => {
-  const response = await request("/api/lab/cases/car-control/v5/mainline?week=9&sections=baselineWorkload,documents");
+  const response = await request("/api/lab/cases/car-control/v6/mainline?week=9&sections=baselineWorkload,documents");
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.deepEqual(body.sections.baselineWorkload.weeks.map((item) => item.week), [9]);
   assert.ok(body.sections.documents.documents.every((document) => document.createdWeek <= 9));
   assert.ok(body.sections.documents.mainlineEvents.every((event) => event.week <= 9));
 
-  const stakeholderResponse = await request("/api/lab/cases/car-control/v5/mainline?week=1&sections=stakeholders");
+  const stakeholderResponse = await request("/api/lab/cases/car-control/v6/mainline?week=1&sections=stakeholders");
   assert.equal(stakeholderResponse.status, 200);
   const stakeholderBody = await stakeholderResponse.json();
   assert.equal(stakeholderBody.sections.stakeholders.stakeholders.length, 13);
   assert.equal(stakeholderBody.sections.stakeholders.stakeholders.some((stakeholder) => stakeholder.id === "vehicle_vendor_pm"), false);
   assert.equal(stakeholderBody.sections.stakeholders.stakeholders.some((stakeholder) => stakeholder.id === "security_vendor"), false);
   assert.ok(stakeholderBody.sections.stakeholders.mainlineEngagementEvents.every((event) => event.week <= 1));
+});
+
+test("serves authoritative iteration tasks only in the v6 mainline package", async () => {
+  const currentResponse = await request("/api/lab/cases/car-control/v6/mainline?week=9&sections=iterations");
+  assert.equal(currentResponse.status, 200);
+  const current = await currentResponse.json();
+  assert.equal(current.sections.iterations.sprints.length, 10);
+  assert.equal(current.sections.iterations.sprints[0].tasks.length, 3);
+
+  const frozenResponse = await request("/api/lab/cases/car-control/v5/mainline?week=9&sections=iterations");
+  assert.equal(frozenResponse.status, 200);
+  const frozen = await frozenResponse.json();
+  assert.equal("iterations" in frozen.sections, false);
 });
 
 test("serves a frozen historical manifest and mainline from the matching package", async () => {
@@ -278,7 +291,7 @@ test("serves a frozen historical manifest and mainline from the matching package
 });
 
 test("lists the signed-in user's scenario branches for switching", async () => {
-  const currentManifest = await (await request("/api/lab/cases/car-control/v5")).json();
+  const currentManifest = await (await request("/api/lab/cases/car-control/v6")).json();
   const env = createEnv({ contentHash: currentManifest.contentHash });
   const response = await request("/api/lab/cases/car-control/branches", {
     headers: { "oai-authenticated-user-id": "user-123", "oai-authenticated-user-email": "iman@example.com" },
@@ -290,14 +303,15 @@ test("lists the signed-in user's scenario branches for switching", async () => {
   assert.equal(body.branches[0].forkWeek, 9);
 });
 
-test("merges signed-in branch history across frozen v1-v4 and current v5", async () => {
-  const currentManifest = await (await request("/api/lab/cases/car-control/v5")).json();
+test("merges signed-in branch history across frozen v1-v5 and current v6", async () => {
+  const currentManifest = await (await request("/api/lab/cases/car-control/v6")).json();
   const env = createEnv({ contentHash: currentManifest.contentHash });
   const historicalHashes = {
     v1: "60e75a09b7043b00d18401ab272fe98536348adef8769ab38130a9a99af0466d",
     v2: "f2b85b61f1a727785c5e1043be4f2eba77bdc6059920ace1996d1cba50d0eccd",
     v3: "e2ef46b6e929a4303d1d43f8478c0169d3371991ef8756a61af4d3de28d70847",
     v4: "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353",
+    v5: "a1b0a1b786181e520f17755c4975c68c23e24fb3311d6b0a3681ece806b205c1",
   };
   for (const [version, contentHash] of Object.entries(historicalHashes)) {
     env.__state.branches.set(`branch-${version}`, {
@@ -313,7 +327,7 @@ test("merges signed-in branch history across frozen v1-v4 and current v5", async
   }, env);
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.deepEqual([...new Set(body.branches.map((branch) => branch.caseVersion))].sort(), ["v1", "v2", "v3", "v4", "v5"]);
+  assert.deepEqual([...new Set(body.branches.map((branch) => branch.caseVersion))].sort(), ["v1", "v2", "v3", "v4", "v5", "v6"]);
 });
 
 test("loads a historical v4 branch only through its exact frozen content hash", async () => {
@@ -334,7 +348,7 @@ test("loads a historical v4 branch only through its exact frozen content hash", 
 });
 
 test("returns same-week mainline and branch values for each changed document field", async () => {
-  const manifest = await (await request("/api/lab/cases/car-control/v5")).json();
+  const manifest = await (await request("/api/lab/cases/car-control/v6")).json();
   const env = createEnv({
     contentHash: manifest.contentHash,
     currentWeek: 26,
@@ -388,7 +402,7 @@ test("returns same-week mainline and branch values for each changed document fie
 });
 
 test("returns a deterministic multi-round Git-style branch path without private rule data", async () => {
-  const manifest = await (await request("/api/lab/cases/car-control/v5")).json();
+  const manifest = await (await request("/api/lab/cases/car-control/v6")).json();
   const pathState = (week, spi, cpi, forecastCompletionWeek, status, outcome = null) => JSON.stringify({
     week,
     scenario: { id: "scenario-1", status },
@@ -505,7 +519,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
     },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-001" }),
   };
-  const response = await request("/api/lab/cases/car-control/v5/branches", options, env);
+  const response = await request("/api/lab/cases/car-control/v6/branches", options, env);
   assert.equal(response.status, 201);
   assert.match(response.headers.get("location") ?? "", /^\/api\/lab\/branches\/branch-/);
   const body = await response.json();
@@ -519,7 +533,7 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal(env.__state.events.length, 1);
   assert.equal(env.__state.progress[0].highestUnlockedWeek, 9);
 
-  const replay = await request("/api/lab/cases/car-control/v5/branches", options, env);
+  const replay = await request("/api/lab/cases/car-control/v6/branches", options, env);
   assert.equal(replay.status, 200);
   const replayBody = await replay.json();
   assert.equal(replayBody.branch.id, body.branch.id);
@@ -587,11 +601,11 @@ test("creates an idempotent branch from a configured takeover point", async () =
   assert.equal("content" in refreshedMaterials.materials[1], false);
 });
 
-test("creates a v5 branch when an immutable v4 case record already exists", async () => {
+test("creates a v6 branch when an immutable v4 case record already exists", async () => {
   const env = createEnv({ includeExistingBranch: false });
   env.__state.caseVersions.set("car-control:v4", "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353");
 
-  const response = await request("/api/lab/cases/car-control/v5/branches", {
+  const response = await request("/api/lab/cases/car-control/v6/branches", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -602,11 +616,11 @@ test("creates a v5 branch when an immutable v4 case record already exists", asyn
   }, env);
 
   assert.equal(response.status, 201);
-  assert.equal((await response.json()).branch.caseVersion, "v5");
+  assert.equal((await response.json()).branch.caseVersion, "v6");
   assert.equal(env.__state.caseVersions.get("car-control:v4"), "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353");
 });
 
-test("creates a new v5 retry branch without mutating the settled source", async () => {
+test("creates a new v6 retry branch without mutating the settled source", async () => {
   const env = createEnv({
     caseVersion: "v4",
     contentHash: "c85e10f6076226cc22b98b0f616f149593ba6508587822d902caf291bdddf353",
@@ -628,7 +642,7 @@ test("creates a new v5 retry branch without mutating the settled source", async 
     "oai-authenticated-user-id": "user-123",
     "oai-authenticated-user-email": "iman@example.com",
   };
-  const response = await request("/api/lab/cases/car-control/v5/branches", {
+  const response = await request("/api/lab/cases/car-control/v6/branches", {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -641,7 +655,7 @@ test("creates a new v5 retry branch without mutating the settled source", async 
   assert.equal(response.status, 201);
   const body = await response.json();
   assert.notEqual(body.branch.id, "branch-1");
-  assert.equal(body.branch.caseVersion, "v5");
+  assert.equal(body.branch.caseVersion, "v6");
   assert.equal(body.branch.parentBranchId, "branch-1");
   assert.equal(body.branch.branchName, "减少重复动作");
   assert.equal(body.branch.currentWeek, 9);
@@ -649,7 +663,7 @@ test("creates a new v5 retry branch without mutating the settled source", async 
   assert.equal(env.__state.branches.get("branch-1").caseVersion, "v4");
   assert.equal(env.__state.snapshots.some((snapshot) => snapshot.branchId === "branch-1" && snapshot.stateHash === "settled-source-hash"), true);
 
-  const secondResponse = await request("/api/lab/cases/car-control/v5/branches", {
+  const secondResponse = await request("/api/lab/cases/car-control/v6/branches", {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -701,14 +715,14 @@ test("renames only an owned branch and allows clearing the custom name", async (
 });
 
 test("requires login and a valid takeover request when creating a branch", async () => {
-  const anonymous = await request("/api/lab/cases/car-control/v5/branches", {
+  const anonymous = await request("/api/lab/cases/car-control/v6/branches", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ scenarioId: "scenario-1", idempotencyKey: "takeover-test-002" }),
   }, createEnv({ includeExistingBranch: false }));
   assert.equal(anonymous.status, 401);
 
-  const invalid = await request("/api/lab/cases/car-control/v5/branches", {
+  const invalid = await request("/api/lab/cases/car-control/v6/branches", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -721,7 +735,7 @@ test("requires login and a valid takeover request when creating a branch", async
 });
 
 test("validates branch ownership and strips scenario scoring fields", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v5");
+  const manifestResponse = await request("/api/lab/cases/car-control/v6");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -740,7 +754,7 @@ test("validates branch ownership and strips scenario scoring fields", async () =
 });
 
 test("does not reveal whether another user's branch exists", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v5");
+  const manifestResponse = await request("/api/lab/cases/car-control/v6");
   const manifest = await manifestResponse.json();
   const env = createEnv({ identityKey: "oai-user:owner", contentHash: manifest.contentHash });
   const response = await request("/api/lab/branches/branch-1/scenarios/scenario-1/projection", {
@@ -754,7 +768,7 @@ test("does not reveal whether another user's branch exists", async () => {
 });
 
 test("reads and autosaves an owned action-chain draft", async () => {
-  const manifestResponse = await request("/api/lab/cases/car-control/v5");
+  const manifestResponse = await request("/api/lab/cases/car-control/v6");
   const manifest = await manifestResponse.json();
   const env = createEnv({ contentHash: manifest.contentHash });
   const path = "/api/lab/branches/branch-1/scenarios/scenario-1/draft";

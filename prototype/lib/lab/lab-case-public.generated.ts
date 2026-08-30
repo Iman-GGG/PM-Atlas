@@ -5,14 +5,14 @@ import type { PublicLabCaseBaseline } from "./contracts";
 export const publicLabCaseBaseline: PublicLabCaseBaseline = {
   "schemaVersion": 1,
   "caseId": "car-control",
-  "caseVersion": "v5",
-  "contentHash": "a1b0a1b786181e520f17755c4975c68c23e24fb3311d6b0a3681ece806b205c1",
+  "caseVersion": "v6",
+  "contentHash": "4a3cfa4ff1855557f36c320fbbb03c3f7efaf5ced5bda32e3bf84e88b6fda4a8",
   "totalWeeks": 32,
   "plans": {
     "workload": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "totalWeeks": 32,
       "personDaysPerPersonWeek": 5,
       "budgetAtCompletionCny": 2600000,
@@ -430,7 +430,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "schedule": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "resourceSchedulingPolicy": {
         "defaultBufferWeeks": 3,
         "outsideWindowCostPerWeek": 5,
@@ -1933,7 +1933,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "stakeholders": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "raciPolicy": {
         "overviewRows": "level_1_work_packages",
         "exactlyOneAccountablePerRow": true,
@@ -3090,7 +3090,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "documents": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "statusPolicy": {
         "lifecycleStates": [
           "not_created",
@@ -6808,7 +6808,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "requirements": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "documentIds": {
         "requirements": "D21",
         "traceabilityMatrix": "D22"
@@ -7570,7 +7570,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "risks": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "probabilityScale": [
         {
           "level": 1,
@@ -8532,7 +8532,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
     "quality": {
       "schemaVersion": 1,
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "preMeasurementState": "not_measured",
       "scopeExclusionState": "not_applicable_by_approved_scope_change",
       "hardGates": [
@@ -8810,6 +8810,410 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
       ],
       "successRule": "all_applicable_hard_gates_pass"
     },
+    "iterations": {
+      "schemaVersion": 1,
+      "caseId": "car-control",
+      "caseVersion": "v6",
+      "policy": {
+        "firstSprintWeek": 9,
+        "lastSprintWeek": 28,
+        "sprintLengthWeeks": 2,
+        "workdaysPerWeek": 5,
+        "estimationUnit": "story_point",
+        "remainingWorkRule": "每个工作日的剩余点数等于尚未完成任务的故事点之和；计划活动人日不参与燃尽计算。",
+        "weeklyDataDateRule": "时间轴位于迭代第一周时显示截至第5个工作日的实绩，位于第二周时显示截至第10个工作日的实绩。"
+      },
+      "sprints": [
+        {
+          "id": "S1",
+          "startWeek": 9,
+          "endWeek": 10,
+          "goal": "完成账号登录骨架、远控二次确认策略和接口鉴权原型。",
+          "tasks": [
+            {
+              "id": "IT-S01-01",
+              "title": "登录、会话与授权主流程",
+              "scheduleActivityId": "WBS-4.1",
+              "requirementIds": [
+                "REQ-001",
+                "REQ-002"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S01-02",
+              "title": "高风险指令二次确认策略",
+              "scheduleActivityId": "WBS-6.1",
+              "requirementIds": [
+                "REQ-013"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S01-03",
+              "title": "车端 Mock 鉴权与错误码原型",
+              "scheduleActivityId": "WBS-3.2",
+              "requirementIds": [
+                "REQ-013"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S2",
+          "startWeek": 11,
+          "endWeek": 12,
+          "goal": "打通车辆绑定、状态数据映射和通知订阅的首个纵向切片。",
+          "tasks": [
+            {
+              "id": "IT-S02-01",
+              "title": "车辆绑定与异常流程接口",
+              "scheduleActivityId": "WBS-4.2",
+              "requirementIds": [
+                "REQ-003",
+                "REQ-004"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 4
+            },
+            {
+              "id": "IT-S02-02",
+              "title": "车辆核心状态字段映射",
+              "scheduleActivityId": "WBS-5.1",
+              "requirementIds": [
+                "REQ-005",
+                "REQ-006"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S02-03",
+              "title": "通知订阅领域模型",
+              "scheduleActivityId": "WBS-7.1",
+              "requirementIds": [
+                "REQ-017"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S3",
+          "startWeek": 13,
+          "endWeek": 14,
+          "goal": "收口车辆绑定安全流程并形成可刷新的车辆状态页面。",
+          "tasks": [
+            {
+              "id": "IT-S03-01",
+              "title": "绑定、解绑与换车异常闭环",
+              "scheduleActivityId": "WBS-4.2",
+              "requirementIds": [
+                "REQ-003",
+                "REQ-004"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S03-02",
+              "title": "会话授权范围安全验收",
+              "scheduleActivityId": "WBS-4.3",
+              "requirementIds": [
+                "REQ-002"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 7
+            },
+            {
+              "id": "IT-S03-03",
+              "title": "状态页面刷新与缓存时间",
+              "scheduleActivityId": "WBS-5.2",
+              "requirementIds": [
+                "REQ-005",
+                "REQ-008"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S4",
+          "startWeek": 15,
+          "endWeek": 16,
+          "goal": "交付车辆状态与首批远程控制能力的可验证版本。",
+          "tasks": [
+            {
+              "id": "IT-S04-01",
+              "title": "远程锁车与解锁流程",
+              "scheduleActivityId": "WBS-6.2",
+              "requirementIds": [
+                "REQ-010"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 6
+            },
+            {
+              "id": "IT-S04-02",
+              "title": "远程鸣笛与寻车流程",
+              "scheduleActivityId": "WBS-6.2",
+              "requirementIds": [
+                "REQ-011"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S04-03",
+              "title": "车辆位置、刷新与缓存联调",
+              "scheduleActivityId": "WBS-5.2",
+              "requirementIds": [
+                "REQ-007",
+                "REQ-008"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S5",
+          "startWeek": 17,
+          "endWeek": 18,
+          "goal": "补齐状态性能、异步指令状态和集成测试环境。",
+          "tasks": [
+            {
+              "id": "IT-S05-01",
+              "title": "状态查询性能与车型兼容",
+              "scheduleActivityId": "WBS-5.3",
+              "requirementIds": [
+                "REQ-009"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S05-02",
+              "title": "异步指令处理中与超时状态",
+              "scheduleActivityId": "WBS-6.3",
+              "requirementIds": [
+                "REQ-014"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S05-03",
+              "title": "集成环境、测试数据与自动化骨架",
+              "scheduleActivityId": "WBS-9.1",
+              "requirementIds": [
+                "REQ-010",
+                "REQ-011"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S6",
+          "startWeek": 19,
+          "endWeek": 20,
+          "goal": "交付空调预设、失败恢复和运营审计查询。",
+          "tasks": [
+            {
+              "id": "IT-S06-01",
+              "title": "空调预设与执行反馈",
+              "scheduleActivityId": "WBS-6.3",
+              "requirementIds": [
+                "REQ-012"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S06-02",
+              "title": "异步失败与超时恢复",
+              "scheduleActivityId": "WBS-6.3",
+              "requirementIds": [
+                "REQ-014"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 7
+            },
+            {
+              "id": "IT-S06-03",
+              "title": "审计查询与异常工单后端",
+              "scheduleActivityId": "WBS-7.2",
+              "requirementIds": [
+                "REQ-018"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S7",
+          "startWeek": 21,
+          "endWeek": 22,
+          "goal": "完成远控幂等、审计撤销和端到端自动化回归。",
+          "tasks": [
+            {
+              "id": "IT-S07-01",
+              "title": "远控幂等令牌与重复提交保护",
+              "scheduleActivityId": "WBS-6.4",
+              "requirementIds": [
+                "REQ-015"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S07-02",
+              "title": "审计、撤销与凭证过期机制",
+              "scheduleActivityId": "WBS-6.4",
+              "requirementIds": [
+                "REQ-016"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S07-03",
+              "title": "状态与通知端到端自动化回归",
+              "scheduleActivityId": "WBS-9.2",
+              "requirementIds": [
+                "REQ-005",
+                "REQ-017"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S8",
+          "startWeek": 23,
+          "endWeek": 24,
+          "goal": "通过系统性能、隐私最小化和运营可用性验证。",
+          "tasks": [
+            {
+              "id": "IT-S08-01",
+              "title": "系统性能与兼容性测试",
+              "scheduleActivityId": "WBS-9.3",
+              "requirementIds": [
+                "REQ-009"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S08-02",
+              "title": "隐私最小化与保留期限验证",
+              "scheduleActivityId": "WBS-10.1",
+              "requirementIds": [
+                "REQ-021"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S08-03",
+              "title": "运营审计与异常处理验收",
+              "scheduleActivityId": "WBS-7.3",
+              "requirementIds": [
+                "REQ-018"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S9",
+          "startWeek": 25,
+          "endWeek": 26,
+          "goal": "完成候选版本兼容验收、安全修复和试点就绪。",
+          "tasks": [
+            {
+              "id": "IT-S09-01",
+              "title": "候选版本车型与系统兼容验收",
+              "scheduleActivityId": "WBS-9.4",
+              "requirementIds": [
+                "REQ-019"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 4
+            },
+            {
+              "id": "IT-S09-02",
+              "title": "远程控制漏洞修复",
+              "scheduleActivityId": "WBS-10.2",
+              "requirementIds": [
+                "REQ-022"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S09-03",
+              "title": "试点培训、监控与回滚准备",
+              "scheduleActivityId": "WBS-11.1",
+              "requirementIds": [
+                "REQ-020"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 10
+            }
+          ]
+        },
+        {
+          "id": "S10",
+          "startWeek": 27,
+          "endWeek": 28,
+          "goal": "形成试点首轮反馈、安全复测证据和上线门结论。",
+          "tasks": [
+            {
+              "id": "IT-S10-01",
+              "title": "可用性监控、恢复与回滚演练",
+              "scheduleActivityId": "WBS-11.1",
+              "requirementIds": [
+                "REQ-020"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 5
+            },
+            {
+              "id": "IT-S10-02",
+              "title": "试点首轮反馈分类与闭环",
+              "scheduleActivityId": "WBS-11.2",
+              "requirementIds": [
+                "REQ-023"
+              ],
+              "storyPoints": 8,
+              "completedWorkday": 8
+            },
+            {
+              "id": "IT-S10-03",
+              "title": "漏洞复测与上线安全门证据",
+              "scheduleActivityId": "WBS-10.3",
+              "requirementIds": [
+                "REQ-022"
+              ],
+              "storyPoints": 5,
+              "completedWorkday": 10
+            }
+          ]
+        }
+      ]
+    },
     "baselineWorkload": {
       "schemaVersion": 1,
       "generatedFrom": [
@@ -8819,7 +9223,7 @@ export const publicLabCaseBaseline: PublicLabCaseBaseline = {
         "content/lab-cases/car-control/v5/document-plan.json"
       ],
       "caseId": "car-control",
-      "caseVersion": "v5",
+      "caseVersion": "v6",
       "totalPlannedPersonDays": 1024,
       "totalActivities": 35,
       "budgetAtCompletionCny": 2600000,

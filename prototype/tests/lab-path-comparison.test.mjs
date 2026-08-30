@@ -22,7 +22,7 @@ function stateJson(week, spi, cpi, forecastCompletionWeek, status, outcomeClassi
 const branch = {
   id: "branch-path",
   caseId: "car-control",
-  caseVersion: "v5",
+  caseVersion: "v6",
   contentHash: currentLabCaseRuntimePackage.contentHash,
   currentWeek: 19,
   currentRoundNumber: 2,

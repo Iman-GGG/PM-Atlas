@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
-const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v5");
+const defaultCaseDirectory = path.join(projectRoot, "content", "lab-cases", "car-control", "v6");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -37,7 +37,7 @@ function visit(value, visitor, pathParts = []) {
 }
 
 export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
-  const [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, scenarios] = await Promise.all([
+  const [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, iterations, scenarios] = await Promise.all([
     readJson(caseDirectory, "workload-plan.json"),
     readJson(caseDirectory, "schedule-plan.json"),
     readJson(caseDirectory, "baseline-workload.generated.json"),
@@ -45,10 +45,11 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
     readJson(caseDirectory, "document-plan.json"),
     readJson(caseDirectory, "requirement-plan.json"),
     readJson(caseDirectory, "risk-plan.json"),
+    readJson(caseDirectory, "iteration-plan.json"),
     readJson(caseDirectory, "scenario-plan.json"),
   ]);
 
-  for (const plan of [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, scenarios]) {
+  for (const plan of [workload, schedule, baselineWorkload, stakeholders, documents, requirements, risks, iterations, scenarios]) {
     assert(plan.caseId === workload.caseId, `Case id mismatch in ${plan.caseId ?? "unknown plan"}`);
     assert(plan.caseVersion === workload.caseVersion, `Case version mismatch in ${plan.caseVersion ?? "unknown plan"}`);
   }
@@ -62,6 +63,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   const deliverableById = new Map([...workPackageById, ...activityById]);
   const requirementById = uniqueMap(requirements.requirements, "requirement");
   const riskById = uniqueMap(risks.initialRisks, "risk");
+  const sprintById = uniqueMap(iterations.sprints, "sprint");
   const scenarioById = uniqueMap(scenarios.scenarios, "scenario");
   const changeById = uniqueMap(documents.changeItems, "change item");
   const issueById = uniqueMap(documents.issues, "issue");
@@ -79,6 +81,7 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "baselined").length === 24, "Expected 24 baselined requirements");
   assert([...requirementById.values()].filter((item) => item.traceabilityStatus === "candidate_unplanned").length === 6, "Expected 6 candidate requirements");
   assert(scenarioById.size === 3, `Expected 3 scenarios; found ${scenarioById.size}`);
+  assert(sprintById.size === 10, `Expected 10 sprints; found ${sprintById.size}`);
   assert(changeById.size === 8, `Expected 8 change items; found ${changeById.size}`);
   assert(issueById.size === 8, `Expected 8 issues; found ${issueById.size}`);
   assert(testRoundById.size === 6, `Expected 6 test rounds; found ${testRoundById.size}`);
@@ -92,6 +95,30 @@ export async function validateLabCase(caseDirectory = defaultCaseDirectory) {
   assert(scenarios.decisionReasoningPolicy.fields.length === 0, "Disabled decision reasoning must not contain fields");
   assert(scenarios.decisionReasoningPolicy.submissionRequirement === "at_least_one_complete_action_chain", "Submission must require one complete action chain");
   assert(scenarios.aiReviewPolicy.capabilityDimensions.length === 5, "AI review must contain 5 capability dimensions");
+
+  assert(iterations.policy.firstSprintWeek === 9 && iterations.policy.lastSprintWeek === 28, "Iteration plan must cover W9 through W28");
+  assert(iterations.policy.sprintLengthWeeks === 2 && iterations.policy.workdaysPerWeek === 5, "Iteration cadence must be ten working days across two weeks");
+  assert(iterations.policy.estimationUnit === "story_point", "Iteration tasks must use story points rather than activity person-days");
+  const iterationTaskIds = new Set();
+  const orderedSprints = [...iterations.sprints].sort((left, right) => left.startWeek - right.startWeek);
+  for (const [index, sprint] of orderedSprints.entries()) {
+    const expectedStartWeek = 9 + index * 2;
+    assert(sprint.id === `S${index + 1}`, `Expected sprint S${index + 1}; found ${sprint.id}`);
+    assert(sprint.startWeek === expectedStartWeek && sprint.endWeek === expectedStartWeek + 1, `${sprint.id} has an invalid two-week window`);
+    assert(typeof sprint.goal === "string" && sprint.goal.length > 0, `${sprint.id} has no sprint goal`);
+    assert(Array.isArray(sprint.tasks) && sprint.tasks.length >= 3, `${sprint.id} must contain at least three iteration tasks`);
+    for (const task of sprint.tasks) {
+      assert(!iterationTaskIds.has(task.id), `Duplicate iteration task id ${task.id}`);
+      iterationTaskIds.add(task.id);
+      const activity = activityById.get(task.scheduleActivityId);
+      assert(activity, `${task.id} references unknown schedule activity ${task.scheduleActivityId}`);
+      assert(activity.startWeek <= sprint.endWeek && activity.endWeek >= sprint.startWeek, `${task.id} references an activity outside ${sprint.id}`);
+      assert(Array.isArray(task.requirementIds) && task.requirementIds.length >= 1, `${task.id} has no requirement references`);
+      for (const requirementId of task.requirementIds) assert(requirementById.has(requirementId), `${task.id} references unknown requirement ${requirementId}`);
+      assert(Number.isInteger(task.storyPoints) && task.storyPoints > 0, `${task.id} has invalid story points`);
+      assert(Number.isInteger(task.completedWorkday) && task.completedWorkday >= 1 && task.completedWorkday <= 10, `${task.id} has an invalid completion workday`);
+    }
+  }
 
   const stakeholderGroups = new Set(["governance", "core_team", "business", "external"]);
   const engagementStates = new Set(stakeholders.engagementPolicy.states);

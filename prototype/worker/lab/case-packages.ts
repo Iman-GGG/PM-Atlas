@@ -1,6 +1,7 @@
 import { publicLabCaseBaseline } from "../../lib/lab/lab-case-public.generated.ts";
 import type { LabCaseRuntimePackage } from "../../lib/lab/contracts";
 import { frozenLabCaseRuntimePackages } from "../generated/lab-case-history.generated.ts";
+import { frozenLabCaseV5RuntimePackage } from "../generated/lab-case-v5-frozen.generated.ts";
 import { privateLabCasePackage } from "../generated/lab-case-private.generated.ts";
 
 function currentRuntimePackage(): LabCaseRuntimePackage {
@@ -14,6 +15,7 @@ export const currentLabCaseRuntimePackage = currentRuntimePackage();
 
 export const labCaseRuntimePackages: readonly LabCaseRuntimePackage[] = [
   ...frozenLabCaseRuntimePackages,
+  frozenLabCaseV5RuntimePackage,
   currentLabCaseRuntimePackage,
 ];
 
