@@ -4,15 +4,26 @@ import test from "node:test";
 
 const appSource = new URL("../app/prototype-app.tsx", import.meta.url);
 const timelineSource = new URL("../app/lab-timeline-page.tsx", import.meta.url);
+const dashboardComponentsSource = new URL("../app/lab-dashboard-components.tsx", import.meta.url);
+const projectTimelineSource = new URL("../app/lab-project-timeline.tsx", import.meta.url);
 const stylesSource = new URL("../app/globals.css", import.meta.url);
 const statsPageSource = new URL("../app/stats/stats-dashboard.tsx", import.meta.url);
 const analyticsApiSource = new URL("../worker/analytics/api.ts", import.meta.url);
 const labApiSource = new URL("../worker/lab/case-api.ts", import.meta.url);
 
+async function readTimelineSource() {
+  const sources = await Promise.all([
+    timelineSource,
+    dashboardComponentsSource,
+    projectTimelineSource,
+  ].map((source) => readFile(source, "utf8")));
+  return sources.join("\n");
+}
+
 test("wires the project lab schedule page to mainline, takeover, and material APIs", async () => {
   const [app, timeline] = await Promise.all([
     readFile(appSource, "utf8"),
-    readFile(timelineSource, "utf8"),
+    readTimelineSource(),
   ]);
 
   assert.match(app, /page === "schedule"[\s\S]*<LabTimelinePage openBranchHistoryRequest=\{branchHistoryRequest\} resetLabDataRequest=\{labDataResetRequest\} \/>/);
@@ -91,7 +102,7 @@ test("keeps the analytics dashboard private and records the requested aggregates
 
 test("renders the complete monochrome project control center", async () => {
   const [timeline, styles] = await Promise.all([
-    readFile(timelineSource, "utf8"),
+    readTimelineSource(),
     readFile(stylesSource, "utf8"),
   ]);
 
@@ -139,7 +150,7 @@ test("renders the complete monochrome project control center", async () => {
   assert.match(timeline, /项二级子任务/);
   assert.match(timeline, /window\.addEventListener\("keydown", onKeyDown\)/);
   assert.match(timeline, /event\.key === "ArrowLeft" \? -1 : 1/);
-  assert.match(timeline, /compactTimelineVisible &&/);
+  assert.match(timeline, /compactTimelineVisible \?/);
   assert.match(timeline, /!currentWeekHasLabel/);
   assert.match(timeline, /getBoundingClientRect\(\)\.bottom <= stickyTop/);
   assert.match(timeline, /milestones\.slice\(1, -1\)\.map/);
@@ -181,7 +192,7 @@ test("renders the complete monochrome project control center", async () => {
 });
 
 test("keeps evaluation answers out of the timeline client", async () => {
-  const timeline = await readFile(timelineSource, "utf8");
+  const timeline = await readTimelineSource();
 
   assert.doesNotMatch(timeline, /requiredActionGroups|minimumCorrectSet|harmfulConsequences|terminalRules/);
 });

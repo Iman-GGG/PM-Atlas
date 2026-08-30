@@ -5,6 +5,7 @@ import test from "node:test";
 import { publicLabCaseBaseline } from "../lib/lab/lab-case-public.generated.ts";
 
 const timelineSource = new URL("../app/lab-timeline-page.tsx", import.meta.url);
+const dashboardComponentsSource = new URL("../app/lab-dashboard-components.tsx", import.meta.url);
 
 test("publishes a minimal authoritative iteration task source for W9 through W28", () => {
   const iterations = publicLabCaseBaseline.plans.iterations;
@@ -54,7 +55,10 @@ test("derives each burn-down series from task points and completion days", () =>
 });
 
 test("renders the burn-down from iteration tasks without a fixed demonstration curve", async () => {
-  const timeline = await readFile(timelineSource, "utf8");
+  const timeline = (await Promise.all([
+    timelineSource,
+    dashboardComponentsSource,
+  ].map((source) => readFile(source, "utf8")))).join("\n");
   assert.match(timeline, /sprint\.tasks\.reduce\(\(total, task\) => total \+ task\.storyPoints, 0\)/);
   assert.match(timeline, /task\.completedWorkday > day/);
   assert.match(timeline, /currentSprint = mainline\.iterations\?\.sprints\.find/);
