@@ -2,6 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { AiReview } from "../lib/lab/contracts";
+import {
+  projectExceptionCounts,
+  projectHealthLabels,
+  projectHealthStatus,
+  sortProjectExceptions,
+  type ExceptionPriority,
+  type ProjectControlException,
+  type ProjectHealthStatus,
+} from "../lib/lab/project-control";
 import { KnowledgeEntryDrawer, knowledgeReferenceExists } from "./knowledge-entry-drawer";
 import { ScenarioOutcomeView } from "./lab-scenario-outcome";
 
@@ -778,6 +787,7 @@ type BranchCreation = {
 };
 
 type DashboardId =
+  | "health"
   | "spi"
   | "cpi"
   | "bac"
@@ -800,6 +810,14 @@ type ManagementArea = {
   title: string;
   shortTitle: string;
   documentIds: string[];
+};
+
+type ManagementAreaSummary = {
+  area: ManagementArea;
+  status: ProjectHealthStatus;
+  exceptions: ProjectControlException[];
+  facts: string[];
+  createdDocumentIds: string[];
 };
 
 const caseId = "car-control";
@@ -1230,6 +1248,7 @@ const managementAreas: ManagementArea[] = [
   { id: "stakeholder", index: "10", title: "项目干系人管理", shortTitle: "干系人", documentIds: ["D13", "D30"] },
 ];
 const dashboardTitles: Record<DashboardId, string> = {
+  health: "项目健康与异常优先级",
   spi: "进度绩效指数 SPI",
   cpi: "成本绩效指数 CPI",
   bac: "项目预算 BAC",
@@ -1246,6 +1265,53 @@ const dashboardTitles: Record<DashboardId, string> = {
   wbs: "WBS",
   "risk-status": "风险状态统计",
 };
+
+const issueCategoryAreaIds: Record<string, string[]> = {
+  requirements: ["scope"],
+  quality: ["quality"],
+  performance: ["quality"],
+  security: ["quality", "risk"],
+  usability: ["quality"],
+  integration: ["integration"],
+  resource: ["resource", "schedule"],
+};
+
+const riskCategoryAreaIds: Record<string, string[]> = {
+  scope: ["risk", "scope"],
+  procurement: ["risk", "procurement"],
+  resource: ["risk", "resource"],
+  security: ["risk", "quality"],
+  technical: ["risk", "integration"],
+  quality: ["risk", "quality"],
+  schedule: ["risk", "schedule"],
+  cost: ["risk", "cost"],
+  stakeholder: ["risk", "stakeholder"],
+};
+
+const changeCategoryAreaIds: Record<string, string[]> = {
+  scope_change: ["integration", "scope"],
+  release_scope_change: ["integration", "scope", "quality"],
+  resource_and_schedule_change: ["integration", "resource", "schedule"],
+  quality_improvement: ["integration", "quality"],
+  technical_change: ["integration", "quality"],
+  compliance_change: ["integration", "quality"],
+  operational_change: ["integration", "communication"],
+};
+
+const changePriorityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+function issuePriority(severity: string): ExceptionPriority {
+  if (severity === "critical") return "P0";
+  if (severity === "high") return "P1";
+  if (severity === "medium") return "P2";
+  return "P3";
+}
+
+function changePriority(priority: string): ExceptionPriority {
+  if (priority === "critical") return "P1";
+  if (priority === "high") return "P2";
+  return "P3";
+}
 
 const publicSampleDocumentIds = new Set(["D05", "D26"]);
 
@@ -1708,6 +1774,8 @@ export function LabTimelinePage({
   const [mainline, setMainline] = useState<MainlineData | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedWidget, setSelectedWidget] = useState<DashboardId | null>(null);
+  const [selectedManagementAreaId, setSelectedManagementAreaId] = useState<string | null>(null);
+  const [exceptionPriorityFilter, setExceptionPriorityFilter] = useState<"ALL" | ExceptionPriority>("ALL");
   const [requirementPriorityFilter, setRequirementPriorityFilter] = useState<"ALL" | RequirementItem["priority"]>("ALL");
   const [riskDetailFilter, setRiskDetailFilter] = useState<"ALL" | "OPEN" | "HIGH" | "CLOSED">("ALL");
   const [documentDrawerOpen, setDocumentDrawerOpen] = useState(false);
@@ -3031,6 +3099,152 @@ export function LabTimelinePage({
       : openRiskRows.length
         ? "剩余风险处于中低等级，按既定责任持续监控。"
         : "所有已识别风险均已关闭，可按项目收尾程序归档。";
+  const projectExceptions: ProjectControlException[] = [];
+  const openIssueRows = visibleIssues.filter((issue) => issue.resolvedWeek > selectedWeek);
+  for (const issue of openIssueRows.filter((item) => !["quality", "performance", "security"].includes(item.category))) {
+    const priority = issuePriority(issue.severity);
+    const areaIds = [...new Set([
+      ...(issueCategoryAreaIds[issue.category] ?? ["integration"]),
+      ...(priority === "P0" || priority === "P1" ? ["communication"] : []),
+    ])];
+    projectExceptions.push({
+      id: issue.id,
+      priority,
+      primaryAreaId: areaIds[0],
+      areaIds,
+      title: issue.title,
+      evidence: `W${issue.discoveredWeek} 发现；目标 W${issue.targetResolutionWeek} 关闭；当前仍未关闭。`,
+      response: issue.linkedChangeIds.length ? `执行 ${issue.linkedChangeIds.join(" / ")} 并验证关闭证据。` : issue.resolution,
+      owner: stakeholderById.get(issue.ownerStakeholderId)?.title ?? issue.ownerStakeholderId,
+      documentIds: [...new Set(["D08", ...issue.linkedChangeIds.map(() => "D05")])],
+    });
+  }
+  for (const risk of openRiskRows) {
+    const severity = riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact, risk.severityOverride);
+    if (severity !== "高" && severity !== "极高") continue;
+    const uncontrolledRedLine = severity === "极高" && (
+      risk.lifecycle === "triggered"
+      || risk.controlStatus === "active_uncontrolled"
+      || risk.controlStatus === "active_partially_controlled"
+    );
+    const areaIds = riskCategoryAreaIds[risk.category] ?? ["risk"];
+    projectExceptions.push({
+      id: risk.id,
+      priority: uncontrolledRedLine ? "P0" : "P1",
+      primaryAreaId: "risk",
+      areaIds,
+      title: risk.title,
+      evidence: `${severity}风险；概率 ${risk.currentAssessment.probability} × 影响 ${risk.currentAssessment.impact}；状态 ${risk.lifecycle}。`,
+      response: risk.responseActions[0] ?? "按已批准风险应对计划继续处置。",
+      owner: risk.owner,
+      documentIds: ["D26", "D27"],
+    });
+  }
+  if (forecastVarianceWeeks > 0 || weekState.spi < 0.99) {
+    projectExceptions.push({
+      id: "SCHEDULE-FORECAST",
+      priority: forecastVarianceWeeks > 0 || weekState.spi < 0.95 ? "P1" : "P2",
+      primaryAreaId: "schedule",
+      areaIds: ["schedule", "integration"],
+      title: forecastVarianceWeeks > 0 ? `当前完工预测较 W32 基线延后 ${forecastVarianceWeeks} 周` : "进度绩效低于基线",
+      evidence: `SPI ${weekState.spi.toFixed(3)}；当前预测 W${forecastCompletionWeek}；基线 W32。`,
+      response: "按 D29 复核零浮动活动、资源例外和恢复计划，不直接改写进度基线。",
+      owner: "项目经理",
+      documentIds: ["D28", "D29"],
+    });
+  }
+  if (weekState.cumulativeActualCostCny > mainline.workload.budgetAtCompletionCny || weekState.cpi < 0.98) {
+    projectExceptions.push({
+      id: "COST-PERFORMANCE",
+      priority: weekState.cumulativeActualCostCny > mainline.workload.budgetAtCompletionCny ? "P0" : weekState.cpi < 0.9 ? "P1" : "P2",
+      primaryAreaId: "cost",
+      areaIds: ["cost", "integration"],
+      title: weekState.cumulativeActualCostCny > mainline.workload.budgetAtCompletionCny ? "累计实际成本超过批准预算" : "成本绩效低于基线",
+      evidence: `CPI ${weekState.cpi.toFixed(3)}；AC ${formatMoney(weekState.cumulativeActualCostCny)}；BAC ${formatMoney(mainline.workload.budgetAtCompletionCny)}。`,
+      response: "复核成本偏差、批准变更和剩余估算；未经批准不得动用基线外预算。",
+      owner: "项目经理",
+      documentIds: ["D06", "D28"],
+    });
+  }
+  const blockerDefectCount = typeof blockerDefects === "number" ? Math.round(blockerDefects) : 0;
+  const qualityBlocking = blockerDefectCount > 0 || qualityReleaseBlockingIssues.length > 0 || qualityHardGateFailed || latestQualityTestRound?.result === "failed_gate";
+  if (qualityBlocking || (selectedWeek >= 28 && qualityHardGateEvidenceMissing) || qualityReportMetricFailures.length > 0) {
+    const priority: ExceptionPriority = qualityBlocking ? "P0" : selectedWeek >= 28 && qualityHardGateEvidenceMissing ? "P1" : "P2";
+    projectExceptions.push({
+      id: "QUALITY-GATE",
+      priority,
+      primaryAreaId: "quality",
+      areaIds: priority === "P0" ? ["quality", "risk", "integration"] : ["quality"],
+      title: qualityBlocking ? "质量或安全门阻断受影响能力发布" : qualityHardGateEvidenceMissing ? "上线门所需质量证据尚未齐备" : "存在未达标质量指标",
+      evidence: `硬门失败 ${qualityHardGateFailed ? 1 : 0}；阻断缺陷 ${blockerDefectCount}；严重开放问题 ${qualityReleaseBlockingIssues.length}；未达标指标 ${qualityReportMetricFailures.length}。`,
+      response: qualityReleaseRecommendation,
+      owner: "测试工程师 / DevOps与安全工程师",
+      documentIds: ["D18", "D20", "D32"],
+    });
+  }
+  if (openChangeItems.length) {
+    const rankedChanges = [...openChangeItems].sort((left, right) => (
+      (changePriorityRank[left.priority] ?? 4) - (changePriorityRank[right.priority] ?? 4)
+    ));
+    const leadingChange = rankedChanges[0];
+    const priority = changePriority(leadingChange.priority);
+    const affectedAreaIds = [...new Set(openChangeItems.flatMap((change) => changeCategoryAreaIds[change.category] ?? ["integration"]))];
+    projectExceptions.push({
+      id: "CCB-OPEN",
+      priority,
+      primaryAreaId: "integration",
+      areaIds: affectedAreaIds,
+      title: `${openChangeItems.length} 项正式变更仍在评审或实施`,
+      evidence: `${leadingChange.id} 为当前最高优先事项（${leadingChange.priority}）；计划 W${leadingChange.decisionWeek} 决策、W${leadingChange.closedWeek} 关闭。`,
+      response: "按 CCB 决策权限完成影响分析、决议和实施验证。",
+      owner: stakeholderById.get(leadingChange.ownerStakeholderId)?.title ?? leadingChange.ownerStakeholderId,
+      documentIds: ["D05"],
+    });
+  }
+  const stakeholderEngagementGaps = stakeholderState.filter((stakeholder) => stakeholder.current !== stakeholder.desired);
+  if (stakeholderEngagementGaps.length) {
+    const resistantCount = stakeholderEngagementGaps.filter((stakeholder) => stakeholder.current === "resistant").length;
+    projectExceptions.push({
+      id: "STAKEHOLDER-GAP",
+      priority: resistantCount ? "P1" : "P2",
+      primaryAreaId: "stakeholder",
+      areaIds: ["stakeholder", "communication"],
+      title: `${stakeholderEngagementGaps.length} 名干系人当前参与度未达到目标`,
+      evidence: `${resistantCount} 人抵制；${stakeholderEngagementGaps.length - resistantCount} 人处于其他参与差距。`,
+      response: "按 D30 的信息需求、沟通触点和责任人执行定向参与策略。",
+      owner: "项目经理",
+      documentIds: ["D30", "D13"],
+    });
+  }
+  const rankedProjectExceptions = sortProjectExceptions(projectExceptions);
+  const currentProjectHealth = projectHealthStatus(rankedProjectExceptions);
+  const exceptionCounts = projectExceptionCounts(rankedProjectExceptions);
+  const filteredProjectExceptions = rankedProjectExceptions.filter((item) => exceptionPriorityFilter === "ALL" || item.priority === exceptionPriorityFilter);
+  const resourceExceptionCount = resourceCalendarRows.filter((row) => row.status === "不可用" || row.status === "存在缺口").length;
+  const procurementOpenRiskCount = openRiskRows.filter((risk) => risk.category === "procurement").length;
+  const managementFacts: Record<string, string[]> = {
+    integration: [`当前阶段：${projectStage(selectedWeek)}`, `待处理变更 ${openChangeItems.length} 项`, `当前零浮动活动 ${activeCriticalActivityIds.length} 项`],
+    scope: [`已基线需求 ${requirementBaselined} 项`, `已验证 ${requirementVerified} 项`, `后续版本候选 ${requirementCandidates} 项`],
+    schedule: [`SPI ${weekState.spi.toFixed(3)}`, `完工预测 W${forecastCompletionWeek}`, forecastVarianceWeeks ? `较 W32 基线 +${forecastVarianceWeeks} 周` : "预测与 W32 基线一致"],
+    cost: [`CPI ${weekState.cpi.toFixed(3)}`, `AC ${formatMoney(weekState.cumulativeActualCostCny)}`, `BAC ${formatMoney(mainline.workload.budgetAtCompletionCny)}`],
+    quality: [`当前结论：${qualityReportStatus}`, `失败指标 ${qualityReportMetricFailures.length} 项`, `严重开放问题 ${qualityReleaseBlockingIssues.length} 项`],
+    resource: [`本周计划 ${weekState.plannedTeamPersonDays} 人日`, `资源例外 ${resourceExceptionCount} 项`, `已识别角色 ${mainline.workload.roles.length} 类`],
+    communication: [`关键沟通记录 ${communicationRecords.length} 条`, `本周新增 ${communicationRecords.filter((record) => record.week === selectedWeek).length} 条`, communicationRecords[0] ? `最近：W${communicationRecords[0].week} ${communicationRecords[0].subject}` : "尚无关键沟通记录"],
+    risk: [`开放风险 ${openRiskCount} 项`, `高/极高风险 ${highOpenRiskCount} 项`, `已关闭 ${completedRiskCount} 项`],
+    procurement: [`开放采购风险 ${procurementOpenRiskCount} 项`, `供应商参与：${stakeholderState.find((item) => item.id === "vehicle_vendor_pm")?.current ?? "未识别"}`, "合同、SLA 和分批交付依据 D25 / D26 管理"],
+    stakeholder: [`总体参与度 ${engagementPercent}%`, `参与差距 ${stakeholderEngagementGaps.length} 人`, `已识别 ${stakeholderState.length} 人`],
+  };
+  const managementAreaSummaries: ManagementAreaSummary[] = managementAreas.map((area) => {
+    const exceptions = rankedProjectExceptions.filter((item) => item.areaIds.includes(area.id));
+    return {
+      area,
+      status: projectHealthStatus(exceptions),
+      exceptions,
+      facts: managementFacts[area.id] ?? [],
+      createdDocumentIds: area.documentIds.filter((documentId) => documentState.some((document) => document.id === documentId && document.createdWeek <= selectedWeek)),
+    };
+  });
+  const selectedManagementAreaSummary = managementAreaSummaries.find((item) => item.area.id === selectedManagementAreaId) ?? null;
   const requirementDetailItems = requirementState.filter((requirement) => requirementPriorityFilter === "ALL" || requirement.priority === requirementPriorityFilter);
   const riskDetailItems = riskState.filter((risk) => {
     if (riskDetailFilter === "OPEN") return risk.lifecycle !== "closed";
@@ -3075,6 +3289,11 @@ export function LabTimelinePage({
   const currentRaciWorkPackage = mainline.workload.workPackages.find((item) => item.id === currentRaci.workPackageId);
   const criticalNow = mainline.baselineWorkload.scheduleNetwork.activities.filter((activity) => activity.isCritical && activity.earliestStart <= selectedWeek && activity.earliestFinish >= selectedWeek);
   const dashboardDetailFacts: Record<DashboardId, string[]> = {
+    health: [
+      `当前项目健康状态：${projectHealthLabels[currentProjectHealth]}`,
+      `P0 ${exceptionCounts.P0} 项 / P1 ${exceptionCounts.P1} 项 / P2 ${exceptionCounts.P2} 项 / P3 ${exceptionCounts.P3} 项`,
+      rankedProjectExceptions[0] ? `最高优先异常：${rankedProjectExceptions[0].priority} ${rankedProjectExceptions[0].title}` : "当前没有需要升级的异常",
+    ],
     spi: [`当前 SPI ${weekState.spi.toFixed(3)}`, `累计挣值 ${formatMoney(weekState.cumulativeEarnedValueCny)}`, `累计计划价值 ${formatMoney(weekState.cumulativePlannedValueCny)}`],
     cpi: [`当前 CPI ${weekState.cpi.toFixed(3)}`, `累计实际成本 ${formatMoney(weekState.cumulativeActualCostCny)}`, `BAC ${formatMoney(mainline.workload.budgetAtCompletionCny)}`],
     bac: [`批准预算 ${formatMoney(mainline.workload.budgetAtCompletionCny)}`, `当前完成度 ${progressPercent.toFixed(1)}%`, `预算基线贯穿 W1–W32`],
@@ -3090,6 +3309,16 @@ export function LabTimelinePage({
     network: [`当前关键活动 ${criticalNow.length} 项`, `关键活动总数 ${mainline.baselineWorkload.scheduleNetwork.criticalActivityIds.length}`, `主线预测完工 W${mainline.baselineWorkload.scheduleNetwork.calculatedProjectFinishWeek}`],
     wbs: [`工作包总数 ${mainline.workload.workPackages.length}`, `进行中 ${activeWorkPackages.length}`, `已完成 ${mainline.workload.workPackages.filter((item) => item.endWeek < selectedWeek).length}`],
     "risk-status": [`累计发现风险 ${riskState.length} 项`, `监控中 ${riskState.filter((risk) => risk.lifecycle === "monitoring").length} 项`, `已关闭 ${completedRiskCount} 项`, `本周新增 ${riskState.filter((risk) => risk.discoveredWeek === selectedWeek).length} 项`],
+  };
+  const closeControlDetail = () => {
+    setSelectedWidget(null);
+    setSelectedManagementAreaId(null);
+  };
+  const openControlDocument = (documentId: string) => {
+    closeControlDetail();
+    setSelectedDocumentId(documentId);
+    setManagementFilter(null);
+    setDocumentDrawerOpen(true);
   };
 
   return (
@@ -3202,7 +3431,17 @@ export function LabTimelinePage({
 
       <section className="lab-v2-dashboard-heading">
         <div><span>PROJECT CONTROL CENTER</span><h2>项目总仪表盘</h2></div>
-        <p>所有指标均为主线在 W{selectedWeek} 的状态。点击任一仪表查看详细数据。</p>
+        <button
+          type="button"
+          className={`lab-v2-project-health ${currentProjectHealth}`}
+          onClick={() => { setSelectedManagementAreaId(null); setSelectedWidget("health"); }}
+          aria-label={`查看 W${selectedWeek} 项目健康与异常优先级`}
+        >
+          <span>W{selectedWeek} PROJECT HEALTH</span>
+          <strong>{projectHealthLabels[currentProjectHealth]}</strong>
+          <small>{rankedProjectExceptions[0] ? `${rankedProjectExceptions[0].priority} · ${rankedProjectExceptions[0].title}` : "当前没有需要升级的异常"}</small>
+          <i>P0 {exceptionCounts.P0} / P1 {exceptionCounts.P1} / 全部 {rankedProjectExceptions.length} →</i>
+        </button>
       </section>
 
       <section className="lab-v2-dashboard-grid">
@@ -3284,16 +3523,17 @@ export function LabTimelinePage({
       </section>
 
       <section className="lab-v2-management">
-        <header><div><span>10 MANAGEMENT AREAS</span><h2>管理领域</h2></div><p>点击领域卡片，在项目文件抽屉中查看该领域当前可用文件。</p></header>
+        <header><div><span>10 MANAGEMENT AREAS</span><h2>管理领域</h2></div><p>点击领域查看当前判断、异常和数据依据，再从详情打开关联项目文件。</p></header>
         <div>
-          {managementAreas.map((area) => {
-            const createdCount = documentState.filter((document) => area.documentIds.includes(document.id) && document.createdWeek <= selectedWeek).length;
-            return (
-              <button key={area.id} onClick={() => { setManagementFilter(area.id); setDocumentDrawerOpen(true); }}>
-                <span>{area.index}</span><strong>{area.title}</strong><small>{createdCount}/{area.documentIds.length} 份文件可用</small><i>→</i>
-              </button>
-            );
-          })}
+          {managementAreaSummaries.map((summary) => (
+            <button
+              key={summary.area.id}
+              className={`status-${summary.status}`}
+              onClick={() => { setSelectedWidget(null); setSelectedManagementAreaId(summary.area.id); }}
+            >
+              <span>{summary.area.index}</span><strong>{summary.area.title}</strong><small>{projectHealthLabels[summary.status]} · {summary.exceptions.length} 项异常 · {summary.createdDocumentIds.length}/{summary.area.documentIds.length} 份文件</small><i>→</i>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -4382,11 +4622,29 @@ export function LabTimelinePage({
         </div>
       )}
 
-      {selectedWidget && (
-        <div className="lab-v2-modal-backdrop" onClick={() => setSelectedWidget(null)}>
-          <section className={`lab-v2-widget-modal ${["ccb", "raci", "requirements", "risk-matrix", "risk-status"].includes(selectedWidget) ? "detailed" : ""}`} onClick={(event) => event.stopPropagation()}>
-            <header><div><span>W{selectedWeek} / DASHBOARD DETAIL</span><h2>{dashboardTitles[selectedWidget]}</h2></div><button onClick={() => setSelectedWidget(null)}>关闭</button></header>
-            {selectedWidget === "ccb" ? (
+      {(selectedWidget || selectedManagementAreaSummary) && (
+        <div className="lab-v2-modal-backdrop" onClick={closeControlDetail}>
+          <section className={`lab-v2-widget-modal ${selectedManagementAreaSummary || selectedWidget === "health" || (selectedWidget && ["ccb", "raci", "requirements", "risk-matrix", "risk-status"].includes(selectedWidget)) ? "detailed" : ""}`} onClick={(event) => event.stopPropagation()}>
+            <header><div><span>W{selectedWeek} / {selectedManagementAreaSummary ? "MANAGEMENT AREA DETAIL" : "DASHBOARD DETAIL"}</span><h2>{selectedManagementAreaSummary?.area.title ?? dashboardTitles[selectedWidget!]}</h2></div><button onClick={closeControlDetail}>关闭</button></header>
+            {selectedManagementAreaSummary ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-metrics"><span><b>{projectHealthLabels[selectedManagementAreaSummary.status]}</b>领域状态</span><span><b>{selectedManagementAreaSummary.exceptions.length}</b>当前异常</span><span><b>{selectedManagementAreaSummary.exceptions[0]?.priority ?? "—"}</b>最高优先级</span><span><b>{selectedManagementAreaSummary.createdDocumentIds.length}/{selectedManagementAreaSummary.area.documentIds.length}</b>文件可用</span></div>
+                <div className="lab-v2-management-facts">{selectedManagementAreaSummary.facts.map((fact, index) => <article key={fact}><span>{String(index + 1).padStart(2, "0")}</span><strong>{fact}</strong></article>)}</div>
+                {selectedManagementAreaSummary.exceptions.length ? (
+                  <div className="lab-v2-detail-table"><table><thead><tr><th>优先级</th><th>异常</th><th>证据</th><th>负责人</th><th>处置</th></tr></thead><tbody>{selectedManagementAreaSummary.exceptions.map((item) => <tr key={item.id}><td><b className={`lab-v2-priority ${item.priority.toLowerCase()}`}>{item.priority}</b></td><td><strong>{item.id}</strong><small>{item.title}</small></td><td>{item.evidence}</td><td>{item.owner}</td><td>{item.response}</td></tr>)}</tbody></table></div>
+                ) : <div className="lab-v2-detail-focus"><span>当前判断</span><strong>未发现需要升级的领域异常</strong><small>状态由当前周权威指标、问题、风险、变更和干系人记录派生，不代表未来没有风险。</small></div>}
+                <div className="lab-v2-detail-links">{selectedManagementAreaSummary.createdDocumentIds.map((documentId) => <button key={documentId} onClick={() => openControlDocument(documentId)}>打开 {documentId}</button>)}</div>
+              </div>
+            ) : selectedWidget === "health" ? (
+              <div className="lab-v2-detail-content">
+                <div className="lab-v2-detail-metrics"><span><b>{projectHealthLabels[currentProjectHealth]}</b>项目健康</span><span><b>{exceptionCounts.P0}</b>P0 阻断</span><span><b>{exceptionCounts.P1}</b>P1 高优先</span><span><b>{rankedProjectExceptions.length}</b>全部异常</span></div>
+                <div className="lab-v2-detail-toolbar"><span>异常优先级</span>{(["ALL", "P0", "P1", "P2", "P3"] as const).map((priority) => <button key={priority} className={exceptionPriorityFilter === priority ? "active" : ""} onClick={() => setExceptionPriorityFilter(priority)}>{priority === "ALL" ? "全部" : priority}</button>)}</div>
+                {filteredProjectExceptions.length ? (
+                  <div className="lab-v2-detail-table"><table><thead><tr><th>优先级</th><th>管理领域 / 异常</th><th>证据</th><th>负责人</th><th>处置</th></tr></thead><tbody>{filteredProjectExceptions.map((item) => <tr key={item.id}><td><b className={`lab-v2-priority ${item.priority.toLowerCase()}`}>{item.priority}</b></td><td><strong>{managementAreas.find((area) => area.id === item.primaryAreaId)?.shortTitle ?? item.primaryAreaId} · {item.id}</strong><small>{item.title}</small></td><td>{item.evidence}</td><td>{item.owner}</td><td>{item.response}</td></tr>)}</tbody></table></div>
+                ) : <div className="lab-v2-detail-focus"><span>当前筛选</span><strong>没有该优先级异常</strong><small>异常只由当前周已有事实触发，不补写预测性告警或装饰性状态。</small></div>}
+                {filteredProjectExceptions[0]?.documentIds[0] && <button className="lab-v2-detail-document-link" onClick={() => openControlDocument(filteredProjectExceptions[0].documentIds[0])}>打开最高优先异常依据 {filteredProjectExceptions[0].documentIds[0]} →</button>}
+              </div>
+            ) : selectedWidget === "ccb" ? (
               <div className="lab-v2-detail-content">
                 <div className="lab-v2-detail-metrics"><span><b>{openChangeItems.length}</b>当前待办</span><span><b>{closedChangeItems.length}</b>已关闭</span><span><b>{visibleChangeItems.length}</b>累计变更</span><span><b>{mainline.documents.changeControlBoard.quorum}</b>法定人数</span></div>
                 <div className="lab-v2-detail-table"><table><thead><tr><th>编号</th><th>变更事项</th><th>提交</th><th>状态</th><th>决议</th><th>负责人</th></tr></thead><tbody>{visibleChangeItems.map((change) => <tr key={change.id}><td>{change.id}</td><td><strong>{change.title}</strong><small>{change.decisionSummary}</small></td><td>W{change.submittedWeek}</td><td>{changeStatusLabels[change.currentStatus]}</td><td>{changeDecisionLabels[change.decision]}</td><td>{stakeholderById.get(change.ownerStakeholderId)?.title}</td></tr>)}</tbody></table></div>
@@ -4411,8 +4669,8 @@ export function LabTimelinePage({
                 <div className="lab-v2-detail-table"><table><thead><tr><th>风险</th><th>等级</th><th>状态</th><th>发现</th><th>负责人</th><th>应对与结果</th></tr></thead><tbody>{riskDetailItems.map((risk) => <tr key={risk.id}><td><strong>{risk.id}</strong><small>{risk.title}</small></td><td>{riskSeverity(risk.currentAssessment.probability, risk.currentAssessment.impact)}</td><td>{risk.lifecycle === "closed" ? "已关闭" : risk.lifecycle === "monitoring" ? "监控中" : "处理中"}</td><td>W{risk.discoveredWeek}</td><td>{risk.owner}</td><td>{risk.lifecycle === "closed" ? risk.postTreatmentResult : risk.responseActions.join("；")}</td></tr>)}</tbody></table></div>
                 <button className="lab-v2-detail-document-link" onClick={() => { setSelectedWidget(null); setSelectedDocumentId("D26"); setManagementFilter(null); setDocumentDrawerOpen(true); }}>打开 D26 风险登记册 →</button>
               </div>
-            ) : <div>{dashboardDetailFacts[selectedWidget].map((fact, index) => <article key={fact}><span>{String(index + 1).padStart(2, "0")}</span><strong>{fact}</strong></article>)}</div>}
-            <footer>数据来自当前主线状态。拖动项目进度条后，该仪表详情会同步更新。</footer>
+            ) : <div>{dashboardDetailFacts[selectedWidget!].map((fact, index) => <article key={fact}><span>{String(index + 1).padStart(2, "0")}</span><strong>{fact}</strong></article>)}</div>}
+            <footer>数据来自当前周权威状态。拖动项目进度条或切换个人分支后，健康、异常和领域详情会同步重算。</footer>
           </section>
         </div>
       )}
