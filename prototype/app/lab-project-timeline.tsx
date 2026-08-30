@@ -14,7 +14,6 @@ export function LabProjectTimeline({
   currentWeekHasLabel,
   currentTakeoverPoint,
   branchActive,
-  authenticated,
   loadingScenarioId,
   compactTimelineVisible,
   timelinePanelRef,
@@ -30,7 +29,6 @@ export function LabProjectTimeline({
   currentWeekHasLabel: boolean;
   currentTakeoverPoint: TimelineTakeoverPoint | null;
   branchActive: boolean;
-  authenticated: boolean | null;
   loadingScenarioId: string | null;
   compactTimelineVisible: boolean;
   timelinePanelRef: RefObject<HTMLElement | null>;
@@ -60,20 +58,50 @@ export function LabProjectTimeline({
               <i /><span>W{milestone.week}</span><small>{milestone.label}</small>
             </button>
           ))}
-          {takeoverPoints.map((point) => (
-            <button key={point.scenarioId} className={`lab-v2-takeover-marker ${selectedWeek === point.week ? "active" : ""}`} style={{ left: weekPosition(point.week) }} onClick={() => onWeekChange(point.week)} aria-label={`查看第${point.week}周接手点`}>
-              <span>接手点</span><b>W{point.week}</b>
-            </button>
-          ))}
+          {takeoverPoints.map((point) => {
+            const active = selectedWeek === point.week;
+            const available = active && currentTakeoverPoint?.scenarioId === point.scenarioId && !branchActive;
+            const alignment = point.week >= 25 ? "align-right" : point.week <= 9 ? "align-left" : "align-center";
+            if (available) {
+              return (
+                <div
+                  key={point.scenarioId}
+                  className={`lab-v2-takeover-marker active available ${alignment}`}
+                  style={{ left: weekPosition(point.week) }}
+                  role="group"
+                  aria-label={`第${point.week}周接手点，${scenarioLabel(point.scenarioId)}`}
+                >
+                  <span>接手点 · {scenarioLabel(point.scenarioId)}</span>
+                  <div className="lab-v2-takeover-marker-action-row">
+                    <b>W{point.week}</b>
+                    <button
+                      type="button"
+                      className="lab-v2-takeover-action"
+                      disabled={loadingScenarioId !== null}
+                      onClick={() => onTakeover(point)}
+                    >
+                      {loadingScenarioId === point.scenarioId ? "正在创建分支…" : "从这里接手 →"}
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <button
+                key={point.scenarioId}
+                type="button"
+                className={`lab-v2-takeover-marker ${active ? "active" : ""}`}
+                style={{ left: weekPosition(point.week) }}
+                onClick={() => onWeekChange(point.week)}
+                aria-label={`查看第${point.week}周接手点`}
+              >
+                <span>接手点</span><b>W{point.week}</b>
+              </button>
+            );
+          })}
           {!currentWeekHasLabel ? <div className="lab-v2-current-week-label" style={{ left: weekPosition(selectedWeek) }}><b>W{selectedWeek}</b></div> : null}
         </div>
         <div className="lab-v2-timeline-meta"><span>W01</span><strong>{progressPercent.toFixed(1)}% 项目价值已完成</strong><span>W32</span></div>
-        {currentTakeoverPoint && !branchActive ? (
-          <div className="lab-v2-takeover-callout">
-            <div><span>SCENARIO AVAILABLE</span><strong>{scenarioLabel(currentTakeoverPoint.scenarioId)}</strong><small>在 W{currentTakeoverPoint.week} 复制主线状态，建立你的个人分支。</small></div>
-            <button disabled={loadingScenarioId !== null} onClick={() => onTakeover(currentTakeoverPoint)}>{loadingScenarioId === currentTakeoverPoint.scenarioId ? "正在创建分支…" : authenticated ? "从这里接手 →" : "登录并从这里接手 →"}</button>
-          </div>
-        ) : null}
       </section>
 
       {compactTimelineVisible ? (

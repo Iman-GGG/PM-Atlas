@@ -108,7 +108,9 @@ test("renders the complete monochrome project control center", async () => {
 
   assert.match(timeline, /type="range"/);
   assert.match(timeline, /从这里接手/);
-  assert.match(timeline, /登录并从这里接手/);
+  assert.match(timeline, /接手点 · \{scenarioLabel\(point\.scenarioId\)\}/);
+  assert.match(timeline, /lab-v2-takeover-action/);
+  assert.doesNotMatch(timeline, /lab-v2-takeover-callout/);
   assert.match(timeline, /publicSampleDocumentIds = new Set\(\["D05", "D26"\]\)/);
   assert.match(timeline, /登录查看具体内容/);
   assert.match(timeline, /apiJson<LabSession>\("\/api\/lab\/session"/);

@@ -2254,7 +2254,6 @@ export function LabTimelinePage({
         currentWeekHasLabel={Boolean(currentWeekHasLabel)}
         currentTakeoverPoint={currentTakeoverPoint}
         branchActive={Boolean(branch)}
-        authenticated={authenticated}
         loadingScenarioId={loadingScenarioId}
         compactTimelineVisible={compactTimelineVisible}
         timelinePanelRef={timelinePanelRef}

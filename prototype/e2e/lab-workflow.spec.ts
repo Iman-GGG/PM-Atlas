@@ -234,6 +234,9 @@ test("逐项阅读情景材料后才解锁行动链", async ({ page }) => {
   await installLabApi(page);
   await page.goto("/#lab-schedule");
   await page.getByRole("button", { name: "查看第9周接手点" }).click();
+  await expect(page.locator(".lab-v2-takeover-marker.available")).toContainText("接手点 · 需求变更");
+  await expect(page.locator(".lab-v2-takeover-marker.available")).toContainText("W9");
+  await expect(page.locator(".lab-v2-takeover-callout")).toHaveCount(0);
   await page.getByRole("button", { name: "从这里接手 →" }).click();
 
   for (const material of materials) {

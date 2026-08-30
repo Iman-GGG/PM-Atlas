@@ -8096,30 +8096,37 @@ select {
 }
 
 .lab-v2-takeover-marker::after { position: absolute; top: 100%; left: 50%; width: 1px; height: 28px; background: var(--line); content: ""; }
-.lab-v2-takeover-marker span { color: var(--muted); font-size: 9px; }
+.lab-v2-takeover-marker span { color: var(--muted); font-size: 9px; white-space: nowrap; }
 .lab-v2-takeover-marker b { font-size: 14px; }
 .lab-v2-takeover-marker.active { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.lab-v2-takeover-marker.available {
+  min-width: 196px;
+  gap: 4px;
+  cursor: default;
+}
+.lab-v2-takeover-marker.available.align-left { transform: translateX(-43px); }
+.lab-v2-takeover-marker.available.align-right { transform: translateX(calc(-100% + 43px)); }
+.lab-v2-takeover-marker.available.align-left::after { left: 42px; }
+.lab-v2-takeover-marker.available.align-right::after { right: 42px; left: auto; }
+.lab-v2-takeover-marker-action-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.lab-v2-takeover-action {
+  min-height: 28px;
+  padding: 0 9px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.lab-v2-takeover-action:hover:not(:disabled) { background: #e7e7e7; }
+.lab-v2-takeover-action:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+.lab-v2-takeover-action:disabled { cursor: wait; opacity: 0.72; }
 
 .lab-v2-timeline-meta { display: flex; justify-content: space-between; align-items: center; margin-top: -8px; color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 10px; }
 .lab-v2-timeline-meta strong { color: var(--ink); font-family: inherit; }
-
-.lab-v2-takeover-callout {
-  display: flex;
-  justify-content: space-between;
-  gap: 28px;
-  align-items: center;
-  margin-top: 20px;
-  padding: 18px 20px;
-  color: var(--paper);
-  background: var(--ink);
-  border-radius: 10px;
-}
-
-.lab-v2-takeover-callout > div { display: grid; gap: 3px; }
-.lab-v2-takeover-callout span { color: #999; }
-.lab-v2-takeover-callout strong { font-size: 18px; }
-.lab-v2-takeover-callout small { color: #bbb; }
-.lab-v2-takeover-callout button { min-height: 42px; padding: 0 18px; color: var(--ink); background: var(--paper); border: 0; border-radius: var(--radius-control); cursor: pointer; font-weight: 800; }
 
 .lab-v2-branch-next-actions button { min-height: 38px; padding: 0 15px; color: var(--paper); background: transparent; border: 1px solid #777; border-radius: var(--radius-control); cursor: pointer; font-weight: 800; }
 .lab-v2-branch-next-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -9408,10 +9415,10 @@ select {
   .lab-v2-branch-workspace { padding: 22px; }
   .lab-v2-range-wrap { margin-right: 36px; margin-left: 36px; }
   .lab-v2-takeover-marker { display: none; }
+  .lab-v2-takeover-marker.available { display: grid; min-width: 188px; }
   .lab-v2-dashboard-heading,
   .lab-v2-management > header,
-  .lab-v2-branch-workspace > header,
-  .lab-v2-takeover-callout { align-items: start; flex-direction: column; }
+  .lab-v2-branch-workspace > header { align-items: start; flex-direction: column; }
   .lab-v2-dashboard-heading p,
   .lab-v2-management > header p,
   .lab-v2-branch-workspace > header p { text-align: left; }
